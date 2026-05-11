@@ -16,6 +16,9 @@ function updateTrader() {
   var resources = ['metal', 'crystal', 'deuterium'];
 
   var total = 0.0;
+  $('#metal-amount').val(0);
+  $('#crystal-amount').val(0);
+  $('#deuterium-amount').val(0);
 
   for (var i = 0; i < resources.length; i++) {
     var resource = resources[i];
@@ -28,13 +31,17 @@ function updateTrader() {
     if (!Number.isFinite(amount) || amount < 0) {
       amount = 0;
     }
+    amount = Math.floor(amount);
 
     var resourceRate = +table.attr('data-rate-' + resource);
-    var received = amount * (tradedResourceRate / resourceRate);
+    var received = amount * resourceRate / tradedResourceRate;
     total += received;
+    $('#' + resource + '-amount').val(amount);
   }
 
+  total = Math.floor(total * 100.0) / 100.0;
   $('#trade-total').text(formatTraderNumber(total));
+  $('#expected-received-amount').val(total.toFixed(2));
 }
 
 $('.trader-input').on('input change', updateTrader);
