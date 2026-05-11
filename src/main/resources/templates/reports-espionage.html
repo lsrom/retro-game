@@ -85,9 +85,11 @@
                 th:text="${report.defense != null ? @formatterService.prefixedNumber(report.defense) : '?'}"></span>
         </td>
         <td class="report-actions">
-          <a class="btn"
-             th:href="@{/flights/send(body=${bodyId},galaxy=${c.galaxy},system=${c.system},position=${c.position},kind=${c.kind},mission='ATTACK',units[ESPIONAGE_PROBE]=${report.neededEspionageProbes})}"
-             th:title="#{raidWithEspionageProbes}">EP</a>
+          <th:block th:if="${espionageProbeRaiding}">
+            <a class="btn"
+              th:href="@{/flights/send(body=${bodyId},galaxy=${c.galaxy},system=${c.system},position=${c.position},kind=${c.kind},mission='ATTACK',units[ESPIONAGE_PROBE]=${report.neededEspionageProbes})}"
+              th:title="#{raidWithEspionageProbes}">EP</a>
+          </th:block>
           <a class="btn"
              th:href="@{/flights/send(body=${bodyId},galaxy=${c.galaxy},system=${c.system},position=${c.position},kind=${c.kind},mission='ATTACK',units[SMALL_CARGO]=${report.neededSmallCargoes})}"
              th:title="#{raidWithSmallCargoes}">SC</a>

@@ -45,6 +45,7 @@ public class AttackMissionHandler {
   private final double fleetDebrisFactor;
   private final double defenseDebrisFactor;
   private final double maxMoonChance;
+  private final boolean espionageProbeRaiding;
   private final BattleEngine battleEngine;
   private final BodyRepository bodyRepository;
   private final DebrisFieldRepository debrisFieldRepository;
@@ -63,6 +64,7 @@ public class AttackMissionHandler {
                               @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
                               @Value("${retro-game.defense-debris-factor:0.0}") double defenseDebrisFactor,
                               @Value("${retro-game.max-moon-chance:0.2}") double maxMoonChance,
+                              @Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
                               BattleEngine battleEngine, BodyRepository bodyRepository,
                               DebrisFieldRepository debrisFieldRepository, EventRepository eventRepository,
                               FlightRepository flightRepository, PartyRepository partyRepository) {
@@ -71,6 +73,7 @@ public class AttackMissionHandler {
     this.fleetDebrisFactor = fleetDebrisFactor;
     this.defenseDebrisFactor = defenseDebrisFactor;
     this.maxMoonChance = maxMoonChance;
+    this.espionageProbeRaiding = espionageProbeRaiding;
     this.battleEngine = battleEngine;
     this.bodyRepository = bodyRepository;
     this.debrisFieldRepository = debrisFieldRepository;
@@ -577,7 +580,8 @@ public class AttackMissionHandler {
     var states = new FlightPlunderState[flights.size()];
     var i = 0;
     for (var flight : flights) {
-      var capacity = calcCapacity(flight.getUnitsArray());
+      boolean excludeEspionageProbes = !espionageProbeRaiding;
+      var capacity = calcCapacity(flight.getUnitsArray(), excludeEspionageProbes);
       capacity -= (long) Math.ceil(flight.getResources().total());
       capacity = Math.max(0L, capacity);
       states[i++] = new FlightPlunderState(flight, new Resources(), capacity);
@@ -631,12 +635,15 @@ public class AttackMissionHandler {
   }
 
   // TODO: Move somewhere else.
-  private static long calcCapacity(int[] units) {
+  private static long calcCapacity(int[] units, boolean excludeEspionageProbes) {
     var capacity = 0L;
     for (var kind : fightUnitKinds) {
       var count = units[kind.ordinal()];
       assert count >= 0;
       if (count == 0) {
+        continue;
+      }
+      if (excludeEspionageProbes && kind == UnitKind.ESPIONAGE_PROBE) {
         continue;
       }
       var item = Item.get(kind);

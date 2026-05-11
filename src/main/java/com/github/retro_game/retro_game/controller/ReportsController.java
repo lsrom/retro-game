@@ -9,6 +9,7 @@ import com.github.retro_game.retro_game.service.ReportService;
 import com.github.retro_game.retro_game.service.UserService;
 import com.github.retro_game.retro_game.service.exception.ReportDoesNotExistException;
 import com.github.retro_game.retro_game.service.exception.UnauthorizedReportAccessException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -56,10 +57,13 @@ public class ReportsController {
         put(UnitKindDto.PLASMA_TURRET, 19);
       }});
 
+  private final boolean espionageProbeRaiding;
   private final ReportService reportService;
   private final UserService userService;
 
-  public ReportsController(ReportService reportService, UserService userService) {
+  public ReportsController(@Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
+                           ReportService reportService, UserService userService) {
+    this.espionageProbeRaiding = espionageProbeRaiding;
     this.reportService = reportService;
     this.userService = userService;
   }
@@ -184,6 +188,7 @@ public class ReportsController {
     model.addAttribute("size", size);
     model.addAttribute("reports", reports);
     model.addAttribute("numProbes", userService.getCurrentUserSettings().getNumProbes());
+    model.addAttribute("espionageProbeRaiding", espionageProbeRaiding);
     return "reports-espionage";
   }
 
