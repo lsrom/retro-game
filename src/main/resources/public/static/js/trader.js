@@ -2,7 +2,7 @@
 
 function formatTraderNumber(value) {
   var lang = document.documentElement.lang || 'en';
-  return value.toLocaleString(lang, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  return value.toLocaleString(lang, {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
 
 function updateTrader() {
