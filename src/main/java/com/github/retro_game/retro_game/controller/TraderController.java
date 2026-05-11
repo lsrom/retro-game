@@ -28,7 +28,10 @@ public class TraderController {
     long seed = LocalDate.now().toEpochDay();
     var random = new Random(seed);
     String[] resources = {"Metal", "Crystal", "Deuterium"};
-    String tradedResource = resources[random.nextInt(resources.length)];
+    String[] resourceKeys = {"metal", "crystal", "deuterium"};
+    int tradedResourceIndex = random.nextInt(resources.length);
+    String tradedResource = resources[tradedResourceIndex];
+    String tradedResourceKey = resourceKeys[tradedResourceIndex];
 
     double crystalRate = 1.6 + random.nextDouble() * (2.1 - 1.6);
     double metalRate = 2.4 + random.nextDouble() * (3.2 - 2.4);
@@ -36,6 +39,7 @@ public class TraderController {
     model.addAttribute("bodyId", bodyId);
     model.addAttribute("ctx", ctx);
     model.addAttribute("tradedResource", tradedResource);
+    model.addAttribute("tradedResourceKey", tradedResourceKey);
     model.addAttribute("metalRate", metalRate);
     model.addAttribute("crystalRate", crystalRate);
     model.addAttribute("deuteriumRate", 1.0);
