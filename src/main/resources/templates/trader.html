@@ -14,8 +14,8 @@
       <td class="error" th:text="${error}"></td>
     </tr>
   </table>
-  <p th:text="${'Today, the trader wants to buy ' + tradedResource}"></p>
-  <form id="trader-form" th:action="@{/trader/trade}" th:object="${form}" method="post">
+  <p th:if="${tradedResource != null}" th:text="${'Today, the trader wants to buy ' + tradedResource}"></p>
+  <form id="trader-form" th:if="${tradedResource != null}" th:action="@{/trader/trade}" th:object="${form}" method="post">
     <input type="hidden" th:field="*{body}">
     <input type="hidden" th:field="*{tradedResourceKey}">
     <input id="expected-received-amount" type="hidden" th:field="*{expectedReceivedAmount}">
