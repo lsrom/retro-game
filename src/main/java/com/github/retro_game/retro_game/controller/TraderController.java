@@ -10,8 +10,10 @@ import com.github.retro_game.retro_game.service.exception.WrongTradeAmountExcept
 import com.github.retro_game.retro_game.service.exception.WrongTradedResourceException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
+import org.springframework.validation.BindingResult;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -44,13 +46,21 @@ public class TraderController {
     model.addAttribute("metalRate", offer.getMetalRate());
     model.addAttribute("crystalRate", offer.getCrystalRate());
     model.addAttribute("deuteriumRate", offer.getDeuteriumRate());
+    var form = new TradeForm();
+    form.setBody(bodyId);
+    form.setTradedResourceKey(offer.getTradedResourceKey());
+    model.addAttribute("form", form);
     return "trader";
   }
 
   @PostMapping("/trader/trade")
   @PreAuthorize("hasPermission(#form.body, 'ACCESS')")
   @Activity(bodies = "#form.body")
-  public String doTrade(@Valid TradeForm form) {
+  public String doTrade(@Valid @ModelAttribute("form") TradeForm form, BindingResult bindingResult) {
+    if (bindingResult.hasErrors()) {
+      return "redirect:/trader?body=" + form.getBody() + "&error=INVALID_TRADE_FORM";
+    }
+
     var params = new TradeResourcesParamsDto(
         form.getBody(),
         form.getTradedResourceKey(),

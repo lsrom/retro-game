@@ -2,7 +2,6 @@ package com.github.retro_game.retro_game.controller.form;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 public class TradeForm {
   private long body;
@@ -10,21 +9,17 @@ public class TradeForm {
   @NotBlank
   private String tradedResourceKey;
 
-  @NotNull
   @Min(0)
-  private Double expectedReceivedAmount;
+  private double expectedReceivedAmount;
 
-  @NotNull
   @Min(0)
-  private Double metalAmount;
+  private double metalAmount;
 
-  @NotNull
   @Min(0)
-  private Double crystalAmount;
+  private double crystalAmount;
 
-  @NotNull
   @Min(0)
-  private Double deuteriumAmount;
+  private double deuteriumAmount;
 
   public long getBody() {
     return body;
@@ -42,35 +37,35 @@ public class TradeForm {
     this.tradedResourceKey = tradedResourceKey;
   }
 
-  public Double getExpectedReceivedAmount() {
+  public double getExpectedReceivedAmount() {
     return expectedReceivedAmount;
   }
 
-  public void setExpectedReceivedAmount(Double expectedReceivedAmount) {
+  public void setExpectedReceivedAmount(double expectedReceivedAmount) {
     this.expectedReceivedAmount = expectedReceivedAmount;
   }
 
-  public Double getMetalAmount() {
+  public double getMetalAmount() {
     return metalAmount;
   }
 
-  public void setMetalAmount(Double metalAmount) {
+  public void setMetalAmount(double metalAmount) {
     this.metalAmount = metalAmount;
   }
 
-  public Double getCrystalAmount() {
+  public double getCrystalAmount() {
     return crystalAmount;
   }
 
-  public void setCrystalAmount(Double crystalAmount) {
+  public void setCrystalAmount(double crystalAmount) {
     this.crystalAmount = crystalAmount;
   }
 
-  public Double getDeuteriumAmount() {
+  public double getDeuteriumAmount() {
     return deuteriumAmount;
   }
 
-  public void setDeuteriumAmount(Double deuteriumAmount) {
+  public void setDeuteriumAmount(double deuteriumAmount) {
     this.deuteriumAmount = deuteriumAmount;
   }
 }
