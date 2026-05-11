@@ -14,7 +14,6 @@
       <td class="error" th:text="${#messages.msg('traderError.' + error)}"></td>
     </tr>
   </table>
-  <p th:if="${tradedResource != null}" th:text="#{traderOfferFormat(${tradedResource})}"></p>
   <form id="trader-form" th:if="${tradedResource != null}" th:action="@{/trader/trade}" th:object="${form}" method="post">
     <input type="hidden" th:field="*{body}">
     <input type="hidden" th:field="*{tradedResourceKey}">
@@ -29,6 +28,9 @@
         <th colspan="3" th:text="#{trader}">Trader</th>
       </tr>
       <tr>
+        <td colspan="3" th:if="${tradedResource != null}" th:text="#{traderOfferFormat(${tradedResource})}">Trader</td>
+      </tr>
+      <tr>
         <th th:text="#{resource}">Resource</th>
         <th th:text="#{exchangeRate}">Exchange Rate</th>
         <th th:text="#{trade}">Trade</th>
@@ -38,7 +40,7 @@
         <td th:text="${#numbers.formatDecimal(metalRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
         <td>
           <th:block th:if="${tradedResource == 'Metal'}">
-            <span id="trade-total">0.00</span>
+            <span id="trade-total">0</span>
           </th:block>
           <th:block th:if="${tradedResource != 'Metal'}">
             <input id="trade-metal" class="trader-input" type="number" min="0" step="1" name="metalTradeAmount">
@@ -50,7 +52,7 @@
         <td th:text="${#numbers.formatDecimal(crystalRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
         <td>
           <th:block th:if="${tradedResource == 'Crystal'}">
-            <span id="trade-total">0.00</span>
+            <span id="trade-total">0</span>
           </th:block>
           <th:block th:if="${tradedResource != 'Crystal'}">
             <input id="trade-crystal" class="trader-input" type="number" min="0" step="1" name="crystalTradeAmount">
@@ -62,7 +64,7 @@
         <td th:text="${#numbers.formatDecimal(deuteriumRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
         <td>
           <th:block th:if="${tradedResource == 'Deuterium'}">
-            <span id="trade-total">0.00</span>
+            <span id="trade-total">0</span>
           </th:block>
           <th:block th:if="${tradedResource != 'Deuterium'}">
             <input id="trade-deuterium" class="trader-input" type="number" min="0" step="1" name="deuteriumTradeAmount">
