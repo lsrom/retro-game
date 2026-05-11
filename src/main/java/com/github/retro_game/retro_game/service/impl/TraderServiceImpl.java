@@ -66,9 +66,9 @@ class TraderServiceImpl implements TraderService {
     }
 
     double tradedResourceRate = getRateByKey(offer, offer.getTradedResourceKey());
-    double receivedAmount = metalAmount * offer.getMetalRate() / tradedResourceRate +
-        crystalAmount * offer.getCrystalRate() / tradedResourceRate +
-        deuteriumAmount * offer.getDeuteriumRate() / tradedResourceRate;
+    double receivedAmount = metalAmount * (tradedResourceRate / offer.getMetalRate()) +
+        crystalAmount * (tradedResourceRate / offer.getCrystalRate()) +
+        deuteriumAmount * (tradedResourceRate / offer.getDeuteriumRate());
     receivedAmount = Math.floor(receivedAmount * 100.0) / 100.0;
 
     double expectedReceivedAmount = Math.floor(Math.max(0.0, params.getExpectedReceivedAmount()) * 100.0) / 100.0;

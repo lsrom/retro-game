@@ -34,7 +34,7 @@ function updateTrader() {
     amount = Math.floor(amount);
 
     var resourceRate = +table.attr('data-rate-' + resource);
-    var received = amount * resourceRate / tradedResourceRate;
+    var received = amount * (tradedResourceRate / resourceRate);
     total += received;
     $('#' + resource + '-amount').val(amount);
   }

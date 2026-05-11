@@ -15,13 +15,13 @@
     </tr>
   </table>
   <p th:text="${'Today, the trader wants to buy ' + tradedResource}"></p>
-  <form id="trader-form" th:action="@{/trader/trade}" method="post">
-    <input type="hidden" name="body" th:value="${bodyId}">
-    <input type="hidden" name="tradedResourceKey" th:value="${tradedResourceKey}">
-    <input id="expected-received-amount" type="hidden" name="expectedReceivedAmount" value="0">
-    <input id="metal-amount" type="hidden" name="metalAmount" value="0">
-    <input id="crystal-amount" type="hidden" name="crystalAmount" value="0">
-    <input id="deuterium-amount" type="hidden" name="deuteriumAmount" value="0">
+  <form id="trader-form" th:action="@{/trader/trade}" th:object="${form}" method="post">
+    <input type="hidden" th:field="*{body}">
+    <input type="hidden" th:field="*{tradedResourceKey}">
+    <input id="expected-received-amount" type="hidden" th:field="*{expectedReceivedAmount}">
+    <input id="metal-amount" type="hidden" th:field="*{metalAmount}">
+    <input id="crystal-amount" type="hidden" th:field="*{crystalAmount}">
+    <input id="deuterium-amount" type="hidden" th:field="*{deuteriumAmount}">
     <table id="trader-table" th:data-traded-resource="${tradedResourceKey}"
            th:data-traded-resource-name="${tradedResource}" th:data-rate-metal="${metalRate}"
            th:data-rate-crystal="${crystalRate}" th:data-rate-deuterium="${deuteriumRate}">
