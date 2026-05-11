@@ -49,7 +49,7 @@
         <a th:href="@{/alliance(body=${bodyId})}" th:with="summary=${@allianceService.getCurrentUserAlliance(bodyId)}"
            th:text="#{alliance} + ${summary?.numApplications > 0 ? ' (' + summary?.numApplications + ')' : ''}">Alliance</a>
       </li>
-      <li>
+      <li th:if="${@environment.getProperty('retro-game.allow-trader') == 'true'}">
         <a th:href="@{/trader(body=${bodyId})}">Trader</a>
       </li>
       <li>
