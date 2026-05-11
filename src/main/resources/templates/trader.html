@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Trader</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <p th:text="${'Today, the trader wants to buy ' + tradedResource}"></p>
+  <table>
+    <tr>
+      <th colspan="3">Trader</th>
+    </tr>
+    <tr>
+      <th>Resource</th>
+      <th>Exchange Rate</th>
+      <th>Trade</th>
+    </tr>
+    <tr>
+      <td>Metal</td>
+      <td th:text="${#numbers.formatDecimal(metalRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
+      <td>
+        <input th:if="${tradedResource != 'Metal'}" type="number" min="0" step="1" name="metalTradeAmount">
+      </td>
+    </tr>
+    <tr>
+      <td>Crystal</td>
+      <td th:text="${#numbers.formatDecimal(crystalRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
+      <td>
+        <input th:if="${tradedResource != 'Crystal'}" type="number" min="0" step="1" name="crystalTradeAmount">
+      </td>
+    </tr>
+    <tr>
+      <td>Deuterium</td>
+      <td th:text="${#numbers.formatDecimal(deuteriumRate, 1, 'DEFAULT', 2, 'DEFAULT')}"></td>
+      <td>
+        <input th:if="${tradedResource != 'Deuterium'}" type="number" min="0" step="1" name="deuteriumTradeAmount">
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

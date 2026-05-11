@@ -50,6 +50,9 @@
            th:text="#{alliance} + ${summary?.numApplications > 0 ? ' (' + summary?.numApplications + ')' : ''}">Alliance</a>
       </li>
       <li>
+        <a th:href="@{/trader(body=${bodyId})}">Trader</a>
+      </li>
+      <li>
         <a th:href="@{/reports(body=${bodyId})}" th:with="summary=${@reportService.getSummary(bodyId)}"
            th:text="#{reports} + ${summary.totalReports > 0 ? ' (' + summary.totalReports + ')' : ''}"></a>
       </li>
