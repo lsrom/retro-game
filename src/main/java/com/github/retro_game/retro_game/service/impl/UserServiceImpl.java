@@ -175,7 +175,8 @@ class UserServiceImpl implements UserServiceInternal {
     return new UserSettingsDto(user.getLanguage(), user.getSkin(), user.getNumProbes(),
         Converter.convert(user.getBodiesSortOrder()), user.getBodiesSortDirection(),
         user.hasFlag(UserFlag.NUMBER_INPUT_SCROLLING), user.hasFlag(UserFlag.SHOW_NEW_MESSAGES_IN_OVERVIEW),
-        user.hasFlag(UserFlag.SHOW_NEW_REPORTS_IN_OVERVIEW), user.hasFlag(UserFlag.STICKY_MOONS));
+        user.hasFlag(UserFlag.SHOW_NEW_REPORTS_IN_OVERVIEW), user.hasFlag(UserFlag.STICKY_MOONS),
+        user.hasFlag(UserFlag.LARGE_BODY_SWITCH));
   }
 
   @Override
@@ -190,6 +191,8 @@ class UserServiceImpl implements UserServiceInternal {
       flags |= UserFlag.SHOW_NEW_REPORTS_IN_OVERVIEW;
     if (settings.isStickyMoonsEnabled())
       flags |= UserFlag.STICKY_MOONS;
+    if (settings.isLargeBodySwitchEnabled())
+      flags |= UserFlag.LARGE_BODY_SWITCH;
 
     long userId = CustomUser.getCurrentUserId();
     User user = userRepository.findById(userId).orElseThrow(UserDoesNotExistException::new);

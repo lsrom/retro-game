@@ -16,6 +16,7 @@ public class SettingsForm {
   private Sort.Direction bodiesSortDirection;
 
   private boolean stickyMoonsEnabled;
+  private boolean largeBodySwitchEnabled;
 
   @NonNull
   private String language;
@@ -60,6 +61,14 @@ public class SettingsForm {
 
   public void setStickyMoonsEnabled(boolean stickyMoonsEnabled) {
     this.stickyMoonsEnabled = stickyMoonsEnabled;
+  }
+
+  public boolean isLargeBodySwitchEnabled() {
+    return largeBodySwitchEnabled;
+  }
+
+  public void setLargeBodySwitchEnabled(boolean largeBodySwitchEnabled) {
+    this.largeBodySwitchEnabled = largeBodySwitchEnabled;
   }
 
   public String getLanguage() {

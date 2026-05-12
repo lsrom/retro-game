@@ -295,6 +295,46 @@ strong {
   background-color: #3c4d6e;
 }
 
+#body-switch-sidebar {
+  padding: 1rem 0 1rem 0;
+  width: 180px;
+}
+
+#body-switch-sidebar h2 {
+  font-size: 10px;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+#body-switch-sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+#body-switch-sidebar form {
+  margin: 0;
+}
+
+#body-switch-sidebar .body-switch-item {
+  background-color: #344566;
+  border-left: 1px #415680 solid;
+  border-right: 1px #415680 solid;
+  border-top: 1px #415680 solid;
+  border-bottom: 0;
+  display: block;
+  padding: .35rem;
+  text-align: left;
+  width: 100%;
+}
+
+#body-switch-sidebar li:last-child .body-switch-item {
+  border-bottom: 1px #415680 solid;
+}
+
+#body-switch-sidebar .body-switch-item span {
+  display: block;
+}
+
 .tooltip {
   background-color: #344566;
   border: 1px #234 solid;
