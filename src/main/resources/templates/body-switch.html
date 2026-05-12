@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Body switch</title>
+</head>
+<body>
+<div class="container">
+  <nav th:fragment="body-switch" id="body-switch-sidebar">
+    <h2 th:text="#{yourBodies}">Planets/moons</h2>
+    <ul>
+      <li th:each="info : ${ctx.bodies}" th:with="c=${info.coordinates}">
+        <a class="body-switch-item" th:classappend="${info.id == bodyId ? ' current' : ''}"
+           th:href="@{${#request.requestURI}(body=${info.id})}"
+           th:text="|${info.name} [${c}]|">Body [1:1:1]</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+</body>
+</html>

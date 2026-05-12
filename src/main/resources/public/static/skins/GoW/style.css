@@ -311,10 +311,6 @@ strong {
   padding: 0;
 }
 
-#body-switch-sidebar form {
-  margin: 0;
-}
-
 #body-switch-sidebar .body-switch-item {
   background-color: #344566;
   border-left: 1px #415680 solid;
@@ -324,6 +320,7 @@ strong {
   display: block;
   padding: .35rem;
   text-align: left;
+  text-decoration: none;
   width: 100%;
 }
 
@@ -331,8 +328,8 @@ strong {
   border-bottom: 1px #415680 solid;
 }
 
-#body-switch-sidebar .body-switch-item span {
-  display: block;
+#body-switch-sidebar .body-switch-item:hover {
+  background-color: #3c4d6e;
 }
 
 .tooltip {
