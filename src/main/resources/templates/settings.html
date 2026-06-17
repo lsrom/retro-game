@@ -63,6 +63,15 @@
         </td>
       </tr>
       <tr>
+        <td>
+          <label for="largeBodySwitchEnabled" th:text="#{largeBodySwitch}">Large body switch</label>
+        </td>
+        <td>
+          <input id="largeBodySwitchEnabled" name="largeBodySwitchEnabled" type="checkbox"
+                 th:checked="${settings.largeBodySwitchEnabled}">
+        </td>
+      </tr>
+      <tr>
         <th colspan="2" th:text="#{other}">Other</th>
       </tr>
       <tr>

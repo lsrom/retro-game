@@ -5,4 +5,5 @@ public class UserFlag {
   public static final int SHOW_NEW_MESSAGES_IN_OVERVIEW = 1 << 1;
   public static final int SHOW_NEW_REPORTS_IN_OVERVIEW = 1 << 2;
   public static final int STICKY_MOONS = 1 << 3;
+  public static final int LARGE_BODY_SWITCH = 1 << 4;
 }

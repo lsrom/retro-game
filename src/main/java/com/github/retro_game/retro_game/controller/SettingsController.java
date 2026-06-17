@@ -20,46 +20,54 @@ import java.util.List;
 
 @Controller
 public class SettingsController {
-  private final UserService userService;
-  private final SettingsFormValidator settingsFormValidator;
-  private final List<String> languages;
-  private final List<String> skins;
+    private final UserService userService;
+    private final SettingsFormValidator settingsFormValidator;
+    private final List<String> languages;
+    private final List<String> skins;
 
-  public SettingsController(@Value("${retro-game.languages}") String languages,
-                            @Value("${retro-game.skins}") String skins,
-                            UserService userService,
-                            SettingsFormValidator settingsFormValidator) {
-    this.userService = userService;
-    this.settingsFormValidator = settingsFormValidator;
-    this.languages = List.of(languages.split(","));
-    this.skins = List.of(skins.split(","));
-  }
+    public SettingsController(@Value("${retro-game.languages}") String languages,
+                              @Value("${retro-game.skins}") String skins,
+                              UserService userService,
+                              SettingsFormValidator settingsFormValidator) {
+        this.userService = userService;
+        this.settingsFormValidator = settingsFormValidator;
+        this.languages = List.of(languages.split(","));
+        this.skins = List.of(skins.split(","));
+    }
 
-  @InitBinder
-  public void initBinder(WebDataBinder binder) {
-    binder.addValidators(settingsFormValidator);
-  }
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.addValidators(settingsFormValidator);
+    }
 
-  @GetMapping("/settings")
-  @PreAuthorize("hasPermission(#bodyId, 'ACCESS')")
-  @Activity(bodies = "#bodyId")
-  public String settings(@RequestParam(name = "body") long bodyId, Model model) {
-    model.addAttribute("bodyId", bodyId);
-    model.addAttribute("ctx", userService.getCurrentUserContext(bodyId));
-    model.addAttribute("languages", languages);
-    model.addAttribute("skins", skins);
-    return "settings";
-  }
+    @GetMapping("/settings")
+    @PreAuthorize("hasPermission(#bodyId, 'ACCESS')")
+    @Activity(bodies = "#bodyId")
+    public String settings(@RequestParam(name = "body") long bodyId, Model model) {
+        model.addAttribute("bodyId", bodyId);
+        model.addAttribute("ctx", userService.getCurrentUserContext(bodyId));
+        model.addAttribute("languages", languages);
+        model.addAttribute("skins", skins);
+        return "settings";
+    }
 
-  @PostMapping("/settings")
-  @PreAuthorize("hasPermission(#form.body, 'ACCESS')")
-  @Activity(bodies = "#form.body")
-  public String saveSettings(@Valid SettingsForm form) {
-    UserSettingsDto settings = new UserSettingsDto(form.getLanguage(), form.getSkin(), form.getNumProbes(),
-        form.getBodiesSortOrder(), form.getBodiesSortDirection(), form.isNumberInputScrollingEnabled(),
-        form.isShowNewMessagesInOverviewEnabled(), form.isShowNewReportsInOverviewEnabled(),
-        form.isStickyMoonsEnabled());
-    userService.saveCurrentUserSettings(settings);
-    return "redirect:/settings?body=" + form.getBody();
-  }
+    @PostMapping("/settings")
+    @PreAuthorize("hasPermission(#form.body, 'ACCESS')")
+    @Activity(bodies = "#form.body")
+    public String saveSettings(@Valid SettingsForm form) {
+        UserSettingsDto settings = new UserSettingsDto(
+                form.getLanguage(),
+                form.getSkin(),
+                form.getNumProbes(),
+                form.getBodiesSortOrder(),
+                form.getBodiesSortDirection(),
+                form.isNumberInputScrollingEnabled(),
+                form.isShowNewMessagesInOverviewEnabled(),
+                form.isShowNewReportsInOverviewEnabled(),
+                form.isStickyMoonsEnabled(),
+                form.isLargeBodySwitchEnabled()
+        );
+        userService.saveCurrentUserSettings(settings);
+        return "redirect:/settings?body=" + form.getBody();
+    }
 }
