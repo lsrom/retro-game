@@ -41,7 +41,7 @@
   </div>
   <nav th:replace="menu :: menu"></nav>
   <th:block th:if="${settings.largeBodySwitchEnabled}">
-    <nav th:replace="body-switch :: body-switch"></nav>
+    <nav th:replace="~{body-switch :: body-switch}"></nav>
   </th:block>
 </div>
 </body>

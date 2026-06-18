@@ -311,6 +311,10 @@ strong {
   padding: 0;
 }
 
+#body-switch-sidebar form {
+  margin: 0;
+}
+
 #body-switch-sidebar .body-switch-item {
   background-color: #344566;
   border-left: 1px #415680 solid;

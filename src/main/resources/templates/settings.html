@@ -43,11 +43,11 @@
         <td>
           <select id="bodiesSortDirection" name="bodiesSortDirection">
             <option value="ASC" th:text="#{sortDirection.ASC}"
-                    th:selected="${settings.bodiesSortDirection == T(org.springframework.data.domain.Sort.Direction).ASC}">
+                    th:selected="${settings.bodiesSortDirection.name() == 'ASC'}">
               Ascending
             </option>
             <option value="DESC" th:text="#{sortDirection.DESC}"
-                    th:selected="${settings.bodiesSortDirection == T(org.springframework.data.domain.Sort.Direction).DESC}">
+                    th:selected="${settings.bodiesSortDirection.name() == 'DESC'}">
               Descending
             </option>
           </select>

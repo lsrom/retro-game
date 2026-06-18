@@ -9,9 +9,13 @@
     <h2 th:text="#{yourBodies}">Your bodies</h2>
     <ul>
       <li th:each="info : ${ctx.bodies}" th:with="c=${info.coordinates}">
-        <a class="body-switch-item" th:classappend="${info.id == bodyId ? ' current' : ''}"
-           th:href="@{${#request.requestURI}(body=${info.id})}"
-           th:text="|${info.name} [${c}]|">Body [1:1:1]</a>
+        <form method="get">
+          <input name="body" type="hidden" th:value="${info.id}">
+          <input th:each="entry : ${param}" th:unless="${entry.key == 'body'}"
+                 th:name="${entry.key}" type="hidden" th:value="${entry.value[0]}">
+          <button class="body-switch-item" th:classappend="${info.id == bodyId ? ' current' : ''}"
+                  th:text="|${info.name} [${c}]|">Body [1:1:1]</button>
+        </form>
       </li>
     </ul>
   </nav>
