@@ -24,7 +24,7 @@ COPY --from=0 /retro-game-src/target/retro-game-*.jar retro-game.jar
 RUN \
   # Install packages needed to run the game.
   apt-get update && \
-  apt-get install -y --no-install-recommends openjdk-21-jre-headless && \
+  apt-get install -y --no-install-recommends openjdk-21-jre-headless postgresql-client && \
   rm -rf /var/lib/apt/lists/* && \
   # Change the permissions of the artifacts.
   chmod 400 *

@@ -16,6 +16,19 @@ This setup may expose ports to database and redis.
 Make sure you configure it properly before running on production.
 Check [etc](etc) directory if you are looking for systemd service and nginx configs.
 
+## Database backup and restore
+
+Administrators can download and restore PostgreSQL backups from the Database
+page in the admin panel. The application runtime must have `pg_dump`,
+`pg_restore`, and `psql` installed. Both provided Docker images include these
+tools.
+
+Restores are atomic and overwrite the database objects contained in the backup.
+The uploaded file size is limited to 1 GiB by default; this can be changed with
+`spring.servlet.multipart.max-file-size`,
+`spring.servlet.multipart.max-request-size`, and
+`retro-game.database-backup.max-size`.
+
 ## Community & server
 There is a testing server: [https://retro-game.org](https://retro-game.org).
 

@@ -18,4 +18,5 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /retro-game
 COPY --from=0 /retro-game-src/build/libBattleEngine.so .
 COPY --from=0 /retro-game-src/target/retro-game-*.jar retro-game.jar
+RUN apk --no-cache add postgresql-client
 CMD ["java", "-Djava.library.path=.", "-jar", "retro-game.jar"]

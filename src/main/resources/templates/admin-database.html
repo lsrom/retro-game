@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{admin-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{database}">Database</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <table th:if="${restoreSuccess}">
+    <tr>
+      <th th:text="#{success}">Success</th>
+    </tr>
+    <tr>
+      <td th:text="#{databaseRestoreSuccess}">The database was restored successfully.</td>
+    </tr>
+  </table>
+
+  <table th:if="${restoreError}">
+    <tr>
+      <th th:text="#{error}">Error</th>
+    </tr>
+    <tr>
+      <td class="error" th:text="${#messages.msg('databaseRestoreError.' + restoreError)}">
+        The database could not be restored.
+      </td>
+    </tr>
+  </table>
+
+  <table>
+    <tr>
+      <th th:text="#{databaseBackup}">Database backup</th>
+    </tr>
+    <tr>
+      <td>
+        <p th:text="#{databaseBackupDescription}">
+          Download a complete backup of the current database.
+        </p>
+        <a th:href="@{/admin/database/backup}" th:text="#{downloadDatabaseBackup}">
+          Download database
+        </a>
+      </td>
+    </tr>
+  </table>
+
+  <table>
+    <tr>
+      <th th:text="#{databaseRestore}">Database restore</th>
+    </tr>
+    <tr>
+      <td>
+        <p class="error" th:text="#{databaseRestoreWarning}">
+          Warning: restoring a backup overwrites the current database.
+        </p>
+        <form th:action="@{/admin/database/restore}" method="post" enctype="multipart/form-data"
+              onsubmit="return confirm(this.dataset.confirm)" th:data-confirm="#{databaseRestoreConfirm}">
+          <input type="file" name="backup" accept=".dump,application/octet-stream" required>
+          <button type="submit" th:text="#{restoreDatabaseBackup}">Restore database</button>
+        </form>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>
