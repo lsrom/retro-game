@@ -51,6 +51,11 @@
           <input name="sequence-number" type="hidden" th:value="${entry.sequence}">
           <button th:title="#{moveDown}" th:disabled="${!entry.downMovable}">↓</button>
         </form>
+        <form class="queue-entry-add-action" th:action="@{/buildings/construct}" method="post">
+          <input name="body" type="hidden" th:value="${bodyId}">
+          <input name="kind" type="hidden" th:value="${entry.kind}">
+          <button th:title="#{addAnother}" th:disabled="${pair.queueFull}">+</button>
+        </form>
         <form th:action="@{/buildings/cancel}" method="post">
           <input name="body" type="hidden" th:value="${bodyId}">
           <input name="sequence-number" type="hidden" th:value="${entry.sequence}">

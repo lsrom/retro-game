@@ -403,6 +403,11 @@ strong {
   display: inline-block;
 }
 
+.queue-entry-actions .queue-entry-add-action {
+  margin-right: 1rem;
+}
+
+
 #galaxy-navigation {
   display: flex;
   justify-content: center;

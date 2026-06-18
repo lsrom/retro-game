@@ -124,7 +124,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
     var state = new State(body, null);
     var queue = getQueueAndUpdateState(state, body, production);
     var buildings = getBuildings(state, body, production, queue.size());
-    return new BuildingsAndQueuePairDto(buildings, queue);
+    return new BuildingsAndQueuePairDto(buildings, queue, queue.size() >= buildingQueueCapacity);
   }
 
   private static int getLevelWithAction(int curLevel, BuildingQueueAction action) {
