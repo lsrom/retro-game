@@ -5,16 +5,15 @@ import com.github.retro_game.retro_game.battleengine.Combatant;
 import com.github.retro_game.retro_game.entity.Coordinates;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import com.github.retro_game.retro_game.integration.IntegrationTest;
+import org.junit.Assert;
+import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Collections;
 import java.util.EnumMap;
 
-@SpringBootTest
-public class BattleEngineUnitTest {
+public class BattleEngineUnitTest extends IntegrationTest {
   @Autowired
   private BattleEngine battleEngine;
 
@@ -39,11 +38,11 @@ public class BattleEngineUnitTest {
     ));
     var outcome0 = battleEngine.fight(attackers, defenders, 0);
     var outcome1 = battleEngine.fight(attackers, defenders, 1);
-    Assertions.assertEquals(
+    Assert.assertEquals(
         outcome0.attackersOutcomes().get(0).unitGroupsStats(),
         outcome1.attackersOutcomes().get(0).unitGroupsStats()
     );
-    Assertions.assertEquals(
+    Assert.assertEquals(
         outcome0.defendersOutcomes().get(0).unitGroupsStats(),
         outcome1.defendersOutcomes().get(0).unitGroupsStats()
     );

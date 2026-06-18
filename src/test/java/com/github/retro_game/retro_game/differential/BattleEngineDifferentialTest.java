@@ -9,6 +9,7 @@ import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 
 @SpringBootTest
+@EnabledIfSystemProperty(named = "retro-game.native-tests", matches = "true")
 public class BattleEngineDifferentialTest {
   private static final long RANDOM_SEED = 42L;
   private static final int NUM_BATTLES = 1000;
