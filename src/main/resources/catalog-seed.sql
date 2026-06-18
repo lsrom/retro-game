@@ -2,8 +2,8 @@
 
 -- Content catalog seed (admin rebuild, stage 6).
 --
--- The 57 built-in items — 18 buildings, 16 technologies, 23 units — and their
--- 100 build requirements. Before stage 6 the catalog was seeded at start-up
+-- The 58 built-in items — 18 buildings, 16 technologies, 24 units — and their
+-- 104 build requirements. Before stage 6 the catalog was seeded at start-up
 -- from the hardcoded Java item classes under model/; those classes have now
 -- been removed, so this script is the authoritative source of the built-in
 -- content instead.
@@ -82,6 +82,7 @@ INSERT INTO public.item_definitions (id, type, kind, name, metal_cost, crystal_c
 INSERT INTO public.item_definitions (id, type, kind, name, metal_cost, crystal_cost, deuterium_cost, cost_factor, base_energy, unit_type, capacity, weapons, shield, armor) VALUES (55, 'UNIT', 'LARGE_SHIELD_DOME', 'Large Shield Dome', 50000, 50000, 0, 1, 0, 'DEFENSE', 0, 1, 10000, 100000);
 INSERT INTO public.item_definitions (id, type, kind, name, metal_cost, crystal_cost, deuterium_cost, cost_factor, base_energy, unit_type, capacity, weapons, shield, armor) VALUES (56, 'UNIT', 'ANTI_BALLISTIC_MISSILE', 'Anti-ballistic Missile', 8000, 0, 2000, 1, 0, 'DEFENSE', 0, 1, 1, 8000);
 INSERT INTO public.item_definitions (id, type, kind, name, metal_cost, crystal_cost, deuterium_cost, cost_factor, base_energy, unit_type, capacity, weapons, shield, armor) VALUES (57, 'UNIT', 'INTERPLANETARY_MISSILE', 'Interplanetary Missile', 12500, 2500, 10000, 1, 0, 'DEFENSE', 0, 12000, 1, 15000);
+INSERT INTO public.item_definitions (id, type, kind, name, metal_cost, crystal_cost, deuterium_cost, cost_factor, base_energy, unit_type, capacity, weapons, shield, armor) VALUES (58, 'UNIT', 'BATTLE_CRUISER', 'Battlecruiser', 30000, 40000, 15000, 1, 0, 'FLEET', 750, 700, 400, 70000);
 
 --
 -- Data for Name: item_requirements
@@ -187,6 +188,10 @@ INSERT INTO public.item_requirements (id, item_id, required_item_id, required_le
 INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (98, 57, 8, 1);
 INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (99, 57, 18, 4);
 INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (100, 57, 27, 1);
+INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (101, 58, 8, 8);
+INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (102, 58, 25, 5);
+INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (103, 58, 28, 5);
+INSERT INTO public.item_requirements (id, item_id, required_item_id, required_level) VALUES (104, 58, 29, 12);
 
 --
 -- Advance the id sequences past the seeded rows, so items created later
@@ -194,4 +199,4 @@ INSERT INTO public.item_requirements (id, item_id, required_item_id, required_le
 --
 
 SELECT pg_catalog.setval('public.item_definitions_id_seq', 59, true);
-SELECT pg_catalog.setval('public.item_requirements_id_seq', 101, true);
+SELECT pg_catalog.setval('public.item_requirements_id_seq', 105, true);

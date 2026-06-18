@@ -25,7 +25,7 @@ import static com.github.retro_game.retro_game.model.behavior.UnitBehavior.Propu
  *
  * <h2>Built-in vs. admin-created kinds</h2>
  *
- * <p>The 57 built-in items have an entry here, registered under the same kind
+ * <p>The 58 built-in items have an entry here, registered under the same kind
  * String as their {@code BuildingKind} / {@code TechnologyKind} / {@code
  * UnitKind} enum constant. An item created through the admin panel has a kind
  * that is not in any of those enums, and no entry here; the lookups fall back
@@ -156,6 +156,12 @@ public final class ItemBehaviorRegistry {
     m.put(UnitKind.DEATH_STAR, new UnitBehavior(
         List.of(new Propulsion(TechnologyKind.HYPERSPACE_DRIVE, 0, 100, 1)),
         deathStarRapidFire()));
+
+    m.put(UnitKind.BATTLE_CRUISER, new UnitBehavior(
+        List.of(new Propulsion(TechnologyKind.HYPERSPACE_DRIVE, 0, 10000, 250)),
+        rapidFire(UnitKind.ESPIONAGE_PROBE, 5, UnitKind.SOLAR_SATELLITE, 5,
+            UnitKind.SMALL_CARGO, 3, UnitKind.LARGE_CARGO, 3, UnitKind.HEAVY_FIGHTER, 4,
+            UnitKind.CRUISER, 4, UnitKind.BATTLESHIP, 7)));
 
     // Defensive structures (rocket launcher through interplanetary missile) do
     // not fly and have no rapid fire; they fall through to UnitBehavior.NONE

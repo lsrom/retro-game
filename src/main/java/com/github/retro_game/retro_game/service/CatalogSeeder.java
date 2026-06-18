@@ -24,7 +24,7 @@ import java.util.HashSet;
  * the first time the application starts against an empty catalog, by running
  * the checked-in seed script {@code sql/catalog-seed.sql}.
  *
- * <p>The seed script holds the 57 built-in items and their requirements. Up to
+ * <p>The seed script holds the 58 built-in items and their requirements. Up to
  * stage 5 of the data-driven content rebuild the catalog was instead seeded
  * from the hardcoded Java item classes under {@code model/}; stage 6 removed
  * those classes, so the SQL script — generated once from a correctly seeded
