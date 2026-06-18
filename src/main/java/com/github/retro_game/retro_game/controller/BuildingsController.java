@@ -1,7 +1,6 @@
 package com.github.retro_game.retro_game.controller;
 
 import com.github.retro_game.retro_game.controller.activity.Activity;
-import com.github.retro_game.retro_game.dto.BuildingKindDto;
 import com.github.retro_game.retro_game.dto.BuildingQueueErrorDto;
 import com.github.retro_game.retro_game.service.BuildingsService;
 import com.github.retro_game.retro_game.service.UserService;
@@ -15,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.function.Supplier;
 
 @Controller
@@ -78,7 +77,7 @@ public class BuildingsController {
   @PreAuthorize("hasPermission(#bodyId, 'ACCESS')")
   @Activity(bodies = "#bodyId")
   public String construct(@RequestParam(name = "body") long bodyId,
-                          @RequestParam @NotNull BuildingKindDto kind) {
+                          @RequestParam @NotNull String kind) {
     return perform(bodyId, () -> {
       buildingsService.construct(bodyId, kind);
       return 0;
@@ -89,7 +88,7 @@ public class BuildingsController {
   @PreAuthorize("hasPermission(#bodyId, 'ACCESS')")
   @Activity(bodies = "#bodyId")
   public String destroy(@RequestParam(name = "body") long bodyId,
-                        @RequestParam @NotNull BuildingKindDto kind) {
+                        @RequestParam @NotNull String kind) {
     return perform(bodyId, () -> {
       buildingsService.destroy(bodyId, kind);
       return 0;

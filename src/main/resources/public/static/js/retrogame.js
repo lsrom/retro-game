@@ -61,6 +61,51 @@ $(function () {
     setInterval(updateTimers, 100);
   }
 
+  // Live-ticking resources: the top bar shows each body's metal, crystal and
+  // deuterium stockpiles only as rendered at page load. To save the player
+  // from reloading, increment the displayed numbers once a second from the
+  // body's hourly production, clamped between zero and storage capacity
+  // (production halts once a store is full).
+  var resourceBar = $('#top-bar-resources');
+  if (resourceBar.length > 0) {
+    var resourceNames = ['metal', 'crystal', 'deuterium'];
+    var loadedAt = Date.now();
+    var resourceBase = {}, resourceProduction = {}, resourceCapacity = {};
+    for (var i = 0; i < resourceNames.length; i++) {
+      var name = resourceNames[i];
+      resourceBase[name] = +resourceBar.attr('data-resources-' + name);
+      resourceProduction[name] = +resourceBar.attr('data-production-' + name);
+      resourceCapacity[name] = +resourceBar.attr('data-capacity-' + name);
+    }
+    var updateResources = function () {
+      var elapsedHours = (Date.now() - loadedAt) / 3600000;
+      for (var i = 0; i < resourceNames.length; i++) {
+        var name = resourceNames[i];
+        var capacity = resourceCapacity[name];
+        var current = resourceBase[name] + resourceProduction[name] * elapsedHours;
+        current = Math.max(0, Math.min(current, capacity));
+        var cell = $('[data-resource-value="' + name + '"]');
+        cell.text(prettyNumber(Math.floor(current)));
+        // Keep the capacity warning in sync as the value ticks: red once a
+        // store is full, amber from 90% so the player can react in time.
+        cell.toggleClass('no-capacity', current >= capacity);
+        cell.toggleClass('almost-full', current >= capacity * 0.9 && current < capacity);
+      }
+    };
+    updateResources();
+    setInterval(updateResources, 1000);
+  }
+
+  // Surface unread reports + messages in the browser tab title (e.g.
+  // "(3) Overview") so the player notices activity from another tab.
+  var sidebar = $('#sidebar');
+  if (sidebar.length > 0) {
+    var unreadCount = +sidebar.attr('data-unread-count');
+    if (unreadCount > 0) {
+      document.title = '(' + unreadCount + ') ' + document.title;
+    }
+  }
+
   $('[data-set]').click(function () {
     var input = $('#' + $(this).attr('data-set-for'));
     input.val($(this).attr('data-set-value'));

@@ -14,6 +14,12 @@ public final class NativeBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   public NativeBattleEngineStrategy() {
+    // NOTE: as of phase 5, makeUnitsAttributes() reads unit combat stats from
+    // the content catalog. The catalog is seeded on ApplicationReadyEvent —
+    // after bean construction — so on a fresh database this constructor runs
+    // before the catalog exists. The native engine is inactive by default
+    // (retro-game.battle-engine=java) and out of scope for this phase; moving
+    // this init past catalog seeding belongs with the native-engine rework.
     var unitsAttributes = UnitAttributes.makeUnitsAttributes();
     var success = init(unitsAttributes);
     Assert.isTrue(success, "Failed to init battle engine");

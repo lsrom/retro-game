@@ -2,7 +2,8 @@ package com.github.retro_game.retro_game.service.impl;
 
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.model.CatalogItem;
+import com.github.retro_game.retro_game.model.ItemCostUtils;
 import com.github.retro_game.retro_game.repository.*;
 import com.github.retro_game.retro_game.security.CustomUser;
 import com.github.retro_game.retro_game.service.ActivityService;
@@ -24,7 +25,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.*;
 import java.security.MessageDigest;
 import java.time.Instant;
@@ -220,12 +221,14 @@ class ReportServiceImpl implements ReportServiceInternal {
       DataOutputStream stream = new DataOutputStream(byteArrayOutputStream);
 
       var units = body.getUnits();
+      var fleetKinds = CatalogItem.unitKindsOfType(UnitType.FLEET);
+      var defenseKinds = CatalogItem.unitKindsOfType(UnitType.DEFENSE);
 
       stream.writeBoolean(fleetVisible);
       Long fleet = null;
       if (fleetVisible) {
         var bodyUnitsStream = units.entrySet().stream()
-            .filter(e -> UnitItem.getFleet().containsKey(e.getKey()));
+            .filter(e -> fleetKinds.contains(e.getKey()));
         var holdingUnitsStream = holdingFlights.stream().flatMap(f -> f.getUnits().entrySet().stream());
         var fleetUnits = Stream.concat(bodyUnitsStream, holdingUnitsStream)
             .filter(e -> e.getValue() > 0)
@@ -243,7 +246,7 @@ class ReportServiceImpl implements ReportServiceInternal {
       Long defense = null;
       if (defenseVisible) {
         var defenseUnits = units.entrySet().stream()
-            .filter(e -> e.getValue() > 0 && UnitItem.getDefense().containsKey(e.getKey()))
+            .filter(e -> e.getValue() > 0 && defenseKinds.contains(e.getKey()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> {
               throw new IllegalStateException();
             }, () -> new EnumMap<>(UnitKind.class)));
@@ -378,11 +381,11 @@ class ReportServiceImpl implements ReportServiceInternal {
               0.75 * (2.0 * resources.getMetal() + resources.getCrystal() + resources.getDeuterium()),
               2.0 * resources.getMetal() + resources.getDeuterium()));
       int neededSmallCargoes = (int) Math.ceil(
-          neededCapacity / UnitItem.getFleet().get(UnitKind.SMALL_CARGO).getCapacity());
+          neededCapacity / CatalogItem.of(UnitKind.SMALL_CARGO.name()).getCapacity());
       int neededLargeCargoes = (int) Math.ceil(
-          neededCapacity / UnitItem.getFleet().get(UnitKind.LARGE_CARGO).getCapacity());
+          neededCapacity / CatalogItem.of(UnitKind.LARGE_CARGO.name()).getCapacity());
       int neededEspionageProbes = (int) Math.ceil(
-          neededCapacity / UnitItem.getFleet().get(UnitKind.ESPIONAGE_PROBE).getCapacity());
+          neededCapacity / CatalogItem.of(UnitKind.ESPIONAGE_PROBE.name()).getCapacity());
 
       simplifiedReports.add(new SimplifiedEspionageReportDto(report.getId(), report.getAt(), report.getEnemyId(),
           report.getEnemyName(), Converter.convert(report.getCoordinates()), report.getActivity(),
@@ -424,8 +427,7 @@ class ReportServiceImpl implements ReportServiceInternal {
   private long calculateUnitsCost(Map<UnitKind, Integer> units) {
     long sum = 0;
     for (Map.Entry<UnitKind, Integer> entry : units.entrySet()) {
-      UnitItem item = UnitItem.getAll().get(entry.getKey());
-      Resources cost = item.getCost();
+      Resources cost = ItemCostUtils.getCost(entry.getKey());
       sum += entry.getValue() * (long) (cost.getMetal() + cost.getCrystal() + cost.getDeuterium());
     }
     return sum;

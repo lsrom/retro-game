@@ -5,7 +5,7 @@ import com.github.retro_game.retro_game.dto.RecordDto;
 import com.github.retro_game.retro_game.dto.ResourcesDto;
 import com.github.retro_game.retro_game.entity.Record;
 import com.github.retro_game.retro_game.entity.*;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.repository.FlightRepository;
 import com.github.retro_game.retro_game.repository.RecordRepository;
 import com.github.retro_game.retro_game.repository.UserRepository;
@@ -106,9 +106,11 @@ public class RecordsServiceImpl implements RecordsService {
 
     if (units) {
       var flights = flightRepository.findByStartUser(user);
+      // Only fleet ships fly, so only they can be counted from in-flight fleets.
+      var fleetKinds = CatalogItem.unitKindsOfType(UnitType.FLEET);
       for (var kind : UnitKind.values()) {
         var sum = bodies.values().stream().mapToLong(b -> b.getUnitsCount(kind)).sum();
-        if (UnitItem.getFleet().containsKey(kind))
+        if (fleetKinds.contains(kind))
           sum += flights.stream().mapToLong(f -> f.getUnitsCount(kind)).sum();
         if (sum == 0) continue;
         updateRecords(records, now, "UNIT_" + kind, sum, userId);

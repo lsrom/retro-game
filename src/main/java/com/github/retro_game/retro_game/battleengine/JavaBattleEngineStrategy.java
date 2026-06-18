@@ -27,7 +27,6 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   private static final int MAX_ROUNDS = 6;
-  private static final UnitAttributes[] unitsAttributes = UnitAttributes.makeUnitsAttributes();
 
   private static final class Units {
     private int numAlive;
@@ -52,7 +51,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   private record Party(Units units, Stats stats) {
   }
 
-  private static Units makeUnits(Combatant[] combatants) {
+  private static Units makeUnits(Combatant[] combatants, UnitAttributes[] unitsAttributes) {
     assert UnitKind.values().length <= Byte.MAX_VALUE;
     assert combatants.length <= Byte.MAX_VALUE;
 
@@ -102,13 +101,13 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
         hullDamageTaken);
   }
 
-  private static Party makeParty(Combatant[] combatants) {
-    var units = makeUnits(combatants);
+  private static Party makeParty(Combatant[] combatants, UnitAttributes[] unitsAttributes) {
+    var units = makeUnits(combatants, unitsAttributes);
     var stats = makeStats(combatants);
     return new Party(units, stats);
   }
 
-  private static void restoreShields(Combatant[] combatants, Party party) {
+  private static void restoreShields(Combatant[] combatants, Party party, UnitAttributes[] unitsAttributes) {
     var units = party.units;
     for (var i = 0; i < units.numAlive; i++) {
       var kind = units.kinds[i];
@@ -120,7 +119,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   private static int fire(Combatant[] attackers, Combatant[] defenders, Party attackersParty, Party defendersParty,
-                          int round, int random) {
+                          int round, int random, UnitAttributes[] unitsAttributes) {
     var r = random;
 
     final var attackersUnits = attackersParty.units;
@@ -281,16 +280,20 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
     var attackers = attackersList.toArray(new Combatant[0]);
     var defenders = defendersList.toArray(new Combatant[0]);
 
-    var attackersParty = makeParty(attackers);
-    var defendersParty = makeParty(defenders);
+    // Built per battle (not cached in a static field) so it is read after the
+    // content catalog is available, and reflects admin combat-stat edits.
+    var unitsAttributes = UnitAttributes.makeUnitsAttributes();
+
+    var attackersParty = makeParty(attackers, unitsAttributes);
+    var defendersParty = makeParty(defenders, unitsAttributes);
 
     var round = 0;
     while (round < MAX_ROUNDS && attackersParty.units.numAlive > 0 && defendersParty.units.numAlive > 0) {
-      restoreShields(attackers, attackersParty);
-      restoreShields(defenders, defendersParty);
+      restoreShields(attackers, attackersParty, unitsAttributes);
+      restoreShields(defenders, defendersParty, unitsAttributes);
 
-      r = fire(attackers, defenders, attackersParty, defendersParty, round, r);
-      r = fire(defenders, attackers, defendersParty, attackersParty, round, r);
+      r = fire(attackers, defenders, attackersParty, defendersParty, round, r, unitsAttributes);
+      r = fire(defenders, attackers, defendersParty, attackersParty, round, r, unitsAttributes);
 
       updateUnits(attackersParty, round);
       updateUnits(defendersParty, round);

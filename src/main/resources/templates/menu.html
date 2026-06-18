@@ -6,7 +6,14 @@
 </head>
 <body>
 <div class="container">
-  <nav th:fragment="menu" id="sidebar">
+  <!-- data-unread-count drives the browser-tab title badge in retrogame.js;
+       it sums the same report and message totals shown on the links below.
+       The sum is bound with th:with (a standard attribute, normal context):
+       Thymeleaf 3.1 evaluates custom th:data-* attributes in a restricted
+       context that forbids @bean access, so the value is resolved first. -->
+  <nav th:fragment="menu" id="sidebar"
+       th:with="unreadCount=${@reportService.getSummary(bodyId).totalReports + @messageSummaryService.get(bodyId).totalMessages}"
+       th:data-unread-count="${unreadCount}">
     <h2>
       <a href="https://github.com/retro-game/retro-game">Retro Game</a>
       <a th:href="@{/changelog(body=${bodyId})}" th:text="${'v' + version}"></a>

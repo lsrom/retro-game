@@ -4,7 +4,8 @@ import com.github.retro_game.retro_game.controller.activity.Activity;
 import com.github.retro_game.retro_game.controller.form.*;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.entity.UnitType;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.BodyService;
 import com.github.retro_game.retro_game.service.FlightService;
 import com.github.retro_game.retro_game.service.PartyService;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -195,7 +196,7 @@ public class FlightsController {
                              Model model) {
     var ctx = userService.getCurrentUserContext(bodyId);
     var maxMissiles = ctx.curBody().units().get(UnitKindDto.INTERPLANETARY_MISSILE);
-    var mainTargetKinds = UnitItem.getDefense().keySet().stream()
+    var mainTargetKinds = CatalogItem.unitKindsOfType(UnitType.DEFENSE).stream()
         .filter(k -> k != UnitKind.ANTI_BALLISTIC_MISSILE && k != UnitKind.INTERPLANETARY_MISSILE)
         .toList();
     model.addAttribute("bodyId", bodyId);

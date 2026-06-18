@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{admin-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{editItem}">Edit item</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <form th:action="@{/admin/items/save}" th:object="${itemForm}" method="post">
+    <input type="hidden" th:field="*{id}">
+    <table>
+      <tr>
+        <th colspan="2" th:text="${item.name}">Metal Mine</th>
+      </tr>
+      <!-- Read-only identity: type, stable kind, and (for units) the fleet/defense split. -->
+      <tr>
+        <td th:text="#{type}">Type</td>
+        <td th:text="${item.type}">BUILDING</td>
+      </tr>
+      <tr>
+        <td th:text="#{kind}">Kind</td>
+        <td th:text="${item.kind}">METAL_MINE</td>
+      </tr>
+      <tr th:if="${item.unitType != null}">
+        <td th:text="#{unitType}">Unit type</td>
+        <td th:text="${item.unitType}">FLEET</td>
+      </tr>
+      <tr>
+        <td>
+          <label for="name" th:text="#{name}">Name</label>
+        </td>
+        <td>
+          <input type="text" th:field="*{name}" maxlength="64" required>
+        </td>
+      </tr>
+      <tr>
+        <th colspan="2" th:text="#{cost}">Cost</th>
+      </tr>
+      <tr>
+        <td>
+          <label for="metalCost" th:text="#{metal}">Metal</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{metalCost}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="crystalCost" th:text="#{crystal}">Crystal</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{crystalCost}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="deuteriumCost" th:text="#{deuterium}">Deuterium</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{deuteriumCost}" required>
+        </td>
+      </tr>
+      <!-- Buildings and technologies: cost grows by costFactor^(level-1). Units have a flat cost. -->
+      <tr th:unless="${item.type.name() == 'UNIT'}">
+        <td>
+          <label for="costFactor" th:text="#{costFactor}">Cost factor</label>
+        </td>
+        <td>
+          <input type="number" min="1" step="any" th:field="*{costFactor}" required>
+        </td>
+      </tr>
+      <!-- Buildings only. -->
+      <tr th:if="${item.type.name() == 'BUILDING'}">
+        <td>
+          <label for="baseEnergy" th:text="#{baseEnergy}">Base energy</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="1" th:field="*{baseEnergy}" required>
+        </td>
+      </tr>
+      <!-- Units only: cargo capacity and combat stats. -->
+      <th:block th:if="${item.type.name() == 'UNIT'}">
+        <tr>
+          <th colspan="2" th:text="#{stats}">Stats</th>
+        </tr>
+        <tr>
+          <td>
+            <label for="capacity" th:text="#{capacity}">Capacity</label>
+          </td>
+          <td>
+            <input type="number" min="0" step="1" th:field="*{capacity}" required>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="weapons" th:text="#{weapons}">Weapons</label>
+          </td>
+          <td>
+            <input type="number" min="0" step="any" th:field="*{weapons}" required>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="shield" th:text="#{shield}">Shield</label>
+          </td>
+          <td>
+            <input type="number" min="0" step="any" th:field="*{shield}" required>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="armor" th:text="#{armor}">Armor</label>
+          </td>
+          <td>
+            <input type="number" min="0" step="any" th:field="*{armor}" required>
+          </td>
+        </tr>
+      </th:block>
+      <tr>
+        <td colspan="2">
+          <button th:text="#{save}">Save</button>
+        </td>
+      </tr>
+    </table>
+  </form>
+  <!-- Build/research prerequisites, editable: each row can be removed, and the
+       final row adds a new one. Stored in the catalog's item_requirements table. -->
+  <table>
+    <tr>
+      <th colspan="3" th:text="#{requirements}">Requirements</th>
+    </tr>
+    <tr th:if="${#lists.isEmpty(requirements)}">
+      <td colspan="3" th:text="#{noRequirements}">This item has no requirements.</td>
+    </tr>
+    <tr th:each="requirement : ${requirements}">
+      <td th:text="${requirement.requiredItem.name}">Robotics Factory</td>
+      <td th:text="${requirement.requiredLevel}">2</td>
+      <td>
+        <form th:action="@{/admin/items/requirement/remove}" method="post">
+          <input type="hidden" name="itemId" th:value="${item.id}">
+          <input type="hidden" name="requirementId" th:value="${requirement.id}">
+          <button th:text="#{removeRequirement}">Remove</button>
+        </form>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="3">
+        <form th:action="@{/admin/items/requirement/add}" method="post">
+          <input type="hidden" name="itemId" th:value="${item.id}">
+          <label for="requiredKind" th:text="#{requiredItem}">Required item</label>
+          <select id="requiredKind" name="requiredKind" required>
+            <option th:each="candidate : ${allItems}" th:value="${candidate.kind}"
+                    th:text="${candidate.name}">Robotics Factory</option>
+          </select>
+          <input type="number" name="requiredLevel" min="1" step="1" value="1" required>
+          <button th:text="#{addRequirement}">Add</button>
+        </form>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

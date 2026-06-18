@@ -1,6 +1,5 @@
 package com.github.retro_game.retro_game.integration;
 
-import com.github.retro_game.retro_game.dto.UnitKindDto;
 import com.github.retro_game.retro_game.entity.*;
 import com.github.retro_game.retro_game.repository.UserRepository;
 import com.github.retro_game.retro_game.service.BodyCreationService;
@@ -54,7 +53,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     var userId = createUser();
     var body = createBody(userId);
     body.setResources(makeResources(1e9, 1e9, 1e9));
-    shipyardService.build(body.getId(), UnitKindDto.ROCKET_LAUNCHER, 1);
+    shipyardService.build(body.getId(), "ROCKET_LAUNCHER", 1);
   }
 
   @Test(expected = RequirementsNotMetException.class)
@@ -65,7 +64,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setResources(makeResources(1e9, 1e9, 1e9));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
     body.setBuildingLevel(BuildingKind.MISSILE_SILO, 1); // too low
-    shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 1);
+    shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 1);
   }
 
   @Test(expected = RequirementsNotMetException.class)
@@ -75,7 +74,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     var body = createBody(userId);
     body.setResources(makeResources(1e9, 1e9, 1e9));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 2);
-    shipyardService.build(body.getId(), UnitKindDto.SMALL_CARGO, 1);
+    shipyardService.build(body.getId(), "SMALL_CARGO", 1);
   }
 
   @Test(expected = RequirementsNotMetException.class)
@@ -86,7 +85,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setResources(makeResources(1e9, 1e9, 1e9));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 2);
     body.getUser().setTechnologyLevel(TechnologyKind.COMBUSTION_DRIVE, 1); // too low
-    shipyardService.build(body.getId(), UnitKindDto.SMALL_CARGO, 1);
+    shipyardService.build(body.getId(), "SMALL_CARGO", 1);
   }
 
   @Test(expected = NotEnoughResourcesException.class)
@@ -96,7 +95,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     var body = createBody(userId);
     body.setResources(makeResources(1000.0, 0, 0));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
-    shipyardService.build(body.getId(), UnitKindDto.ROCKET_LAUNCHER, 1);
+    shipyardService.build(body.getId(), "ROCKET_LAUNCHER", 1);
   }
 
   @Test(expected = NotEnoughResourcesException.class)
@@ -106,7 +105,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     var body = createBody(userId);
     body.setResources(makeResources(19_000.0, 0, 0));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
-    shipyardService.build(body.getId(), UnitKindDto.ROCKET_LAUNCHER, 10);
+    shipyardService.build(body.getId(), "ROCKET_LAUNCHER", 10);
   }
 
   @Test(expected = TooManyShieldDomesException.class)
@@ -117,7 +116,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setResources(makeResources(1e9, 1e9, 1e9));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 2);
-    shipyardService.build(body.getId(), UnitKindDto.SMALL_SHIELD_DOME, 2);
+    shipyardService.build(body.getId(), "SMALL_SHIELD_DOME", 2);
   }
 
   @Test(expected = TooManyShieldDomesException.class)
@@ -128,7 +127,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setResources(makeResources(1e9, 1e9, 1e9));
     body.setBuildingLevel(BuildingKind.SHIPYARD, 6);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 6);
-    shipyardService.build(body.getId(), UnitKindDto.LARGE_SHIELD_DOME, 2);
+    shipyardService.build(body.getId(), "LARGE_SHIELD_DOME", 2);
   }
 
   @Test(expected = ShieldDomeAlreadyBuiltException.class)
@@ -140,7 +139,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 2);
     body.setUnitsCount(UnitKind.SMALL_SHIELD_DOME, 1);
-    shipyardService.build(body.getId(), UnitKindDto.SMALL_SHIELD_DOME, 1);
+    shipyardService.build(body.getId(), "SMALL_SHIELD_DOME", 1);
   }
 
   @Test(expected = ShieldDomeAlreadyBuiltException.class)
@@ -152,7 +151,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.SHIPYARD, 6);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 6);
     body.setUnitsCount(UnitKind.LARGE_SHIELD_DOME, 1);
-    shipyardService.build(body.getId(), UnitKindDto.LARGE_SHIELD_DOME, 1);
+    shipyardService.build(body.getId(), "LARGE_SHIELD_DOME", 1);
   }
 
   @Test(expected = ShieldDomeAlreadyInQueueException.class)
@@ -164,9 +163,9 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.SHIPYARD, 1);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 2);
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.SMALL_SHIELD_DOME, 1)
+        () -> shipyardService.build(body.getId(), "SMALL_SHIELD_DOME", 1)
     ).doesNotThrowAnyException();
-    shipyardService.build(body.getId(), UnitKindDto.SMALL_SHIELD_DOME, 1);
+    shipyardService.build(body.getId(), "SMALL_SHIELD_DOME", 1);
   }
 
   @Test(expected = ShieldDomeAlreadyInQueueException.class)
@@ -178,9 +177,9 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.SHIPYARD, 6);
     body.getUser().setTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY, 6);
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.LARGE_SHIELD_DOME, 1)
+        () -> shipyardService.build(body.getId(), "LARGE_SHIELD_DOME", 1)
     ).doesNotThrowAnyException();
-    shipyardService.build(body.getId(), UnitKindDto.LARGE_SHIELD_DOME, 1);
+    shipyardService.build(body.getId(), "LARGE_SHIELD_DOME", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -193,7 +192,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.MISSILE_SILO, 4); // 40 capacity
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 40);
-    shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 1);
+    shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -206,7 +205,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.MISSILE_SILO, 4); // 40 capacity
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 39);
-    shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 1);
+    shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -219,7 +218,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.MISSILE_SILO, 4); // 40 capacity
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 20);
-    shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 1);
+    shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -232,7 +231,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setBuildingLevel(BuildingKind.MISSILE_SILO, 4); // 40 capacity
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 20);
-    shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 1);
+    shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -246,7 +245,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 20);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 10);
-    shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 1);
+    shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -260,7 +259,7 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.getUser().setTechnologyLevel(TechnologyKind.IMPULSE_DRIVE, 1);
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 19);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 10);
-    shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 1);
+    shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -275,12 +274,12 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 10);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 5);
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 5)
+        () -> shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 5)
     ).doesNotThrowAnyException();
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 10)
+        () -> shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 10)
     ).doesNotThrowAnyException();
-    shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 1);
+    shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 1);
   }
 
   @Test(expected = NotEnoughCapacityException.class)
@@ -295,11 +294,11 @@ public class ShipyardServiceIntegrationTest extends IntegrationTest {
     body.setUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE, 10);
     body.setUnitsCount(UnitKind.INTERPLANETARY_MISSILE, 5);
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 5)
+        () -> shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 5)
     ).doesNotThrowAnyException();
     Assertions.assertThatCode(
-        () -> shipyardService.build(body.getId(), UnitKindDto.ANTI_BALLISTIC_MISSILE, 9)
+        () -> shipyardService.build(body.getId(), "ANTI_BALLISTIC_MISSILE", 9)
     ).doesNotThrowAnyException();
-    shipyardService.build(body.getId(), UnitKindDto.INTERPLANETARY_MISSILE, 1);
+    shipyardService.build(body.getId(), "INTERPLANETARY_MISSILE", 1);
   }
 }

@@ -1,10 +1,9 @@
 package com.github.retro_game.retro_game.controller.form;
 
-import com.github.retro_game.retro_game.dto.UnitKindDto;
 import com.github.retro_game.retro_game.dto.UnitTypeDto;
 
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 public class BuildUnitsForm {
   private long body;
@@ -12,7 +11,7 @@ public class BuildUnitsForm {
   private UnitTypeDto type;
 
   @NotNull
-  private UnitKindDto kind;
+  private String kind;
 
   @Min(1)
   private int count;
@@ -33,11 +32,11 @@ public class BuildUnitsForm {
     this.type = type;
   }
 
-  public UnitKindDto getKind() {
+  public String getKind() {
     return kind;
   }
 
-  public void setKind(UnitKindDto kind) {
+  public void setKind(String kind) {
     this.kind = kind;
   }
 

@@ -60,7 +60,8 @@
         <th:block th:if="${body.ongoingBuildingKind != null}">
           <a th:href="@{/buildings(body=${body.id})}"
              th:text="#{${'items.' + body.ongoingBuildingKind + '.name'}} + ' (' + ${body.ongoingBuildingLevel} + ')'"></a>
-          <span th:text="${#dates.format(body.ongoingBuildingFinishAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
+          <span th:data-timer="${body.ongoingBuildingFinishAt.time / 1000}"
+                th:text="${#dates.format(body.ongoingBuildingFinishAt, 'yyyy-MM-dd HH:mm:ss')}"></span>
         </th:block>
         <span th:unless="${body.ongoingBuildingKind != null}">free</span>
       </td>

@@ -3,7 +3,6 @@ package com.github.retro_game.retro_game.service.impl;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;
 import com.github.retro_game.retro_game.model.*;
-import com.github.retro_game.retro_game.model.building.BuildingItem;
 import com.github.retro_game.retro_game.repository.BodyRepository;
 import com.github.retro_game.retro_game.repository.EventRepository;
 import com.github.retro_game.retro_game.service.exception.*;
@@ -18,7 +17,7 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
@@ -194,12 +193,12 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
         nextCost.sub(curCost);
 
         if (!body.getResources().greaterOrEqual(nextCost) || nextEnergy > production.totalEnergy() ||
-            !ItemRequirementsUtils.meetsTechnologiesRequirements(Item.get(nextKind), body.getUser())) {
+            !ItemRequirementsUtils.meetsTechnologiesRequirements(nextKind.name(), body.getUser())) {
           downMovable = cancelable = false;
         }
       }
 
-      ret.add(new BuildingQueueEntryDto(Converter.convert(curKind), cur.getKey(), curLevelFrom, curLevelTo,
+      ret.add(new BuildingQueueEntryDto(curKind.name(), cur.getKey(), curLevelFrom, curLevelTo,
           Converter.convert(curCost), curEnergy, Date.from(Instant.ofEpochSecond(finishAt)), downMovable, upMovable,
           cancelable));
 
@@ -219,16 +218,23 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   private List<BuildingDto> getBuildings(State state, Body body, ProductionDto production, int queueSize) {
     var buildings = new ArrayList<BuildingDto>(BuildingKindDto.values().length);
 
-    for (var entry : BuildingItem.getAll().entrySet()) {
-      var kind = entry.getKey();
-      var item = entry.getValue();
+    // Iterate the content catalog rather than the BuildingKind enum, so admin-panel
+    // edits are reflected. A catalog item whose kind isn't a built-in BuildingKind
+    // (a future admin-created building) is not supported yet, so it is skipped.
+    for (var ci : CatalogItem.allOfType(ItemType.BUILDING)) {
+      BuildingKind kind;
+      try {
+        kind = BuildingKind.valueOf(ci.getKind());
+      } catch (IllegalArgumentException e) {
+        continue;
+      }
 
       var currentLevel = body.getBuildingLevel(kind);
       var futureLevel = state.buildings.get(kind);
 
-      var meetsRequirements = meetsSpecialRequirements(body, item, kind) &&
-          ItemRequirementsUtils.meetsBuildingsRequirements(item, state.buildings) &&
-          (queueSize > 0 || ItemRequirementsUtils.meetsTechnologiesRequirements(item, body.getUser()));
+      var meetsRequirements = meetsSpecialRequirements(body, kind) &&
+          ItemRequirementsUtils.meetsBuildingsRequirements(kind.name(), state.buildings) &&
+          (queueSize > 0 || ItemRequirementsUtils.meetsTechnologiesRequirements(kind.name(), body.getUser()));
 
       // Show the building even if it doesn't meet the requirements.
       var show = futureLevel > 0 || meetsRequirements;
@@ -256,7 +262,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
           (queueSize > 0 || (hasEnoughResources && hasEnoughEnergy));
 
       buildings.add(
-          new BuildingDto(Converter.convert(kind), currentLevel, futureLevel, Converter.convert(cost), requiredEnergy,
+          new BuildingDto(kind.name(), currentLevel, futureLevel, Converter.convert(cost), requiredEnergy,
               constructionTime, Converter.convert(missingResources), neededSmallCargoes, neededLargeCargoes,
               accumulationTime, canConstructNow));
     }
@@ -267,7 +273,17 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   @Override
   public Map<BuildingKind, Tuple2<Integer, Integer>> getCurrentAndFutureLevels(Body body) {
     State state = new State(body, body.getBuildingQueue());
-    return Arrays.stream(BuildingKind.values())
+    // Iterate the content catalog rather than the BuildingKind enum; skip any item
+    // whose kind isn't a built-in BuildingKind (a future admin-created building).
+    return CatalogItem.allOfType(ItemType.BUILDING).stream()
+        .map(ci -> {
+          try {
+            return BuildingKind.valueOf(ci.getKind());
+          } catch (IllegalArgumentException e) {
+            return null;
+          }
+        })
+        .filter(Objects::nonNull)
         .filter(kind -> body.getBuildingLevel(kind) != 0 || state.buildings.getOrDefault(kind, 0) != 0)
         .collect(Collectors.toMap(
             Function.identity(),
@@ -298,8 +314,13 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
 
   @Override
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public void construct(long bodyId, BuildingKindDto kind) {
-    var k = Converter.convert(kind);
+  public void construct(long bodyId, String kind) {
+    BuildingKind k;
+    try {
+      k = BuildingKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown building kind: " + kind, e);
+    }
     var body = bodyServiceInternal.getUpdated(bodyId);
     var queue = body.getBuildingQueue();
 
@@ -314,10 +335,9 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
       throw new NoMoreFreeFieldsException();
     }
 
-    var item = Item.get(k);
-    if (!meetsSpecialRequirements(body, item, k) ||
-        !ItemRequirementsUtils.meetsBuildingsRequirements(item, state.buildings) ||
-        (queue.isEmpty() && !ItemRequirementsUtils.meetsTechnologiesRequirements(item, body.getUser()))) {
+    if (!meetsSpecialRequirements(body, k) ||
+        !ItemRequirementsUtils.meetsBuildingsRequirements(k.name(), state.buildings) ||
+        (queue.isEmpty() && !ItemRequirementsUtils.meetsTechnologiesRequirements(k.name(), body.getUser()))) {
       logger.info("Constructing building failed, requirements not met: bodyId={} kind={}", bodyId, k);
       throw new RequirementsNotMetException();
     }
@@ -364,8 +384,13 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
 
   @Override
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public void destroy(long bodyId, BuildingKindDto kind) {
-    var k = Converter.convert(kind);
+  public void destroy(long bodyId, String kind) {
+    BuildingKind k;
+    try {
+      k = BuildingKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown building kind: " + kind, e);
+    }
     var body = bodyServiceInternal.getUpdated(bodyId);
     var queue = body.getBuildingQueue();
 
@@ -500,8 +525,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
         }
       }
 
-      var secondItem = Item.get(secondKind);
-      if (!ItemRequirementsUtils.meetsTechnologiesRequirements(secondItem, body.getUser())) {
+      if (!ItemRequirementsUtils.meetsTechnologiesRequirements(secondKind.name(), body.getUser())) {
         logger.info("Moving down entry in building queue failed, requirements not met: bodyId={} sequenceNumber={}",
             bodyId, sequenceNumber);
         throw new RequirementsNotMetException();
@@ -644,8 +668,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
           }
         }
 
-        var item = Item.get(kind);
-        if (!ItemRequirementsUtils.meetsTechnologiesRequirements(item, body.getUser())) {
+        if (!ItemRequirementsUtils.meetsTechnologiesRequirements(kind.name(), body.getUser())) {
           logger.info("Cancelling entry in building queue failed, requirements not met: bodyId={} sequenceNumber={}",
               bodyId, sequenceNumber);
           throw new RequirementsNotMetException();
@@ -753,8 +776,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
         continue;
       }
 
-      var item = Item.get(entry.kind());
-      if (!ItemRequirementsUtils.meetsRequirements(item, body)) {
+      if (!ItemRequirementsUtils.meetsRequirements(entry.kind().name(), body)) {
         logger.info("Handling building queue, removing entry, requirements not met: bodyId={} kind={}" +
                 " sequenceNumber={}",
             bodyId, entry.kind(), seq);
@@ -826,7 +848,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
     // The second building will always meet requirements when the first action is destroy.
     if (first.action() == BuildingQueueAction.CONSTRUCT) {
       if (second.action() == BuildingQueueAction.CONSTRUCT) {
-        var requirements = Item.get(second.kind()).getBuildingsRequirements();
+        var requirements = CatalogItem.of(second.kind().name()).getBuildingsRequirements();
         if (requirements.getOrDefault(first.kind(), 0) >
             state.buildings.getOrDefault(first.kind(), 0)) {
           return false;
@@ -836,7 +858,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
         if (!state.buildings.containsKey(second.kind())) {
           return false;
         }
-        var requirements = Item.get(first.kind()).getBuildingsRequirements();
+        var requirements = CatalogItem.of(first.kind().name()).getBuildingsRequirements();
         int levelAfterDeconstruction = state.buildings.get(second.kind()) - 1;
         assert levelAfterDeconstruction >= 0;
         if (requirements.getOrDefault(second.kind(), 0) > levelAfterDeconstruction) {
@@ -911,7 +933,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
           level--;
         }
       } else {
-        var requirements = Item.get(currentKind).getBuildingsRequirements();
+        var requirements = CatalogItem.of(currentKind.name()).getBuildingsRequirements();
         if (requirements.getOrDefault(firstKind, 0) > level) {
           return false;
         }
@@ -921,8 +943,10 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
     return true;
   }
 
-  private boolean meetsSpecialRequirements(Body body, BuildingItem item, BuildingKind kind) {
-    boolean meetsRequirements = item.meetsSpecialRequirements(body);
+  private boolean meetsSpecialRequirements(Body body, BuildingKind kind) {
+    // The body restriction (planet-only / moon-only) is code-only behavior; the
+    // catalog item supplies it through the kind-keyed behavior registry.
+    boolean meetsRequirements = CatalogItem.of(kind.name()).meetsSpecialRequirements(body);
     if (kind == BuildingKind.NANITE_FACTORY && body.getCoordinates().getKind() == CoordinatesKind.MOON &&
         !allowNanitesOnMoon) {
       meetsRequirements = false;

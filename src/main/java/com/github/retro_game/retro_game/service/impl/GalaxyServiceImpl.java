@@ -9,7 +9,7 @@ import com.github.retro_game.retro_game.dto.NoobProtectionRankDto;
 import com.github.retro_game.retro_game.dto.StatisticsSummaryDto;
 import com.github.retro_game.retro_game.entity.GalaxySlot;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.repository.GalaxySlotRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
 import com.github.retro_game.retro_game.service.ActivityService;
@@ -113,7 +113,7 @@ class GalaxyServiceImpl implements GalaxyService {
 
       var debrisMetal = slot.getDebrisMetal() != null ? slot.getDebrisMetal() : 0L;
       var debrisCrystal = slot.getDebrisCrystal() != null ? slot.getDebrisCrystal() : 0L;
-      var recyclerCapacity = UnitItem.get(UnitKind.RECYCLER).getCapacity();
+      var recyclerCapacity = CatalogItem.of(UnitKind.RECYCLER.name()).getCapacity();
       var neededRecyclers = (int) Math.ceil((double) (debrisMetal + debrisCrystal) / recyclerCapacity);
 
       Long allianceId = userAllianceCache.getUserAlliance(slot.getUserId());

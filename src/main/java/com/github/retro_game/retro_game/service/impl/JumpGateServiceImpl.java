@@ -7,7 +7,8 @@ import com.github.retro_game.retro_game.entity.Body;
 import com.github.retro_game.retro_game.entity.BuildingKind;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.entity.UnitType;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.JumpGateService;
 import com.github.retro_game.retro_game.service.exception.CannotJumpException;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ class JumpGateServiceImpl implements JumpGateService {
         .map(b -> new JumpGateTargetDto(b.getId(), b.getName(), Converter.convert(b.getCoordinates()), canJumpAt(b)))
         .collect(Collectors.toList());
     Map<UnitKindDto, Integer> units = new EnumMap<>(UnitKindDto.class);
-    for (UnitKind kind : UnitItem.getFleet().keySet()) {
+    for (UnitKind kind : CatalogItem.unitKindsOfType(UnitType.FLEET)) {
       int count = body.getUnitsCount(kind);
       units.put(Converter.convert(kind), count);
     }
@@ -78,9 +79,10 @@ class JumpGateServiceImpl implements JumpGateService {
     body.setLastJumpAt(now);
     target.setLastJumpAt(now);
 
+    var fleetKinds = CatalogItem.unitKindsOfType(UnitType.FLEET);
     for (Map.Entry<UnitKindDto, Integer> entry : units.entrySet()) {
       UnitKind kind = Converter.convert(entry.getKey());
-      if (!UnitItem.getFleet().containsKey(kind)) {
+      if (!fleetKinds.contains(kind)) {
         logger.warn("Jumping failed, trying to jump with a non-fleet unit: bodyId={} targetId={}", bodyId, targetId);
         throw new CannotJumpException();
       }

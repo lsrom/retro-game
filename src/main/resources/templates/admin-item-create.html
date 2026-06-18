@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{admin-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{createItem}">Create item</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <form th:action="@{/admin/items/create}" th:object="${itemForm}" method="post">
+    <table>
+      <tr>
+        <th colspan="2" th:text="#{createItem}">Create item</th>
+      </tr>
+      <!-- Validation failures and service rejections (duplicate kind, ...). -->
+      <tr th:if="${#fields.hasErrors('*')}">
+        <td colspan="2">
+          <ul>
+            <li th:each="err : ${#fields.errors('*')}" th:text="${err}">Error</li>
+          </ul>
+        </td>
+      </tr>
+      <!-- Identity: type and the stable kind are fixed once the item is created. -->
+      <tr>
+        <td>
+          <label for="type" th:text="#{type}">Type</label>
+        </td>
+        <td>
+          <select th:field="*{type}" required>
+            <option th:each="t : ${itemTypes}" th:value="${t}" th:text="${t}">BUILDING</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="kind" th:text="#{kind}">Kind</label>
+        </td>
+        <td>
+          <input type="text" th:field="*{kind}" maxlength="64" pattern="[A-Z][A-Z0-9_]*"
+                 placeholder="QUANTUM_FORGE" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="name" th:text="#{name}">Name</label>
+        </td>
+        <td>
+          <input type="text" th:field="*{name}" maxlength="64" required>
+        </td>
+      </tr>
+      <tr>
+        <th colspan="2" th:text="#{cost}">Cost</th>
+      </tr>
+      <tr>
+        <td>
+          <label for="metalCost" th:text="#{metal}">Metal</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{metalCost}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="crystalCost" th:text="#{crystal}">Crystal</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{crystalCost}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="deuteriumCost" th:text="#{deuterium}">Deuterium</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{deuteriumCost}" required>
+        </td>
+      </tr>
+      <!-- Buildings and technologies only: cost grows by costFactor^(level-1). -->
+      <tr>
+        <td>
+          <label for="costFactor" th:text="#{costFactor}">Cost factor</label>
+        </td>
+        <td>
+          <input type="number" min="1" step="any" th:field="*{costFactor}" required>
+        </td>
+      </tr>
+      <!-- Buildings only. -->
+      <tr>
+        <td>
+          <label for="baseEnergy" th:text="#{baseEnergy}">Base energy</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="1" th:field="*{baseEnergy}" required>
+        </td>
+      </tr>
+      <!-- Units only: the fleet/defense split, cargo capacity and combat stats. -->
+      <tr>
+        <th colspan="2" th:text="#{stats}">Stats</th>
+      </tr>
+      <tr>
+        <td>
+          <label for="unitType" th:text="#{unitType}">Unit type</label>
+        </td>
+        <td>
+          <select th:field="*{unitType}">
+            <option value="">&mdash;</option>
+            <option th:each="u : ${unitTypes}" th:value="${u}" th:text="${u}">FLEET</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="capacity" th:text="#{capacity}">Capacity</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="1" th:field="*{capacity}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="weapons" th:text="#{weapons}">Weapons</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{weapons}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="shield" th:text="#{shield}">Shield</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{shield}" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="armor" th:text="#{armor}">Armor</label>
+        </td>
+        <td>
+          <input type="number" min="0" step="any" th:field="*{armor}" required>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <button th:text="#{create}">Create</button>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+</body>
+</html>

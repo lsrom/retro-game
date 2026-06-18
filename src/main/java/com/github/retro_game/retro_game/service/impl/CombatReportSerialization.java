@@ -8,7 +8,7 @@ import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.Coordinates;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.service.CatalogService;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -114,10 +114,12 @@ public class CombatReportSerialization {
       var count = stream.readLong();
       assert count > 0;
 
-      var item = UnitItem.get(kind);
-      var weapons = (1.0 + 0.1 * weaponsTechnology) * item.getBaseWeapons();
-      var shields = (1.0 + 0.1 * shieldingTechnology) * item.getBaseShield();
-      var armor = (1.0 + 0.1 * armorTechnology) * item.getBaseArmor();
+      // Base weapons, shield and armor come from the editable content catalog;
+      // the combatant's stored technology levels are then applied on top.
+      var definition = CatalogService.getInstance().getDefinition(kind.name());
+      var weapons = (1.0 + 0.1 * weaponsTechnology) * definition.getWeapons();
+      var shields = (1.0 + 0.1 * shieldingTechnology) * definition.getShield();
+      var armor = (1.0 + 0.1 * armorTechnology) * definition.getArmor();
 
       unitGroups.put(Converter.convert(kind), new CombatReportUnitGroupDto(count, weapons, shields, armor));
     }

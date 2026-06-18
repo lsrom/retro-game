@@ -4,7 +4,7 @@ import org.springframework.lang.Nullable;
 
 import java.util.Date;
 
-public record BuildingDto(BuildingKindDto kind, int currentLevel, int futureLevel, ResourcesDto cost,
+public record BuildingDto(String kind, int currentLevel, int futureLevel, ResourcesDto cost,
                           int requiredEnergy, long constructionTime, ResourcesDto missingResources,
                           long neededSmallCargoes, long neededLargeCargoes, @Nullable Date accumulationTime,
                           boolean canConstructNow) {

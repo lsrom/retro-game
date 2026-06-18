@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{admin-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{items}">Items</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <table th:if="${param.saved}">
+    <tr>
+      <th th:text="#{saved}">Saved</th>
+    </tr>
+    <tr>
+      <td th:text="#{itemSaved}">The item was saved!</td>
+    </tr>
+  </table>
+  <table th:if="${param.created}">
+    <tr>
+      <th th:text="#{created}">Created</th>
+    </tr>
+    <tr>
+      <td th:text="#{itemCreated}">The item was created!</td>
+    </tr>
+  </table>
+  <p>
+    <a th:href="@{/admin/items/create}" th:text="#{createItem}">Create item</a>
+  </p>
+  <table>
+    <tr>
+      <th colspan="6" th:text="#{items}">Items</th>
+    </tr>
+    <tr>
+      <th th:text="#{name}">Name</th>
+      <th th:text="#{type}">Type</th>
+      <th th:text="#{metal}">Metal</th>
+      <th th:text="#{crystal}">Crystal</th>
+      <th th:text="#{deuterium}">Deuterium</th>
+      <th></th>
+    </tr>
+    <tr th:each="item : ${items}">
+      <td th:text="${item.name}">Metal Mine</td>
+      <td th:text="${item.type}">BUILDING</td>
+      <td th:text="${#numbers.formatInteger(item.metalCost, 1, 'DEFAULT')}">60</td>
+      <td th:text="${#numbers.formatInteger(item.crystalCost, 1, 'DEFAULT')}">15</td>
+      <td th:text="${#numbers.formatInteger(item.deuteriumCost, 1, 'DEFAULT')}">0</td>
+      <td>
+        <a th:href="@{/admin/items/edit(id=${item.id})}" th:text="#{edit}">Edit</a>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

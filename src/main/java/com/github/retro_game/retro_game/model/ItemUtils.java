@@ -3,7 +3,7 @@ package com.github.retro_game.retro_game.model;
 import com.github.retro_game.retro_game.entity.Coordinates;
 import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
+import com.github.retro_game.retro_game.entity.UnitType;
 
 public class ItemUtils {
   // TODO: Move this to config.
@@ -40,8 +40,9 @@ public class ItemUtils {
   }
 
   public static long calcNumUnitsForCapacity(UnitKind kind, double neededCapacity) {
-    assert UnitItem.getFleet().containsKey(kind) && kind != UnitKind.SOLAR_SATELLITE;
-    var unitCapacity = Item.get(kind).getCapacity();
+    assert CatalogItem.of(kind.name()).getUnitType() == UnitType.FLEET && kind != UnitKind.SOLAR_SATELLITE;
+    // Read the cargo capacity from the content catalog, so admin-panel edits are reflected.
+    var unitCapacity = CatalogItem.of(kind.name()).getCapacity();
     assert unitCapacity > 0;
     return (long) Math.ceil(neededCapacity / unitCapacity);
   }

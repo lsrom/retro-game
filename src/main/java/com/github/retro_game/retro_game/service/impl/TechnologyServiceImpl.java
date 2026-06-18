@@ -3,10 +3,10 @@ package com.github.retro_game.retro_game.service.impl;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;
 import com.github.retro_game.retro_game.model.*;
-import com.github.retro_game.retro_game.model.technology.TechnologyItem;
 import com.github.retro_game.retro_game.repository.EventRepository;
 import com.github.retro_game.retro_game.repository.UserRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
+import com.github.retro_game.retro_game.service.CatalogService;
 import com.github.retro_game.retro_game.service.exception.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -30,7 +30,6 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
   private final ItemTimeUtils itemTimeUtils;
   private final EventRepository eventRepository;
   private final UserRepository userRepository;
-  private final int maxRequiredLabLevel;
   private BodyServiceInternal bodyServiceInternal;
   private EventScheduler eventScheduler;
 
@@ -41,15 +40,34 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
     this.itemTimeUtils = itemTimeUtils;
     this.eventRepository = eventRepository;
     this.userRepository = userRepository;
-    this.maxRequiredLabLevel = getMaxRequiredLabLevel();
   }
 
+  /**
+   * The highest research lab level any technology requires, read from the
+   * content catalog so admin-panel requirement edits are respected. Computed on
+   * demand rather than cached, as the catalog is not yet loaded when this bean
+   * is constructed.
+   */
   private static int getMaxRequiredLabLevel() {
     int max = 0;
-    for (TechnologyItem item : TechnologyItem.getAll().values()) {
-      max = Math.max(max, item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0));
+    for (var technology : CatalogItem.allOfType(ItemType.TECHNOLOGY)) {
+      max = Math.max(max, technology.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0));
     }
     return max;
+  }
+
+  /**
+   * The research lab level a technology requires, read from the content catalog
+   * so admin-panel requirement edits are respected; 0 if it has no such
+   * requirement.
+   */
+  private static int getRequiredLabLevel(TechnologyKind kind) {
+    return CatalogService.getInstance().getRequirements(kind.name()).stream()
+        .filter(req -> req.requiredType() == ItemType.BUILDING
+            && req.requiredKind().equals(BuildingKind.RESEARCH_LAB.name()))
+        .mapToInt(CatalogService.Requirement::requiredLevel)
+        .findFirst()
+        .orElse(0);
   }
 
   @Autowired
@@ -101,7 +119,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       var curCost = ItemCostUtils.getCost(curKind, curLevelTo);
       var curEnergy = ItemCostUtils.getRequiredEnergy(curKind, curLevelTo);
 
-      var requiredLabLevel = Item.get(curKind).getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+      var requiredLabLevel = getRequiredLabLevel(curKind);
       var effectiveLabLevel = effectiveLevelTables.get(curBodyId)[requiredLabLevel];
       var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
 
@@ -149,7 +167,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       }
 
       var entry =
-          new TechnologyQueueEntryDto(Converter.convert(curKind), cur.getKey(), curLevelTo, Converter.convert(curCost),
+          new TechnologyQueueEntryDto(curKind.name(), cur.getKey(), curLevelTo, Converter.convert(curCost),
               curEnergy, curBodyId, effectiveLabLevel, Date.from(Instant.ofEpochSecond(finishAt)), downMovable,
               upMovable, cancelable);
       ret.add(entry);
@@ -172,15 +190,22 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
     var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
 
     var technologies = new ArrayList<TechnologyDto>(TechnologyKindDto.values().length);
-    for (var entry : TechnologyItem.getAll().entrySet()) {
-      var kind = entry.getKey();
-      var item = entry.getValue();
+    // Iterate the content catalog rather than the TechnologyKind enum, so admin-panel
+    // edits are reflected. A catalog item whose kind isn't a built-in TechnologyKind
+    // (a future admin-created technology) is not supported yet, so it is skipped.
+    for (var ci : CatalogItem.allOfType(ItemType.TECHNOLOGY)) {
+      TechnologyKind kind;
+      try {
+        kind = TechnologyKind.valueOf(ci.getKind());
+      } catch (IllegalArgumentException e) {
+        continue;
+      }
 
       var currentLevel = user.getTechnologyLevel(kind);
       var futureLevel = state.getOrDefault(kind, 0);
 
-      var meetsRequirements = ItemRequirementsUtils.meetsBuildingsRequirements(item, body) &&
-          ItemRequirementsUtils.meetsTechnologiesRequirements(item, state);
+      var meetsRequirements = ItemRequirementsUtils.meetsBuildingsRequirements(kind.name(), body) &&
+          ItemRequirementsUtils.meetsTechnologiesRequirements(kind.name(), state);
 
       var show = futureLevel > 0 || meetsRequirements;
       if (!show) {
@@ -191,7 +216,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       var cost = ItemCostUtils.getCost(kind, nextLevel);
       var requiredEnergy = ItemCostUtils.getRequiredEnergy(kind, nextLevel);
 
-      var requiredLabLevel = item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+      var requiredLabLevel = getRequiredLabLevel(kind);
       var effectiveLabLevel = effectiveLevelTable[requiredLabLevel];
       var researchTime = itemTimeUtils.getTechnologyResearchTime(cost, effectiveLabLevel, irnLevel);
 
@@ -209,7 +234,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
           isQueueNotFull && meetsRequirements && (queueSize > 0 || (hasEnoughResources && hasEnoughEnergy));
 
       var technology =
-          new TechnologyDto(Converter.convert(kind), currentLevel, futureLevel, Converter.convert(cost), requiredEnergy,
+          new TechnologyDto(kind.name(), currentLevel, futureLevel, Converter.convert(cost), requiredEnergy,
               researchTime, effectiveLabLevel, Converter.convert(missingResources), neededSmallCargoes,
               neededLargeCargoes, accumulationTime, canResearchNow);
       technologies.add(technology);
@@ -220,8 +245,13 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
 
   @Override
   @Transactional(isolation = Isolation.REPEATABLE_READ)
-  public void research(long bodyId, TechnologyKindDto kind) {
-    TechnologyKind k = Converter.convert(kind);
+  public void research(long bodyId, String kind) {
+    TechnologyKind k;
+    try {
+      k = TechnologyKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown technology kind: " + kind, e);
+    }
 
     long userId = CustomUser.getCurrentUserId();
     User user = userRepository.getOne(userId);
@@ -238,9 +268,8 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
     queue.values().stream().map(TechnologyQueueEntry::kind)
         .forEach(techKind -> futureTechs.put(techKind, futureTechs.get(techKind) + 1));
 
-    var item = Item.get(k);
-    if ((queue.isEmpty() && !ItemRequirementsUtils.meetsBuildingsRequirements(item, body)) ||
-        !ItemRequirementsUtils.meetsTechnologiesRequirements(item, futureTechs)) {
+    if ((queue.isEmpty() && !ItemRequirementsUtils.meetsBuildingsRequirements(k.name(), body)) ||
+        !ItemRequirementsUtils.meetsTechnologiesRequirements(k.name(), futureTechs)) {
       logger.info("Researching technology failed, requirements not met: bodyId={} kind={}", bodyId, k);
       throw new RequirementsNotMetException();
     }
@@ -270,7 +299,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       }
 
       int[] table = getEffectiveLevelTables(user, Collections.singletonList(bodyId)).get(bodyId);
-      int requiredLabLevel = item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+      int requiredLabLevel = getRequiredLabLevel(k);
       int effectiveLabLevel = table[requiredLabLevel];
       var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
 
@@ -378,8 +407,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       }
       Event event = eventOptional.get();
 
-      var item = Item.get(secondKind);
-      int requiredLabLevel = item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+      int requiredLabLevel = getRequiredLabLevel(secondKind);
       int[] table =
           getEffectiveLevelTables(user, Collections.singletonList(secondBody.getId())).get(secondBody.getId());
       int effectiveLabLevel = table[requiredLabLevel];
@@ -516,8 +544,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
           }
         }
 
-        var item = Item.get(kind);
-        int requiredLabLevel = item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+        int requiredLabLevel = getRequiredLabLevel(kind);
         int[] table = getEffectiveLevelTables(user, Collections.singletonList(nextBody.getId())).get(nextBody.getId());
         int effectiveLabLevel = table[requiredLabLevel];
         var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
@@ -595,8 +622,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
         }
       }
 
-      var item = Item.get(entry.kind());
-      if (!ItemRequirementsUtils.meetsRequirements(item, body)) {
+      if (!ItemRequirementsUtils.meetsRequirements(entry.kind().name(), body)) {
         logger.info("Handling technology queue, removing entry, requirements not met: userId={} bodyId={} kind={}" +
             " sequenceNumber={}", userId, entry.bodyId(), entry.kind(), seq);
         it.remove();
@@ -609,7 +635,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       body.getResources().sub(cost);
 
       int[] table = getEffectiveLevelTables(user, Collections.singletonList(entry.bodyId())).get(entry.bodyId());
-      int requiredLabLevel = item.getBuildingsRequirements().getOrDefault(BuildingKind.RESEARCH_LAB, 0);
+      int requiredLabLevel = getRequiredLabLevel(entry.kind());
       int effectiveLabLevel = table[requiredLabLevel];
       var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
       var requiredTime = itemTimeUtils.getTechnologyResearchTime(cost, effectiveLabLevel, irnLevel);
@@ -629,6 +655,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
 
   private Map<Long, int[]> getEffectiveLevelTables(User user, Collection<Long> bodiesIds) {
     var irnLevel = user.getTechnologyLevel(TechnologyKind.INTERGALACTIC_RESEARCH_NETWORK);
+    var maxRequiredLabLevel = getMaxRequiredLabLevel();
 
     var bodies = user.getBodies();
     var labs = bodies.entrySet().stream()
@@ -666,7 +693,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
     TechnologyQueueEntry second = it.next();
 
     // Check whether the second one depends on the first one.
-    var requirements = Item.get(second.kind()).getTechnologiesRequirements();
+    var requirements = CatalogItem.of(second.kind().name()).getTechnologiesRequirements();
     return techs.get(first.kind()) >= requirements.getOrDefault(first.kind(), 0);
   }
 
@@ -686,7 +713,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       if (currentKind == firstKind) {
         level++;
       } else {
-        var requirements = Item.get(currentKind).getTechnologiesRequirements();
+        var requirements = CatalogItem.of(currentKind.name()).getTechnologiesRequirements();
         if (requirements.getOrDefault(firstKind, 0) > level) {
           return false;
         }

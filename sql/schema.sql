@@ -44,8 +44,11 @@ create table users (
   flags integer not null,
   vacation_until timestamptz,
   forced_vacation boolean not null,
-  technologies int[] not null check (array_length(technologies, 1) = 16),
-  technology_queue bigint[] not null
+  -- Technology levels keyed by item name, e.g. {"ENERGY_TECHNOLOGY": 5}.
+  technologies jsonb not null,
+  -- Research queue, a JSON array of objects keyed by item name, e.g.
+  -- [{"sequence": 1, "kind": "ASTROPHYSICS", "bodyId": 42}].
+  technology_queue jsonb not null
 );
 
 create unique index users_upper_name_idx on users (upper(name) text_pattern_ops);
@@ -127,10 +130,15 @@ create table bodies (
   solar_satellites_factor int not null check (solar_satellites_factor between 0 and 10),
   last_jump_at timestamptz,
   shipyard_start_at timestamptz,
-  buildings int[] not null check (array_length(buildings, 1) = 18),
-  units int[] not null check (array_length(units, 1) = 24),
-  building_queue int[] not null,
-  shipyard_queue int[] not null,
+  -- Building levels and unit counts keyed by item name, e.g. {"METAL_MINE": 5}.
+  buildings jsonb not null,
+  units jsonb not null,
+  -- Building queue, a JSON array of objects keyed by item name, e.g.
+  -- [{"sequence": 1, "kind": "METAL_MINE", "action": "CONSTRUCT"}].
+  building_queue jsonb not null,
+  -- Shipyard queue, an ordered JSON array of objects keyed by item name, e.g.
+  -- [{"kind": "SMALL_CARGO", "count": 10}].
+  shipyard_queue jsonb not null,
   unique (galaxy, system, position, kind)
 );
 
@@ -178,7 +186,8 @@ create table flights (
   metal double precision not null check (metal >= 0),
   crystal double precision not null check (crystal >= 0),
   deuterium double precision not null check (deuterium >= 0),
-  units int[] not null check (array_length(units, 1) = 24),
+  -- Fleet composition keyed by item name, e.g. {"SMALL_CARGO": 12}.
+  units jsonb not null,
   main_target int
 );
 
@@ -557,6 +566,50 @@ create table user_password_reset_tokens (
   expire_at timestamptz not null,
   primary key (user_id)
 );
+
+-- Content catalog
+--
+-- The catalog of buildings, technologies and units, the data-driven content
+-- store the game reads from at runtime and the admin panel edits. The 57
+-- built-in items and their requirements are inserted by CatalogSeeder on first
+-- start, from the checked-in seed script sql/catalog-seed.sql (a copy lives on
+-- the classpath); these tables start empty.
+
+create table item_definitions (
+  id bigserial primary key,
+  type text not null check (type in ('BUILDING', 'TECHNOLOGY', 'UNIT')),
+  -- Stable identifier, e.g. 'METAL_MINE'. Matches the legacy enum constant for seeded items.
+  kind text not null unique,
+  name text not null,
+  metal_cost double precision not null default 0 check (metal_cost >= 0),
+  crystal_cost double precision not null default 0 check (crystal_cost >= 0),
+  deuterium_cost double precision not null default 0 check (deuterium_cost >= 0),
+  -- Buildings and technologies: cost grows by cost_factor^(level-1). Units have a flat cost.
+  cost_factor double precision not null default 2 check (cost_factor >= 1),
+  -- Buildings only: energy required at level 1.
+  base_energy integer not null default 0,
+  -- Units only: FLEET or DEFENSE.
+  unit_type text check (unit_type in ('FLEET', 'DEFENSE')),
+  -- Units only: cargo capacity and combat stats.
+  capacity bigint not null default 0 check (capacity >= 0),
+  weapons double precision not null default 0 check (weapons >= 0),
+  shield double precision not null default 0 check (shield >= 0),
+  armor double precision not null default 0 check (armor >= 0)
+);
+
+-- Item requirements
+--
+-- Buildings/technologies that must reach a given level before an item is available.
+
+create table item_requirements (
+  id bigserial primary key,
+  item_id bigint references item_definitions on delete cascade not null,
+  required_item_id bigint references item_definitions not null,
+  required_level integer not null check (required_level >= 1),
+  unique (item_id, required_item_id)
+);
+
+create index item_requirements_item_id_idx on item_requirements (item_id);
 
 -- Flight view
 

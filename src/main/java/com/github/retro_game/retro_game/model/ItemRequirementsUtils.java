@@ -2,34 +2,89 @@ package com.github.retro_game.retro_game.model;
 
 import com.github.retro_game.retro_game.entity.Body;
 import com.github.retro_game.retro_game.entity.BuildingKind;
+import com.github.retro_game.retro_game.entity.ItemType;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
 import com.github.retro_game.retro_game.entity.User;
+import com.github.retro_game.retro_game.service.CatalogService;
 
 import java.util.Map;
 
-// A helper to check whether the requirements for a given item are met.
+/**
+ * A helper to check whether the build/research requirements for a given item
+ * are met.
+ *
+ * <p>An item's prerequisites are read from the content catalog
+ * ({@link CatalogService#getRequirements(String)}) rather than the hardcoded
+ * {@code model/} classes, so requirement edits made through the admin panel
+ * take effect on the running game. The methods are keyed by an item's kind
+ * String (e.g. {@code "SHIPYARD"}); callers pass {@code kind.name()}.
+ */
 public class ItemRequirementsUtils {
-  public static boolean meetsBuildingsRequirements(Item item, Map<BuildingKind, Integer> buildings) {
-    return item.getBuildingsRequirements().entrySet().stream()
-        .allMatch(entry -> buildings.getOrDefault(entry.getKey(), 0) >= entry.getValue());
+  /** Whether the given building levels satisfy the item's building prerequisites. */
+  public static boolean meetsBuildingsRequirements(String kind, Map<BuildingKind, Integer> buildings) {
+    return requirements(kind).stream()
+        .filter(req -> req.requiredType() == ItemType.BUILDING)
+        .allMatch(req -> {
+          var buildingKind = buildingKindOrNull(req.requiredKind());
+          // A requirement on a kind that is not a built-in building cannot be
+          // satisfied from the level map; treat it as unmet, matching the
+          // legacy behavior where unknown buildings had level 0.
+          return buildingKind != null && buildings.getOrDefault(buildingKind, 0) >= req.requiredLevel();
+        });
   }
 
-  public static boolean meetsBuildingsRequirements(Item item, Body body) {
-    return item.getBuildingsRequirements().entrySet().stream()
-        .allMatch(entry -> body.getBuildingLevel(entry.getKey()) >= entry.getValue());
+  /** Whether the body's building levels satisfy the item's building prerequisites. */
+  public static boolean meetsBuildingsRequirements(String kind, Body body) {
+    return requirements(kind).stream()
+        .filter(req -> req.requiredType() == ItemType.BUILDING)
+        .allMatch(req -> {
+          var buildingKind = buildingKindOrNull(req.requiredKind());
+          return buildingKind != null && body.getBuildingLevel(buildingKind) >= req.requiredLevel();
+        });
   }
 
-  public static boolean meetsTechnologiesRequirements(Item item, Map<TechnologyKind, Integer> technologies) {
-    return item.getTechnologiesRequirements().entrySet().stream()
-        .allMatch(entry -> technologies.getOrDefault(entry.getKey(), 0) >= entry.getValue());
+  /** Whether the given technology levels satisfy the item's technology prerequisites. */
+  public static boolean meetsTechnologiesRequirements(String kind, Map<TechnologyKind, Integer> technologies) {
+    return requirements(kind).stream()
+        .filter(req -> req.requiredType() == ItemType.TECHNOLOGY)
+        .allMatch(req -> {
+          var technologyKind = technologyKindOrNull(req.requiredKind());
+          return technologyKind != null && technologies.getOrDefault(technologyKind, 0) >= req.requiredLevel();
+        });
   }
 
-  public static boolean meetsTechnologiesRequirements(Item item, User user) {
-    return item.getTechnologiesRequirements().entrySet().stream()
-        .allMatch(entry -> user.getTechnologyLevel(entry.getKey()) >= entry.getValue());
+  /** Whether the user's technology levels satisfy the item's technology prerequisites. */
+  public static boolean meetsTechnologiesRequirements(String kind, User user) {
+    return requirements(kind).stream()
+        .filter(req -> req.requiredType() == ItemType.TECHNOLOGY)
+        .allMatch(req -> {
+          var technologyKind = technologyKindOrNull(req.requiredKind());
+          return technologyKind != null && user.getTechnologyLevel(technologyKind) >= req.requiredLevel();
+        });
   }
 
-  public static boolean meetsRequirements(Item item, Body body) {
-    return meetsBuildingsRequirements(item, body) && meetsTechnologiesRequirements(item, body.getUser());
+  /** Whether the body and its owner satisfy all of the item's prerequisites. */
+  public static boolean meetsRequirements(String kind, Body body) {
+    return meetsBuildingsRequirements(kind, body) && meetsTechnologiesRequirements(kind, body.getUser());
+  }
+
+  private static java.util.List<CatalogService.Requirement> requirements(String kind) {
+    return CatalogService.getInstance().getRequirements(kind);
+  }
+
+  private static BuildingKind buildingKindOrNull(String kind) {
+    try {
+      return BuildingKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+  private static TechnologyKind technologyKindOrNull(String kind) {
+    try {
+      return TechnologyKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 }

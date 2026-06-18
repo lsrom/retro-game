@@ -1,99 +1,130 @@
 package com.github.retro_game.retro_game.config;
 
 import com.github.retro_game.retro_game.security.CspHeaderWriter;
-import com.github.retro_game.retro_game.security.CustomUserDetailsService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.access.PermissionEvaluator;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.expression.DefaultHttpSecurityExpressionHandler;
+import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
+/**
+ * Spring Security configuration.
+ *
+ * <p>Spring Security 6 removed {@code WebSecurityConfigurerAdapter}: security is
+ * now expressed as a {@link SecurityFilterChain} bean built with the lambda DSL.
+ * Authentication is wired automatically from the {@code CustomUserDetailsService}
+ * and the {@link PasswordEncoder} bean below, so no explicit AuthenticationManager
+ * setup is needed.
+ */
 @Configuration
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-  private final boolean enableJoinCaptcha;
-  private final AuthenticationSuccessHandler authenticationSuccessHandler;
-  private final CustomUserDetailsService customUserDetailsService;
+@EnableWebSecurity
+// @EnableMethodSecurity replaces @EnableGlobalMethodSecurity; pre/post annotations are on by default.
+@EnableMethodSecurity
+public class SecurityConfig {
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                 @Value("${retro-game.enable-join-captcha}") boolean enableJoinCaptcha,
+                                                 AuthenticationSuccessHandler authenticationSuccessHandler,
+                                                 ApplicationContext context)
+      throws Exception {
+    // The vacation-mode rules below evaluate the SpEL expression
+    // "!@userService.isOnVacation()". Resolving the @userService bean reference
+    // needs an expression handler that has been given the ApplicationContext.
+    var expressionHandler = new DefaultHttpSecurityExpressionHandler();
+    expressionHandler.setApplicationContext(context);
 
-  public SecurityConfig(@Value("${retro-game.enable-join-captcha}") boolean enableJoinCaptcha,
-                        AuthenticationSuccessHandler authenticationSuccessHandler,
-                        CustomUserDetailsService customUserDetailsService) {
-    this.enableJoinCaptcha = enableJoinCaptcha;
-    this.authenticationSuccessHandler = authenticationSuccessHandler;
-    this.customUserDetailsService = customUserDetailsService;
-  }
-
-  @Override
-  protected void configure(HttpSecurity http) throws Exception {
     // @formatter:off
     http
-        .authorizeRequests()
-        // Public
-        .antMatchers(
-            "/",
-            "/combat-report",
-            "/espionage-report",
-            "/join",
-            "/reset-password",
-            "/change-password",
-            "/static/**").permitAll()
-        // Admin
-        .antMatchers("/admin/**").hasRole("ADMIN")
-        // Vacation mode
-        .antMatchers(HttpMethod.POST, "/body-settings/abandon").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/buildings/*").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/flights/*").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/jump-gate/jump").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/party/*").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.GET, "/phalanx").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/shipyard/build").access("!@userService.isOnVacation()")
-        .antMatchers(HttpMethod.POST, "/technologies/*").access("!@userService.isOnVacation()")
-        // Other
-        .anyRequest().authenticated()
-        .and()
-        .csrf()
-        .ignoringAntMatchers(
-            "/flights/send-probes",
-            "/messages/private/delete",
-            "/messages/private/delete-all",
-            "/reports/combat/delete",
-            "/reports/combat/delete-all",
-            "/reports/espionage/delete",
-            "/reports/espionage/delete-all",
-            "/reports/harvest/delete",
-            "/reports/harvest/delete-all",
-            "/reports/transport/delete",
-            "/reports/transport/delete-all",
-            "/reports/other/delete",
-            "/reports/other/delete-all")
-        .and()
-        .formLogin()
-        .loginPage("/")
-        .usernameParameter("email")
-        .successHandler(authenticationSuccessHandler)
-        .and()
-      .headers()
-        .addHeaderWriter(new CspHeaderWriter(enableJoinCaptcha))
-        .frameOptions().deny()
-        .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER);
+        .authorizeHttpRequests(authorize -> authorize
+            // Public
+            .requestMatchers(
+                "/",
+                "/combat-report",
+                "/espionage-report",
+                "/join",
+                "/reset-password",
+                "/change-password",
+                "/static/**").permitAll()
+            // Admin
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+            // Vacation mode — these actions are blocked while the user is on vacation
+            .requestMatchers(HttpMethod.POST, "/body-settings/abandon").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/buildings/*").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/flights/*").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/jump-gate/jump").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/party/*").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.GET, "/phalanx").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/shipyard/build").access(notOnVacation(expressionHandler))
+            .requestMatchers(HttpMethod.POST, "/technologies/*").access(notOnVacation(expressionHandler))
+            // Other
+            .anyRequest().authenticated())
+        .csrf(csrf -> csrf
+            .ignoringRequestMatchers(
+                "/flights/send-probes",
+                "/messages/private/delete",
+                "/messages/private/delete-all",
+                "/reports/combat/delete",
+                "/reports/combat/delete-all",
+                "/reports/espionage/delete",
+                "/reports/espionage/delete-all",
+                "/reports/harvest/delete",
+                "/reports/harvest/delete-all",
+                "/reports/transport/delete",
+                "/reports/transport/delete-all",
+                "/reports/other/delete",
+                "/reports/other/delete-all"))
+        .formLogin(form -> form
+            .loginPage("/")
+            .usernameParameter("email")
+            .successHandler(authenticationSuccessHandler))
+        .headers(headers -> headers
+            .addHeaderWriter(new CspHeaderWriter(enableJoinCaptcha))
+            .frameOptions(frameOptions -> frameOptions.deny())
+            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.NO_REFERRER)));
     // @formatter:on
+    return http.build();
   }
 
-  @Autowired
-  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
+  /**
+   * Authorization rule that permits the request only when the current user is not on vacation.
+   * The SpEL expression resolves the {@code userService} bean at request time, which is why the
+   * passed expression handler must be the ApplicationContext-aware one built above.
+   */
+  private static WebExpressionAuthorizationManager notOnVacation(DefaultHttpSecurityExpressionHandler expressionHandler) {
+    var manager = new WebExpressionAuthorizationManager("!@userService.isOnVacation()");
+    manager.setExpressionHandler(expressionHandler);
+    return manager;
   }
 
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  /**
+   * Wires {@code CustomPermissionEvaluator} into method security explicitly.
+   * Spring Security 6's @EnableMethodSecurity no longer auto-detects a
+   * PermissionEvaluator bean, so without this the {@code hasPermission(...)}
+   * checks in @PreAuthorize would always deny. The bean is static so it is
+   * created early, before the beans it would otherwise trigger initialization of.
+   */
+  @Bean
+  static MethodSecurityExpressionHandler methodSecurityExpressionHandler(PermissionEvaluator permissionEvaluator) {
+    var handler = new DefaultMethodSecurityExpressionHandler();
+    handler.setPermissionEvaluator(permissionEvaluator);
+    return handler;
   }
 }

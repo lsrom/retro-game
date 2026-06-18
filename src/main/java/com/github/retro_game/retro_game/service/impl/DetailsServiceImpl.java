@@ -2,18 +2,19 @@ package com.github.retro_game.retro_game.service.impl;
 
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.model.ItemCostUtils;
 import com.github.retro_game.retro_game.model.ItemTimeUtils;
-import com.github.retro_game.retro_game.model.unit.UnitItem;
 import com.github.retro_game.retro_game.repository.UserRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
+import com.github.retro_game.retro_game.service.CatalogService;
 import com.github.retro_game.retro_game.service.DetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Map;
@@ -57,10 +58,15 @@ class DetailsServiceImpl implements DetailsService {
   }
 
   @Override
-  public BuildingDetailsDto getBuildingDetails(long bodyId, BuildingKindDto kind) {
+  public BuildingDetailsDto getBuildingDetails(long bodyId, String kind) {
     Body body = bodyServiceInternal.getUpdated(bodyId);
 
-    BuildingKind k = Converter.convert(kind);
+    BuildingKind k;
+    try {
+      k = BuildingKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown building kind: " + kind, e);
+    }
 
     Collection<BuildingQueueEntry> queue = body.getBuildingQueue().values();
 
@@ -97,11 +103,16 @@ class DetailsServiceImpl implements DetailsService {
   }
 
   @Override
-  public TechnologyDetailsDto getTechnologyDetails(long bodyId, TechnologyKindDto kind) {
+  public TechnologyDetailsDto getTechnologyDetails(long bodyId, String kind) {
     long userId = CustomUser.getCurrentUserId();
     User user = userRepository.getOne(userId);
 
-    TechnologyKind k = Converter.convert(kind);
+    TechnologyKind k;
+    try {
+      k = TechnologyKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown technology kind: " + kind, e);
+    }
 
     int currentLevel = user.getTechnologyLevel(k);
     int futureLevel = currentLevel + (int) user.getTechnologyQueue().values().stream()
@@ -112,12 +123,17 @@ class DetailsServiceImpl implements DetailsService {
   }
 
   @Override
-  public UnitDetailsDto getUnitDetails(long bodyId, UnitKindDto kind) {
+  public UnitDetailsDto getUnitDetails(long bodyId, String kind) {
     long userId = CustomUser.getCurrentUserId();
     User user = userRepository.getOne(userId);
 
-    UnitKind k = Converter.convert(kind);
-    UnitItem item = UnitItem.getAll().get(k);
+    UnitKind k;
+    try {
+      k = UnitKind.valueOf(kind);
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException("Unknown unit kind: " + kind, e);
+    }
+    CatalogItem item = CatalogItem.of(k.name());
 
     double weapons = unitService.getWeapons(k, user);
     double shield = unitService.getShield(k, user);
@@ -129,16 +145,20 @@ class DetailsServiceImpl implements DetailsService {
               throw new IllegalStateException();
             }, () -> new EnumMap<>(UnitKindDto.class)));
 
-    Map<UnitKindDto, Integer> rapidFireFrom = UnitItem.getAll().entrySet().stream()
-        .filter(entry -> entry.getValue().getRapidFireAgainst().containsKey(k))
-        .collect(Collectors.toMap(entry -> Converter.convert(entry.getKey()),
-            entry -> entry.getValue().getRapidFireAgainst().get(k),
-            (l, r) -> {
-              throw new IllegalStateException();
-            }, () -> new EnumMap<>(UnitKindDto.class)));
+    // Which units have rapid fire against this one: scan every catalog unit's
+    // rapid-fire behavior. (Rapid fire is keyed by the built-in UnitKind set.)
+    Map<UnitKindDto, Integer> rapidFireFrom = new EnumMap<>(UnitKindDto.class);
+    for (var unit : CatalogItem.allOfType(ItemType.UNIT)) {
+      var n = unit.getRapidFireAgainst().get(k);
+      if (n != null) {
+        rapidFireFrom.put(Converter.convert(UnitKind.valueOf(unit.getKind())), n);
+      }
+    }
 
-    return new UnitDetailsDto(weapons, shield, armor, item.getCapacity(), item.getConsumption(user),
-        unitService.getSpeed(k, user), item.getBaseWeapons(), item.getBaseShield(), item.getBaseArmor(),
+    // Base weapons, shield and armor are read from the editable content catalog.
+    var definition = CatalogService.getInstance().getDefinition(k.name());
+    return new UnitDetailsDto(weapons, shield, armor, (int) item.getCapacity(), item.getConsumption(user),
+        unitService.getSpeed(k, user), definition.getWeapons(), definition.getShield(), definition.getArmor(),
         item.getBaseSpeed(user), rapidFireAgainst, rapidFireFrom);
   }
 }

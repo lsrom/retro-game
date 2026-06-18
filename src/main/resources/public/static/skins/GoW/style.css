@@ -459,6 +459,11 @@ strong {
   color: red;
 }
 
+/* Storage at 90%+ of capacity: warn the player before production overflows. */
+.almost-full {
+  color: #fa0;
+}
+
 .own-attack, .own-destroy {
   color: #0ff;
 }

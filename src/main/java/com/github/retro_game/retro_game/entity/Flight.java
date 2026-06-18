@@ -1,18 +1,16 @@
 package com.github.retro_game.retro_game.entity;
 
-import com.vladmihalcea.hibernate.type.array.IntArrayType;
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 
-import javax.persistence.*;
-import java.util.Arrays;
+import jakarta.persistence.*;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 
 @Entity
 @Table(name = "flights")
-@TypeDef(name = "int-array", typeClass = IntArrayType.class)
 public class Flight {
   @Column(name = "id")
   @Id
@@ -75,36 +73,34 @@ public class Flight {
   @Embedded
   private Resources resources;
 
+  // Fleet composition in transit, keyed by item name, e.g. {"SMALL_CARGO": 12}.
+  // A unit absent from the map counts as 0.
   @Column(name = "units", nullable = false)
-  @Type(type = "int-array")
-  private int[] unitsArray;
+  @Type(JsonBinaryType.class)
+  private Map<String, Integer> units = new HashMap<>();
 
   @Column(name = "main_target", updatable = false)
   private UnitKind mainTarget;
 
   public EnumMap<UnitKind, Integer> getUnits() {
-    return SerializationUtils.deserializeItems(UnitKind.class, unitsArray);
+    return ItemMaps.toEnumMap(UnitKind.class, units);
   }
 
   public void setUnits(Map<UnitKind, Integer> units) {
-    unitsArray = SerializationUtils.serializeItems(UnitKind.class, units);
+    this.units = ItemMaps.toStored(units);
   }
 
   public int getUnitsCount(UnitKind kind) {
-    var index = kind.ordinal();
-    var count = unitsArray[index];
-    assert count >= 0;
-    return count;
+    return ItemMaps.get(units, kind);
   }
 
   public void setUnitsCount(UnitKind kind, int count) {
     assert count >= 0;
-    var index = kind.ordinal();
-    unitsArray[index] = count;
+    units.put(kind.name(), count);
   }
 
   public int getTotalUnitsCount() {
-    return Arrays.stream(unitsArray).sum();
+    return units.values().stream().mapToInt(Integer::intValue).sum();
   }
 
   public long getId() {
@@ -205,10 +201,6 @@ public class Flight {
 
   public void setResources(Resources resources) {
     this.resources = resources;
-  }
-
-  public int[] getUnitsArray() {
-    return unitsArray;
   }
 
   public UnitKind getMainTarget() {
