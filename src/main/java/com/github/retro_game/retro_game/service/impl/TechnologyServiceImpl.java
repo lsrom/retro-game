@@ -90,7 +90,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
     var effectiveLevelTables = getEffectiveLevelTables(user, user.getBodies().keySet());
     var queue = getQueueAndUpdateState(state, user, effectiveLevelTables);
     var technologies = getTechnologies(state, body, production, effectiveLevelTables, queue.size());
-    return new TechnologiesAndQueuePairDto(technologies, queue);
+    return new TechnologiesAndQueuePairDto(technologies, queue, queue.size() >= technologyQueueCapacity);
   }
 
   private List<TechnologyQueueEntryDto> getQueueAndUpdateState(EnumMap<TechnologyKind, Integer> state, User user,
