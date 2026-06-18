@@ -9,6 +9,7 @@ import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.BodyService;
 import com.github.retro_game.retro_game.service.FlightService;
 import com.github.retro_game.retro_game.service.PartyService;
+import com.github.retro_game.retro_game.service.ReportService;
 import com.github.retro_game.retro_game.service.UserService;
 import com.github.retro_game.retro_game.service.exception.*;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -28,13 +29,20 @@ public class FlightsController {
   private final BodyService bodyService;
   private final FlightService flightService;
   private final PartyService partyService;
+  private final ReportService reportService;
   private final UserService userService;
 
-  public FlightsController(BodyService bodyService, FlightService flightService, PartyService partyService,
-                           UserService userService) {
+  public FlightsController(
+          BodyService bodyService,
+          FlightService flightService,
+          PartyService partyService,
+          ReportService reportService,
+          UserService userService
+  ) {
     this.bodyService = bodyService;
     this.flightService = flightService;
     this.partyService = partyService;
+    this.reportService = reportService;
     this.userService = userService;
   }
 
@@ -70,6 +78,8 @@ public class FlightsController {
       error = FlightErrorDto.NO_UNIT_SELECTED;
     } catch (PartyDoesNotExistException e) {
       error = FlightErrorDto.PARTY_DOES_NOT_EXIST;
+    } catch (ReportDoesNotExistException e) {
+      error = FlightErrorDto.REPORT_DOES_NOT_EXIST;
     } catch (TargetOnVacationException e) {
       error = FlightErrorDto.TARGET_ON_VACATION;
     } catch (TargetOutOfRangeException e) {
@@ -82,6 +92,8 @@ public class FlightsController {
       error = FlightErrorDto.UNAUTHORIZED_FLIGHT_ACCESS;
     } catch (UnauthorizedPartyAccessException e) {
       error = FlightErrorDto.UNAUTHORIZED_PARTY_ACCESS;
+    } catch (UnauthorizedReportAccessException e) {
+      error = FlightErrorDto.UNAUTHORIZED_REPORT_ACCESS;
     } catch (UnrecallableFlightException e) {
       error = FlightErrorDto.UNRECALLABLE_FLIGHT;
     } catch (WrongMissionException e) {
@@ -178,6 +190,19 @@ public class FlightsController {
     SendFleetParamsDto params = new SendFleetParamsDto(form.getBody(), form.getUnits(), form.getMission(),
         form.getHoldTime(), c, form.getFactor(), r, form.getParty());
     return perform(form.getBody(), "/flights/send", () -> {
+      flightService.send(params);
+      return 0;
+    });
+  }
+
+  @PostMapping("/reports/combat/repeat")
+  @PreAuthorize("hasPermission(#bodyId, 'ACCESS')")
+  @Activity(bodies = "#bodyId")
+  public String repeat(@RequestParam(name = "body") long bodyId, @RequestParam long reportId) {
+    return perform(bodyId, "/reports/combat", () -> {
+      var fleet = reportService.getRepeatFleet(bodyId, reportId);
+      var params = new SendFleetParamsDto(bodyId, fleet.units(), MissionDto.ATTACK, null, fleet.coordinates(), 10,
+          new ResourcesDto(0, 0, 0), null, true);
       flightService.send(params);
       return 0;
     });

@@ -13,10 +13,17 @@ public class SendFleetParamsDto {
   private final int factor;
   private final ResourcesDto resources;
   private final Long partyId;
+  private final boolean exactUnits;
 
   public SendFleetParamsDto(long bodyId, Map<UnitKindDto, Integer> units, MissionDto mission,
                             @Nullable Integer holdTime, CoordinatesDto coordinates, int factor, ResourcesDto resources,
                             @Nullable Long partyId) {
+    this(bodyId, units, mission, holdTime, coordinates, factor, resources, partyId, false);
+  }
+
+  public SendFleetParamsDto(long bodyId, Map<UnitKindDto, Integer> units, MissionDto mission,
+                            @Nullable Integer holdTime, CoordinatesDto coordinates, int factor, ResourcesDto resources,
+                            @Nullable Long partyId, boolean exactUnits) {
     this.bodyId = bodyId;
     this.units = units;
     this.mission = mission;
@@ -25,6 +32,7 @@ public class SendFleetParamsDto {
     this.factor = factor;
     this.resources = resources;
     this.partyId = partyId;
+    this.exactUnits = exactUnits;
   }
 
   public long getBodyId() {
@@ -57,5 +65,9 @@ public class SendFleetParamsDto {
 
   public Long getPartyId() {
     return partyId;
+  }
+
+  public boolean isExactUnits() {
+    return exactUnits;
   }
 }

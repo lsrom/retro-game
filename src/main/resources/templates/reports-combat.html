@@ -6,6 +6,14 @@
 </head>
 <body>
 <div layout:fragment="content">
+  <table th:if="${error}">
+    <tr>
+      <th th:text="#{error}">Error</th>
+    </tr>
+    <tr>
+      <td class="error" th:text="${#messages.msg('flightError.' + error)}"></td>
+    </tr>
+  </table>
   <table th:replace="reports-tabs :: reports-tabs">
   </table>
   <table th:if="${#lists.isEmpty(reports)}">
@@ -102,6 +110,13 @@
              th:with="tooltip=#{${report.combatReportId != null ? 'openFullReport' : (report.result == T(com.github.retro_game.retro_game.dto.CombatResultDto).WIN ? 'noBattle' : 'lostContact')}}"
              th:data-tooltip-title="${tooltip}"
              href="#">F</a>
+          <form th:if="${report.canRepeat}" th:action="@{/reports/combat/repeat}" method="post">
+            <input type="hidden" name="body" th:value="${bodyId}">
+            <input type="hidden" name="reportId" th:value="${report.id}">
+            <button type="submit" th:title="#{repeat}">R</button>
+          </form>
+          <button th:unless="${report.canRepeat}" type="button" disabled
+                  th:title="#{repeat}">R</button>
           <button data-delete-report th:data-body="${bodyId}" data-kind="combat" th:data-id="${report.id}"
                   th:title="#{delete}">
             D

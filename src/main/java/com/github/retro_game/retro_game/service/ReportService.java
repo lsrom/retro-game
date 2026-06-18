@@ -14,6 +14,8 @@ public interface ReportService {
   List<SimplifiedCombatReportDto> getSimplifiedCombatReports(long bodyId, SimplifiedCombatReportSortOrderDto sortOrder,
                                                              Sort.Direction direction, Pageable pageable);
 
+  RepeatFleetDto getRepeatFleet(long bodyId, long reportId);
+
   void deleteSimplifiedCombatReport(long bodyId, long reportId);
 
   void deleteAllSimplifiedCombatReports(long bodyId);

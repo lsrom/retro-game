@@ -127,6 +127,7 @@ public class ReportsController {
                               @RequestParam(required = false, defaultValue = "DESC") Sort.Direction direction,
                               @RequestParam(required = false, defaultValue = "1") @Min(1) int page,
                               @RequestParam(required = false, defaultValue = "50") @Min(1) int size,
+                              @RequestParam(required = false) FlightErrorDto error,
                               Model model) {
     var ctx = userService.getCurrentUserContext(bodyId);
     PageRequest pageRequest = PageRequest.of(page - 1, size);
@@ -139,6 +140,7 @@ public class ReportsController {
     model.addAttribute("direction", direction.toString());
     model.addAttribute("page", page);
     model.addAttribute("size", size);
+    model.addAttribute("error", error);
     model.addAttribute("reports", reports);
     return "reports-combat";
   }

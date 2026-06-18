@@ -279,9 +279,16 @@ class FlightServiceImpl implements FlightServiceInternal {
       Integer count = entry.getValue();
       if (count == null)
         continue;
-      count = Math.min(count, body.getUnitsCount(kind));
       if (count <= 0)
         continue;
+      if (count > body.getUnitsCount(kind)) {
+        if (params.isExactUnits()) {
+          logger.info("Sending fleet failed, not enough units: userId={} bodyId={} kind={} requested={} available={}",
+              userId, body.getId(), kind, count, body.getUnitsCount(kind));
+          throw new NotEnoughUnitsException();
+        }
+        count = body.getUnitsCount(kind);
+      }
       units.put(kind, count);
     }
 

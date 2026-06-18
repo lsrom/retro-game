@@ -42,6 +42,7 @@ class ReportServiceImpl implements ReportServiceInternal {
   private final EspionageReportRepository espionageReportRepository;
   private final HarvestReportRepository harvestReportRepository;
   private final OtherReportRepository otherReportRepository;
+  private final CombatReportRepository combatReportRepository;
   private final SimplifiedCombatReportRepository simplifiedCombatReportRepository;
   private final TransportReportRepository transportReportRepository;
   private final UserRepository userRepository;
@@ -50,11 +51,13 @@ class ReportServiceImpl implements ReportServiceInternal {
 
   public ReportServiceImpl(EspionageReportRepository espionageReportRepository,
                            HarvestReportRepository harvestReportRepository, OtherReportRepository otherReportRepository,
+                           CombatReportRepository combatReportRepository,
                            SimplifiedCombatReportRepository simplifiedCombatReportRepository,
                            TransportReportRepository transportReportRepository, UserRepository userRepository) {
     this.espionageReportRepository = espionageReportRepository;
     this.harvestReportRepository = harvestReportRepository;
     this.otherReportRepository = otherReportRepository;
+    this.combatReportRepository = combatReportRepository;
     this.simplifiedCombatReportRepository = simplifiedCombatReportRepository;
     this.transportReportRepository = transportReportRepository;
     this.userRepository = userRepository;
@@ -144,14 +147,51 @@ class ReportServiceImpl implements ReportServiceInternal {
     user.setCombatReportsSeenAt(Date.from(Instant.now()));
 
     var reports = simplifiedCombatReportRepository.findReports(user, Converter.convert(sortOrder), direction, pageable);
+    var combatReportIds = reports.stream()
+        .map(SimplifiedCombatReport::getCombatReportId)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    var combatReports = combatReportRepository.findAllById(combatReportIds).stream()
+        .collect(Collectors.toMap(CombatReport::getId, Function.identity()));
     var ret = new ArrayList<SimplifiedCombatReportDto>(reports.size());
     for (var report : reports) {
+      var combatReport = combatReports.get(report.getCombatReportId());
+      var canRepeat =
+          combatReport != null && Arrays.stream(combatReport.getAttackers()).anyMatch(id -> id == userId);
       ret.add(new SimplifiedCombatReportDto(report.getId(), report.getAt(), report.getEnemyId(), report.getEnemyName(),
           Converter.convert(report.getCoordinates()), Converter.convert(report.getResult()), report.getAttackersLoss(),
           report.getDefendersLoss(), Converter.convert(report.getPlunder()), report.getDebrisMetal(),
-          report.getDebrisCrystal(), report.getMoonChance(), report.isMoonGiven(), report.getCombatReportId()));
+          report.getDebrisCrystal(), report.getMoonChance(), report.isMoonGiven(), report.getCombatReportId(),
+          canRepeat));
     }
     return ret;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public RepeatFleetDto getRepeatFleet(long bodyId, long reportId) {
+    long userId = CustomUser.getCurrentUserId();
+    var report = simplifiedCombatReportRepository.findById(reportId).orElseThrow(ReportDoesNotExistException::new);
+    if (report.getUser().getId() != userId) {
+      throw new UnauthorizedReportAccessException();
+    }
+    if (report.getCombatReportId() == null) {
+      throw new ReportDoesNotExistException();
+    }
+
+    var combatReport =
+        combatReportRepository.findById(report.getCombatReportId()).orElseThrow(ReportDoesNotExistException::new);
+    var data = CombatReportSerialization.deserialize(combatReport.getData());
+    var units = new EnumMap<UnitKindDto, Integer>(UnitKindDto.class);
+    data.attackers().stream()
+        .filter(combatant -> combatant.userId() == userId)
+        .flatMap(combatant -> combatant.unitGroups().entrySet().stream())
+        .forEach(entry -> units.merge(entry.getKey(), Math.toIntExact(entry.getValue().numUnits()), Math::addExact));
+
+    if (units.isEmpty()) {
+      throw new ReportDoesNotExistException();
+    }
+    return new RepeatFleetDto(units, Converter.convert(report.getCoordinates()));
   }
 
   @Override
