@@ -390,6 +390,22 @@ strong {
   margin: 0 0 .5rem 0;
 }
 
+.item-info .shipyard-building-time {
+  display: flex;
+  justify-content: space-between;
+}
+
+.item-info .item-cost-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.shipyard-total-building-time,
+.total-resource-cost {
+  margin-left: .5rem;
+  text-align: right;
+}
+
 .item-actions {
   padding: .25rem;
 }

@@ -75,13 +75,19 @@
         </p>
         <th:block
             th:replace="item-cost :: item-cost(${ctx.curBody}, ${unit.cost}, 0, ${r}, ${unit.missingResources}, ${unit.neededSmallCargoes}, ${unit.neededLargeCargoes})"></th:block>
-        <p>
-          <span th:text="#{buildingTime}">Building time</span>:
-          <strong th:text="${@formatterService.formatTimeMs(unit.buildingTime)}">01:02:03</strong>
-          <th:block th:if="${unit.accumulationTime != null}">
-            <span th:text="#{accumulationTime}">Accumulation time</span>:
-            <strong th:text="${#dates.format(unit.accumulationTime, 'yyyy-MM-dd HH:mm:ss')}"></strong>
-          </th:block>
+        <p class="shipyard-building-time">
+          <span>
+            <span th:text="#{buildingTime}">Building time</span>:
+            <strong th:text="${@formatterService.formatTimeMs(unit.buildingTime)}">01:02:03</strong>
+            <th:block th:if="${unit.accumulationTime != null}">
+              <span th:text="#{accumulationTime}">Accumulation time</span>:
+              <strong th:text="${#dates.format(unit.accumulationTime, 'yyyy-MM-dd HH:mm:ss')}"></strong>
+            </th:block>
+          </span>
+          <span class="shipyard-total-building-time" hidden>
+            <span th:text="#{total}">Total</span>:
+            <strong data-total-building-time>01:02:03</strong>
+          </span>
         </p>
       </td>
       <td class="item-actions">
@@ -90,7 +96,7 @@
           <input th:if="${type != null}" name="type" type="hidden" th:value="${type}">
           <input name="kind" type="hidden" th:value="${unit.kind}">
           <input th:id="'count_' + ${unit.kind}" name="count" type="number" value="0" min="1"
-                 th:max="${unit.maxBuildable}" required>
+                 th:max="${unit.maxBuildable}" th:data-building-time-ms="${unit.buildingTime}" required>
           <button th:disabled="${ctx.onVacation}" th:text="#{build}">Build</button>
         </form>
         <button th:if="${unit.maxBuildable >= 1}" data-set th:data-set-for="'count_' + ${unit.kind}"
@@ -104,6 +110,7 @@
       <td th:text="#{youHaveToConstructShipyardFirst}">You have to construct a Shipyard first!</td>
     </tr>
   </table>
+  <script th:src="@{/static/js/shipyard.js?{v}(v=${version})}"></script>
   <script th:src="@{/static/js/body-keyboard-navigation.js?{v}(v=${version})}"></script>
 </div>
 </body>

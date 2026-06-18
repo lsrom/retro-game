@@ -84,6 +84,7 @@ $(function () {
         var capacity = resourceCapacity[name];
         var current = resourceBase[name] + resourceProduction[name] * elapsedHours;
         current = Math.max(0, Math.min(current, capacity));
+        resourceBar.attr('data-current-resources-' + name, current);
         var cell = $('[data-resource-value="' + name + '"]');
         cell.text(prettyNumber(Math.floor(current)));
         // Keep the capacity warning in sync as the value ticks: red once a
@@ -91,6 +92,7 @@ $(function () {
         cell.toggleClass('no-capacity', current >= capacity);
         cell.toggleClass('almost-full', current >= capacity * 0.9 && current < capacity);
       }
+      resourceBar.trigger('resources-updated');
     };
     updateResources();
     setInterval(updateResources, 1000);
