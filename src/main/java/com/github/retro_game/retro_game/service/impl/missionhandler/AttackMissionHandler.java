@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -45,6 +46,7 @@ public class AttackMissionHandler {
   private final double fleetDebrisFactor;
   private final double defenseDebrisFactor;
   private final double maxMoonChance;
+  private final long moonChanceResourcePercent;
   private final boolean espionageProbeRaiding;
   private final BattleEngine battleEngine;
   private final BodyRepository bodyRepository;
@@ -64,6 +66,8 @@ public class AttackMissionHandler {
                               @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
                               @Value("${retro-game.defense-debris-factor:0.0}") double defenseDebrisFactor,
                               @Value("${retro-game.max-moon-chance:0.2}") double maxMoonChance,
+                              @Value("${retro-game.moon-chance-resource-percent:100000}")
+                              long moonChanceResourcePercent,
                               @Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
                               BattleEngine battleEngine, BodyRepository bodyRepository,
                               DebrisFieldRepository debrisFieldRepository, EventRepository eventRepository,
@@ -73,6 +77,9 @@ public class AttackMissionHandler {
     this.fleetDebrisFactor = fleetDebrisFactor;
     this.defenseDebrisFactor = defenseDebrisFactor;
     this.maxMoonChance = maxMoonChance;
+    Assert.isTrue(moonChanceResourcePercent > 0,
+        "retro-game.moon-chance-resource-percent must be greater than 0");
+    this.moonChanceResourcePercent = moonChanceResourcePercent;
     this.espionageProbeRaiding = espionageProbeRaiding;
     this.battleEngine = battleEngine;
     this.bodyRepository = bodyRepository;
@@ -475,8 +482,8 @@ public class AttackMissionHandler {
       return 0.0;
     }
 
-    // Each 100k resources is 1%.
-    return Math.min(maxMoonChance, 1e-7 * (debris.getMetal() + debris.getCrystal()));
+    return Math.min(maxMoonChance,
+        (debris.getMetal() + debris.getCrystal()) / moonChanceResourcePercent / 100.0);
   }
 
   private boolean maybeCreateMoon(Flight mainFlight, double moonChance) {
