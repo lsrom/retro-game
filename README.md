@@ -29,6 +29,27 @@ The uploaded file size is limited to 1 GiB by default; this can be changed with
 `spring.servlet.multipart.max-request-size`, and
 `retro-game.database-backup.max-size`.
 
+### Upgrading an existing Docker Compose installation
+
+The Compose configuration uses PostgreSQL 17 and Redis 8. PostgreSQL data files
+cannot be reused directly across major versions. Before upgrading from the old
+PostgreSQL 12 configuration:
+
+1. Download a database backup from the admin panel.
+2. Stop the old stack with `docker compose down` without the `--volumes` option.
+3. Start the upgraded stack with `docker compose up -d --build`.
+4. Copy the backup into PostgreSQL and restore it:
+
+   ```shell
+   docker compose cp retro-game-backup.dump postgres:/tmp/retro-game-backup.dump
+   docker compose exec postgres pg_restore \
+     --clean --if-exists --no-owner --no-privileges --single-transaction \
+     --username=postgres --dbname=retro-game /tmp/retro-game-backup.dump
+   ```
+
+Redis contains cache and session data and does not require migration. Existing
+sessions will be lost when its data is reset.
+
 ## Community & server
 There is a testing server: [https://retro-game.org](https://retro-game.org).
 

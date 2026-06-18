@@ -1,8 +1,12 @@
 package com.github.retro_game.retro_game.service;
 
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -16,8 +20,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class DatabaseBackupService {
+  private static final Logger logger = LoggerFactory.getLogger(DatabaseBackupService.class);
   private static final int MAX_ERROR_MESSAGE_LENGTH = 4_000;
 
+  private final DataSource dataSource;
   private final String databaseUrl;
   private final String username;
   private final String password;
@@ -27,12 +33,14 @@ public class DatabaseBackupService {
   private final ReentrantLock operationLock = new ReentrantLock();
 
   public DatabaseBackupService(
+      DataSource dataSource,
       @Value("${spring.datasource.url}") String databaseUrl,
       @Value("${spring.datasource.username}") String username,
       @Value("${spring.datasource.password:}") String password,
       @Value("${retro-game.database-backup.pg-dump-command:pg_dump}") String pgDumpCommand,
       @Value("${retro-game.database-backup.pg-restore-command:pg_restore}") String pgRestoreCommand,
       @Value("${retro-game.database-backup.psql-command:psql}") String psqlCommand) {
+    this.dataSource = dataSource;
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
@@ -94,12 +102,27 @@ public class DatabaseBackupService {
       psql.add("--file=" + compatibleRestoreScript);
       psql.addAll(connectionArguments());
       run(psql, "Database restore failed");
+      evictDatabaseConnections();
     } catch (IOException e) {
       throw new DatabaseBackupException("Could not prepare the database restore", e);
     } finally {
       deleteQuietly(restoreScript);
       deleteQuietly(compatibleRestoreScript);
       operationLock.unlock();
+    }
+  }
+
+  private void evictDatabaseConnections() {
+    try {
+      HikariDataSource hikariDataSource = dataSource.unwrap(HikariDataSource.class);
+      var pool = hikariDataSource.getHikariPoolMXBean();
+      if (pool != null) {
+        pool.softEvictConnections();
+      }
+    } catch (Exception e) {
+      // The restore itself succeeded. Log pool cleanup failures without
+      // incorrectly reporting that the database restore was rolled back.
+      logger.warn("Database restored, but existing pooled connections could not be evicted", e);
     }
   }
 
