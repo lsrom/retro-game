@@ -12,12 +12,12 @@ import org.testcontainers.utility.DockerImageName;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-    "spring.datasource.url=jdbc:tc:postgresql:13-alpine:///databasename?TC_INITSCRIPT=file:sql/schema.sql",
+    "spring.datasource.url=jdbc:tc:postgresql:17.10-alpine:///databasename?TC_INITSCRIPT=file:sql/schema.sql",
     "spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver"
 })
 @ActiveProfiles("test")
 public abstract class IntegrationTest {
-  static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:6-alpine"))
+  static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:8.8.0-alpine"))
       .withExposedPorts(6379);
 
   @DynamicPropertySource
