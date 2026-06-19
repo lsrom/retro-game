@@ -38,6 +38,8 @@ public class GameConfigModelAdvice {
     layoutConfig.put("fieldsPerTerraformerLevel", environment.getProperty("retro-game.fields-per-terraformer-level"));
     layoutConfig.put("fieldsPerLunarBaseLevel", environment.getProperty("retro-game.fields-per-lunar-base-level"));
     layoutConfig.put("storageCapacityMultiplier", environment.getProperty("retro-game.storage-capacity-multiplier"));
+    layoutConfig.put("missileSiloAbmPerLevel", environment.getProperty("retro-game.missile-silo-abm-per-level", Integer.class, 10));
+    layoutConfig.put("missileSiloImPerLevel", environment.getProperty("retro-game.missile-silo-im-per-level", Integer.class, 5));
   }
 
   @ModelAttribute

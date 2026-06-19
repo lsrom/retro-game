@@ -21,7 +21,15 @@
         <img th:src="@{/static/skins/{skin}/items/{kind}.webp(skin=${skin},kind=${kind})}">
       </td>
       <td class="item-info">
-        <p th:text="#{${'items.' + kind + '.description'}}"></p>
+        <p th:if="${kind == 'MISSILE_SILO'}"
+           th:text="#{items.MISSILE_SILO.description(
+             ${missileSiloAbmPerLevel},
+             ${missileSiloImPerLevel},
+             ${details.currentLevel * missileSiloAbmPerLevel},
+             ${details.currentLevel * missileSiloImPerLevel}
+           )}"></p>
+        <p th:unless="${kind == 'MISSILE_SILO'}"
+           th:text="#{${'items.' + kind + '.description'}}"></p>
         <p th:if="${kind == 'JUMP_GATE' && details.currentLevel > 0}">
           <a th:href="@{/jump-gate(body=${bodyId})}">
             <strong th:text="#{goToJumpGate}">Go to Jump Gate</strong>
@@ -70,8 +78,11 @@
          th:data-level="${details.currentLevel}"
          th:data-temperature="${temperature}"
          th:data-energy-technology-level="${energyTechnologyLevel}"
+         th:data-missile-silo-abm-per-level="${missileSiloAbmPerLevel}"
+         th:data-missile-silo-im-per-level="${missileSiloImPerLevel}"
          th:data-msg-additional-fields-diff="#{additionalFieldsDiff}"
          th:data-msg-additional-fields="#{additionalFields}"
+         th:data-msg-anti-ballistic-missiles="#{items.ANTI_BALLISTIC_MISSILE.name}"
          th:data-msg-capacity-diff="#{capacityDiff}"
          th:data-msg-capacity="#{capacity}"
          th:data-msg-deuterium-diff="#{deuteriumDiff}"
@@ -81,6 +92,7 @@
          th:data-msg-level-from="#{levelFrom}"
          th:data-msg-level-to="#{levelTo}"
          th:data-msg-level="#{level}"
+         th:data-msg-interplanetary-missiles="#{items.INTERPLANETARY_MISSILE.name}"
          th:data-msg-production-diff="#{productionDiff}"
          th:data-msg-production="#{production}"
          th:data-msg-range-diff="#{rangeDiff}"

@@ -13,9 +13,11 @@ import io.vavr.Tuple2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.Instant;
 import java.util.*;
@@ -26,10 +28,21 @@ import java.util.stream.Collectors;
 public class ShipyardServiceImpl implements ShipyardServiceInternal {
   private static final Logger logger = LoggerFactory.getLogger(ShipyardServiceImpl.class);
   private final ItemTimeUtils itemTimeUtils;
+  private final int missileSiloAbmPerLevel;
+  private final int missileSiloImPerLevel;
   private BodyServiceInternal bodyServiceInternal;
 
-  public ShipyardServiceImpl(ItemTimeUtils itemTimeUtils) {
+  public ShipyardServiceImpl(
+          ItemTimeUtils itemTimeUtils,
+          @Value("${retro-game.missile-silo-abm-per-level:10}") int missileSiloAbmPerLevel,
+          @Value("${retro-game.missile-silo-im-per-level:5}") int missileSiloImPerLevel
+  ) {
+    Assert.isTrue(missileSiloAbmPerLevel > 0, "retro-game.missile-silo-abm-per-level must be greater than 0");
+    Assert.isTrue(missileSiloImPerLevel > 0, "retro-game.missile-silo-im-per-level must be greater than 0");
+
     this.itemTimeUtils = itemTimeUtils;
+    this.missileSiloAbmPerLevel = missileSiloAbmPerLevel;
+    this.missileSiloImPerLevel = missileSiloImPerLevel;
   }
 
   @Autowired
@@ -177,18 +190,17 @@ public class ShipyardServiceImpl implements ShipyardServiceInternal {
     return count == 0 ? 1 : 0;
   }
 
-  private static int calcMaxMissiles(Map<UnitKind, Integer> state, Body body, UnitKind kind) {
-    var capacity = body.getBuildingLevel(BuildingKind.MISSILE_SILO) * 10;
-    var numABM =
-        body.getUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE) + state.getOrDefault(UnitKind.ANTI_BALLISTIC_MISSILE, 0);
-    var numIPM =
-        body.getUnitsCount(UnitKind.INTERPLANETARY_MISSILE) + state.getOrDefault(UnitKind.INTERPLANETARY_MISSILE, 0);
-    var max = capacity - (numABM + 2 * numIPM);
-    assert max >= 0;
-    if (kind == UnitKind.INTERPLANETARY_MISSILE) {
-      max /= 2;
-    }
-    return max;
+  private int calcMaxMissiles(Map<UnitKind, Integer> state, Body body, UnitKind kind) {
+    long siloLevel = body.getBuildingLevel(BuildingKind.MISSILE_SILO);
+    var capacity = siloLevel * missileSiloAbmPerLevel * missileSiloImPerLevel;
+    long numABM = body.getUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE) + state.getOrDefault(UnitKind.ANTI_BALLISTIC_MISSILE, 0);
+    long numIPM = body.getUnitsCount(UnitKind.INTERPLANETARY_MISSILE) + state.getOrDefault(UnitKind.INTERPLANETARY_MISSILE, 0);
+    var used = numABM * missileSiloImPerLevel + numIPM * missileSiloAbmPerLevel;
+    var remaining = capacity - used;
+    assert remaining >= 0;
+    var capacityPerMissile =
+        kind == UnitKind.ANTI_BALLISTIC_MISSILE ? missileSiloImPerLevel : missileSiloAbmPerLevel;
+    return (int) (remaining / capacityPerMissile);
   }
 
   @Override
@@ -263,17 +275,19 @@ public class ShipyardServiceImpl implements ShipyardServiceInternal {
       }
     } else if (k == UnitKind.ANTI_BALLISTIC_MISSILE || k == UnitKind.INTERPLANETARY_MISSILE) {
       // Special case for missiles, check the capacity.
-      int used = body.getUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE) +
-          2 * body.getUnitsCount(UnitKind.INTERPLANETARY_MISSILE);
+      long used = (long) body.getUnitsCount(UnitKind.ANTI_BALLISTIC_MISSILE) * missileSiloImPerLevel +
+          (long) body.getUnitsCount(UnitKind.INTERPLANETARY_MISSILE) * missileSiloAbmPerLevel;
       used += queue.stream()
-          .mapToInt(e -> switch (e.kind()) {
-            case ANTI_BALLISTIC_MISSILE -> e.count();
-            case INTERPLANETARY_MISSILE -> e.count() * 2;
+          .mapToLong(e -> switch (e.kind()) {
+            case ANTI_BALLISTIC_MISSILE -> (long) e.count() * missileSiloImPerLevel;
+            case INTERPLANETARY_MISSILE -> (long) e.count() * missileSiloAbmPerLevel;
             default -> 0;
           })
           .sum();
-      used += (k == UnitKind.ANTI_BALLISTIC_MISSILE ? 1 : 2) * count;
-      int cap = 10 * body.getBuildingLevel(BuildingKind.MISSILE_SILO);
+      used += (long) count *
+          (k == UnitKind.ANTI_BALLISTIC_MISSILE ? missileSiloImPerLevel : missileSiloAbmPerLevel);
+      long cap = (long) body.getBuildingLevel(BuildingKind.MISSILE_SILO) *
+          missileSiloAbmPerLevel * missileSiloImPerLevel;
       if (used > cap) {
         logger.info("Constructing unit failed, not enough capacity in missile silo: bodyId={} kind={} count={}",
             bodyId, k, count);

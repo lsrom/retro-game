@@ -120,13 +120,27 @@ if (kind === 'METAL_MINE' || kind === 'CRYSTAL_MINE' || kind === 'DEUTERIUM_SYNT
     return rangeFunc(level) - rangeFunc(currentLevel);
   });
 } else if (kind === 'MISSILE_SILO') {
-  headers = headers.concat([msg('capacity'), msg('capacity-diff')]);
-  capacityFunc = function (level) {
-    return 10 * level;
+  headers = headers.concat([
+    msg('anti-ballistic-missiles'),
+    msg('capacity-diff'),
+    msg('interplanetary-missiles'),
+    msg('capacity-diff')
+  ]);
+  var abmPerLevel = +input.attr('data-missile-silo-abm-per-level');
+  var imPerLevel = +input.attr('data-missile-silo-im-per-level');
+  var abmCapacityFunc = function (level) {
+    return abmPerLevel * level;
   };
-  body.push(capacityFunc);
+  var imCapacityFunc = function (level) {
+    return imPerLevel * level;
+  };
+  body.push(abmCapacityFunc);
   body.push(function (level) {
-    return capacityFunc(level) - capacityFunc(currentLevel);
+    return abmCapacityFunc(level) - abmCapacityFunc(currentLevel);
+  });
+  body.push(imCapacityFunc);
+  body.push(function (level) {
+    return imCapacityFunc(level) - imCapacityFunc(currentLevel);
   });
 } else if (kind === 'ASTROPHYSICS') {
   headers.push(msg('max-planets'));

@@ -83,7 +83,15 @@
               th:text="${building.currentLevel + (building.currentLevel != building.futureLevel ? ' → ' + building.futureLevel : '')}">1</span>)
           </th:block>
         </h2>
-        <p th:text="#{${'items.' + building.kind + '.description'}}"></p>
+        <p th:if="${building.kind == 'MISSILE_SILO'}"
+           th:text="#{items.MISSILE_SILO.description(
+             ${missileSiloAbmPerLevel},
+             ${missileSiloImPerLevel},
+             ${building.currentLevel * missileSiloAbmPerLevel},
+             ${building.currentLevel * missileSiloImPerLevel}
+           )}"></p>
+        <p th:unless="${building.kind == 'MISSILE_SILO'}"
+           th:text="#{${'items.' + building.kind + '.description'}}"></p>
         <p th:if="${building.kind == 'JUMP_GATE' && building.currentLevel > 0}">
           <a th:href="@{/jump-gate(body=${bodyId})}">
             <strong th:text="#{goToJumpGate}">Go to Jump Gate</strong>
