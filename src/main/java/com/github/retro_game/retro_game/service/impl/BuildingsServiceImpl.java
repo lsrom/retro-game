@@ -29,6 +29,9 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   private final int buildingQueueCapacity;
   private final int fieldsPerTerraformerLevel;
   private final int fieldsPerLunarBaseLevel;
+  private final int metalMineBaseEnergyUsage;
+  private final int crystalMineBaseEnergyUsage;
+  private final int deuteriumSynthesizerBaseEnergyUsage;
   private final boolean allowNanitesOnMoon;
   private final ItemTimeUtils itemTimeUtils;
   private final BodyRepository bodyRepository;
@@ -83,6 +86,10 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   public BuildingsServiceImpl(@Value("${retro-game.building-queue-capacity}") int buildingQueueCapacity,
                               @Value("${retro-game.fields-per-terraformer-level}") int fieldsPerTerraformerLevel,
                               @Value("${retro-game.fields-per-lunar-base-level}") int fieldsPerLunarBaseLevel,
+                              @Value("${retro-game.metal-mine-base-energy-usage}") int metalMineBaseEnergyUsage,
+                              @Value("${retro-game.crystal-mine-base-energy-usage}") int crystalMineBaseEnergyUsage,
+                              @Value("${retro-game.deuterium-synthesizer-base-energy-usage}")
+                              int deuteriumSynthesizerBaseEnergyUsage,
                               @Value("${retro-game.allow-nanites-on-moons}") boolean allowNanitesOnMoon,
                               ItemTimeUtils itemTimeUtils,
                               BodyRepository bodyRepository,
@@ -90,6 +97,9 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
     this.buildingQueueCapacity = buildingQueueCapacity;
     this.fieldsPerTerraformerLevel = fieldsPerTerraformerLevel;
     this.fieldsPerLunarBaseLevel = fieldsPerLunarBaseLevel;
+    this.metalMineBaseEnergyUsage = metalMineBaseEnergyUsage;
+    this.crystalMineBaseEnergyUsage = crystalMineBaseEnergyUsage;
+    this.deuteriumSynthesizerBaseEnergyUsage = deuteriumSynthesizerBaseEnergyUsage;
     this.allowNanitesOnMoon = allowNanitesOnMoon;
     this.itemTimeUtils = itemTimeUtils;
     this.bodyRepository = bodyRepository;
@@ -244,7 +254,9 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
 
       var nextLevel = futureLevel + 1;
       var cost = ItemCostUtils.getCost(kind, nextLevel);
-      var requiredEnergy = ItemCostUtils.getRequiredEnergy(kind, nextLevel);
+      var constructionEnergy = ItemCostUtils.getRequiredEnergy(kind, nextLevel);
+      var operatingEnergy = getAdditionalEnergyUsage(body, kind, futureLevel, nextLevel);
+      var requiredEnergy = constructionEnergy > 0 ? constructionEnergy : operatingEnergy;
       var constructionTime = getConstructionTime(cost, state.buildings);
 
       var missingResources = new Resources(cost);
@@ -257,17 +269,46 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
       var hasEnoughFields = state.usedFields < state.maxFields;
       var isQueueNotFull = queueSize < buildingQueueCapacity;
       var hasEnoughResources = body.getResources().greaterOrEqual(cost);
-      var hasEnoughEnergy = production.totalEnergy() >= requiredEnergy;
+      var hasEnoughEnergy = constructionEnergy > 0
+          ? production.totalEnergy() >= constructionEnergy
+          : production.availableEnergy() >= operatingEnergy;
       var canConstructNow = hasEnoughFields && isQueueNotFull && meetsRequirements &&
-          (queueSize > 0 || (hasEnoughResources && hasEnoughEnergy));
+          (queueSize > 0 || (hasEnoughResources && (constructionEnergy <= 0 || hasEnoughEnergy)));
 
       buildings.add(
           new BuildingDto(kind.name(), currentLevel, futureLevel, Converter.convert(cost), requiredEnergy,
-              constructionTime, Converter.convert(missingResources), neededSmallCargoes, neededLargeCargoes,
-              accumulationTime, canConstructNow));
+              hasEnoughEnergy, constructionTime, Converter.convert(missingResources), neededSmallCargoes,
+              neededLargeCargoes, accumulationTime, canConstructNow));
     }
 
     return buildings;
+  }
+
+  private int getAdditionalEnergyUsage(Body body, BuildingKind kind, int currentLevel, int nextLevel) {
+    int baseEnergy;
+    int factor;
+    switch (kind) {
+      case METAL_MINE -> {
+        baseEnergy = metalMineBaseEnergyUsage;
+        factor = body.getProductionFactors().getMetalMineFactor();
+      }
+      case CRYSTAL_MINE -> {
+        baseEnergy = crystalMineBaseEnergyUsage;
+        factor = body.getProductionFactors().getCrystalMineFactor();
+      }
+      case DEUTERIUM_SYNTHESIZER -> {
+        baseEnergy = deuteriumSynthesizerBaseEnergyUsage;
+        factor = body.getProductionFactors().getDeuteriumSynthesizerFactor();
+      }
+      default -> {
+        return 0;
+      }
+    }
+    return getEnergyUsage(baseEnergy, factor, nextLevel) - getEnergyUsage(baseEnergy, factor, currentLevel);
+  }
+
+  private static int getEnergyUsage(int baseEnergy, int factor, int level) {
+    return (int) Math.ceil(baseEnergy * level * Math.pow(1.1, level) * 0.1 * factor);
   }
 
   @Override

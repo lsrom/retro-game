@@ -98,7 +98,7 @@
           </a>
         </p>
         <th:block
-            th:replace="item-cost :: item-cost(${ctx.curBody}, ${building.cost}, ${building.requiredEnergy}, ${r}, ${building.missingResources}, ${building.neededSmallCargoes}, ${building.neededLargeCargoes})"></th:block>
+            th:replace="item-cost :: item-cost(${ctx.curBody}, ${building.cost}, ${building.requiredEnergy}, ${building.hasEnoughEnergy}, ${r}, ${building.missingResources}, ${building.neededSmallCargoes}, ${building.neededLargeCargoes})"></th:block>
         <p>
           <span th:text="#{constructionTime}">Construction time</span>:
           <strong th:text="${@formatterService.formatTime(building.constructionTime)}">01:02:03</strong>

@@ -5,7 +5,8 @@ import org.springframework.lang.Nullable;
 import java.util.Date;
 
 public record BuildingDto(String kind, int currentLevel, int futureLevel, ResourcesDto cost,
-                          int requiredEnergy, long constructionTime, ResourcesDto missingResources,
+                          int requiredEnergy, boolean hasEnoughEnergy, long constructionTime,
+                          ResourcesDto missingResources,
                           long neededSmallCargoes, long neededLargeCargoes, @Nullable Date accumulationTime,
                           boolean canConstructNow) {
 }

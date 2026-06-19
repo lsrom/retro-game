@@ -91,7 +91,7 @@
         </h2>
         <p th:text="#{${'items.' + technology.kind + '.description'}}"></p>
         <th:block
-            th:replace="item-cost :: item-cost(${ctx.curBody}, ${technology.cost}, ${technology.requiredEnergy}, ${r}, ${technology.missingResources}, ${technology.neededSmallCargoes}, ${technology.neededLargeCargoes})"></th:block>
+            th:replace="item-cost :: item-cost(${ctx.curBody}, ${technology.cost}, ${technology.requiredEnergy}, ${ctx.curBody.production.totalEnergy >= technology.requiredEnergy}, ${r}, ${technology.missingResources}, ${technology.neededSmallCargoes}, ${technology.neededLargeCargoes})"></th:block>
         <p>
           <span th:text="#{researchTime}">Research time</span>:
           <strong data-tooltip data-tooltip-html
