@@ -531,8 +531,8 @@ public class Converter {
         return UnitKindDto.LIGHT_LASER;
       case HEAVY_LASER:
         return UnitKindDto.HEAVY_LASER;
-      case GAIUS_CANNON:
-        return UnitKindDto.GAIUS_CANNON;
+      case GAUSS_CANNON:
+        return UnitKindDto.GAUSS_CANNON;
       case ION_CANNON:
         return UnitKindDto.ION_CANNON;
       case PLASMA_TURRET:
@@ -586,8 +586,8 @@ public class Converter {
         return UnitKind.LIGHT_LASER;
       case HEAVY_LASER:
         return UnitKind.HEAVY_LASER;
-      case GAIUS_CANNON:
-        return UnitKind.GAIUS_CANNON;
+      case GAUSS_CANNON:
+        return UnitKind.GAUSS_CANNON;
       case ION_CANNON:
         return UnitKind.ION_CANNON;
       case PLASMA_TURRET:

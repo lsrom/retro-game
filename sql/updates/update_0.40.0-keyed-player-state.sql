@@ -41,7 +41,7 @@ update bodies
                    'SMALL_CARGO', 'LARGE_CARGO', 'LITTLE_FIGHTER', 'HEAVY_FIGHTER',
                    'CRUISER', 'BATTLESHIP', 'COLONY_SHIP', 'RECYCLER', 'ESPIONAGE_PROBE',
                    'BOMBER', 'SOLAR_SATELLITE', 'DESTROYER', 'DEATH_STAR', 'ROCKET_LAUNCHER',
-                   'LIGHT_LASER', 'HEAVY_LASER', 'GAIUS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
+                   'LIGHT_LASER', 'HEAVY_LASER', 'GAUSS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
                    'SMALL_SHIELD_DOME', 'LARGE_SHIELD_DOME', 'ANTI_BALLISTIC_MISSILE',
                    'INTERPLANETARY_MISSILE']) with ordinality as t(name, ord)),
          '{}'::jsonb);
@@ -77,7 +77,7 @@ update flights
                    'SMALL_CARGO', 'LARGE_CARGO', 'LITTLE_FIGHTER', 'HEAVY_FIGHTER',
                    'CRUISER', 'BATTLESHIP', 'COLONY_SHIP', 'RECYCLER', 'ESPIONAGE_PROBE',
                    'BOMBER', 'SOLAR_SATELLITE', 'DESTROYER', 'DEATH_STAR', 'ROCKET_LAUNCHER',
-                   'LIGHT_LASER', 'HEAVY_LASER', 'GAIUS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
+                   'LIGHT_LASER', 'HEAVY_LASER', 'GAUSS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
                    'SMALL_SHIELD_DOME', 'LARGE_SHIELD_DOME', 'ANTI_BALLISTIC_MISSILE',
                    'INTERPLANETARY_MISSILE']) with ordinality as t(name, ord)),
          '{}'::jsonb);

@@ -69,7 +69,7 @@ update bodies
                                  'HEAVY_FIGHTER', 'CRUISER', 'BATTLESHIP', 'COLONY_SHIP',
                                  'RECYCLER', 'ESPIONAGE_PROBE', 'BOMBER', 'SOLAR_SATELLITE',
                                  'DESTROYER', 'DEATH_STAR', 'ROCKET_LAUNCHER', 'LIGHT_LASER',
-                                 'HEAVY_LASER', 'GAIUS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
+                                 'HEAVY_LASER', 'GAUSS_CANNON', 'ION_CANNON', 'PLASMA_TURRET',
                                  'SMALL_SHIELD_DOME', 'LARGE_SHIELD_DOME',
                                  'ANTI_BALLISTIC_MISSILE', 'INTERPLANETARY_MISSILE'
                                ])[shipyard_queue[2 * i + 1] + 1],

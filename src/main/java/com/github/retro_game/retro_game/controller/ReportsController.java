@@ -52,7 +52,7 @@ public class ReportsController {
         put(UnitKindDto.ROCKET_LAUNCHER, 14);
         put(UnitKindDto.LIGHT_LASER, 15);
         put(UnitKindDto.HEAVY_LASER, 16);
-        put(UnitKindDto.GAIUS_CANNON, 17);
+        put(UnitKindDto.GAUSS_CANNON, 17);
         put(UnitKindDto.ION_CANNON, 18);
         put(UnitKindDto.PLASMA_TURRET, 19);
       }});

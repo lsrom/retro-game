@@ -199,7 +199,7 @@ public final class ItemBehaviorRegistry {
     m.put(UnitKind.ROCKET_LAUNCHER, 200);
     m.put(UnitKind.LIGHT_LASER, 200);
     m.put(UnitKind.HEAVY_LASER, 100);
-    m.put(UnitKind.GAIUS_CANNON, 50);
+    m.put(UnitKind.GAUSS_CANNON, 50);
     m.put(UnitKind.ION_CANNON, 100);
     return m;
   }
