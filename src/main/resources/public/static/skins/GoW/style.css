@@ -248,6 +248,10 @@ strong {
   padding-top: .25rem;
 }
 
+.top-bar-body-list {
+  width: 15rem;
+}
+
 #top-bar-resources {
   display: flex;
   flex-grow: 1;
