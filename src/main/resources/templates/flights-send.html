@@ -105,7 +105,7 @@
       <tr>
         <td th:text="#{yourBodies}">Your bodies</td>
         <td>
-          <select id="own-bodies">
+          <select class="body-list" id="own-bodies">
             <option disabled></option>
             <option th:each="body : ${bodies}" th:with="c=${body.coordinates}"
                     th:data-galaxy="${c.galaxy}" th:data-system="${c.system}" th:data-position="${c.position}"

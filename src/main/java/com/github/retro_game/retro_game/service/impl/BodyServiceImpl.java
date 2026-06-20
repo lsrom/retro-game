@@ -53,6 +53,7 @@ class BodyServiceImpl implements BodyServiceInternal {
   private final int solarPlantBaseEnergyProduction;
   private final int fusionReactorBaseEnergyProduction;
   private final int fusionReactorBaseDeuteriumUsage;
+  private final double laserTechnologyBoostSolarSatellites;
   private final int fieldsPerTerraformerLevel;
   private final int fieldsPerLunarBaseLevel;
   private final int storageCapacityMultiplier;
@@ -82,6 +83,7 @@ class BodyServiceImpl implements BodyServiceInternal {
                          @Value("${retro-game.solar-plant-base-energy-production}") int solarPlantBaseEnergyProduction,
                          @Value("${retro-game.fusion-reactor-base-energy-production}") int fusionReactorBaseEnergyProduction,
                          @Value("${retro-game.fusion-reactor-base-deuterium-usage}") int fusionReactorBaseDeuteriumUsage,
+                         @Value("${retro-game.laser-technology-boost-solar-satellites}") double laserTechnologyBoostSolarSatellites,
                          @Value("${retro-game.fields-per-terraformer-level}") int fieldsPerTerraformerLevel,
                          @Value("${retro-game.fields-per-lunar-base-level}") int fieldsPerLunarBaseLevel,
                          @Value("${retro-game.storage-capacity-multiplier}") int storageCapacityMultiplier,
@@ -106,6 +108,7 @@ class BodyServiceImpl implements BodyServiceInternal {
     this.solarPlantBaseEnergyProduction = solarPlantBaseEnergyProduction;
     this.fusionReactorBaseEnergyProduction = fusionReactorBaseEnergyProduction;
     this.fusionReactorBaseDeuteriumUsage = fusionReactorBaseDeuteriumUsage;
+    this.laserTechnologyBoostSolarSatellites = laserTechnologyBoostSolarSatellites;
     this.fieldsPerTerraformerLevel = fieldsPerTerraformerLevel;
     this.fieldsPerLunarBaseLevel = fieldsPerLunarBaseLevel;
     this.storageCapacityMultiplier = storageCapacityMultiplier;
@@ -169,6 +172,8 @@ class BodyServiceImpl implements BodyServiceInternal {
         "retro-game.fusion-reactor-base-energy-production must be greater than 0");
     Assert.isTrue(fusionReactorBaseDeuteriumUsage >= 0,
         "retro-game.fusion-reactor-base-deuterium-usage must be at least 0");
+    Assert.isTrue(laserTechnologyBoostSolarSatellites >= 0,
+        "retro-game.laser-technology-boost-solar-satellites must be at least 0");
 
     Assert.isTrue(fieldsPerTerraformerLevel > 1,
         "retro-game.fields-per-terraformer-level must be greater than 1");
@@ -724,9 +729,14 @@ class BodyServiceImpl implements BodyServiceInternal {
     // Solar satellites.
     int numSolarSatellites = items.getNumSolarSatellites();
     double solarSatellitesFactor = 0.1 * factors.getSolarSatellitesFactor();
-    int singleSatelliteEnergy = Math.max(5, Math.min(50, (int) Math.floor(body.getTemperature() / 4.0 + 20.0)));
-    int solarSatellitesEnergyProduction = (int) Math.round(singleSatelliteEnergy * numSolarSatellites *
-        solarSatellitesFactor);
+    int singleSatelliteEnergy = Math.clamp((int) Math.floor(body.getTemperature() / 4.0 + 20.0), 5, 50);
+    var solarSatellitesEnergyProduction = (int) Math.round(singleSatelliteEnergy * numSolarSatellites * solarSatellitesFactor);
+
+    if (laserTechnologyBoostSolarSatellites > 0) {
+      int laserTechLevel = body.getUser().getTechnologyLevel(TechnologyKind.LASER_TECHNOLOGY);
+      double laserTechBoost = 1.0 + laserTechLevel * laserTechnologyBoostSolarSatellites;
+      solarSatellitesEnergyProduction = (int) Math.round(solarSatellitesEnergyProduction * laserTechBoost);
+    }
 
     // Energy balance.
     int totalEnergy = solarPlantEnergyProduction + fusionReactorEnergyProduction + solarSatellitesEnergyProduction;

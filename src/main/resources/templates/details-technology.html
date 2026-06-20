@@ -22,6 +22,9 @@
       </td>
       <td class="item-info">
         <p th:text="#{${'items.' + kind + '.description'}}"></p>
+        <th:block th:with="extraDescription=${@technologyDescriptionService.getExtraDescription(kind)}">
+          <p th:if="${extraDescription != null}" th:text="${extraDescription}"></p>
+        </th:block>
       </td>
     </tr>
   </table>
