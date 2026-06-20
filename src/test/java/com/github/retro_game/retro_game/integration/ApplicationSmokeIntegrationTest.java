@@ -49,7 +49,7 @@ public class ApplicationSmokeIntegrationTest extends IntegrationTest {
 
   @Test
   public void startsAndSeedsBuiltInCatalog() {
-    assertThat(itemDefinitionRepository.count()).isEqualTo(57);
+    assertThat(itemDefinitionRepository.count()).isEqualTo(58);
     assertThat(itemDefinitionRepository.findByKind("METAL_MINE")).isPresent();
     assertThat(itemDefinitionRepository.findByKind("BATTLESHIP")).isPresent();
     assertThat(itemDefinitionRepository.findByKind("ASTROPHYSICS")).isPresent();
