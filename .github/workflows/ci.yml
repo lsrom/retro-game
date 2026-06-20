@@ -41,10 +41,10 @@ jobs:
           cxx: g++
           gen: Unix Makefiles
         - build: windows-cl
-          os: windows-latest
+          os: windows-2022
           gen: Visual Studio 17 2022
         - build: windows-gcc
-          os: windows-latest
+          os: windows-2022
           cxx: g++
           gen: Unix Makefiles
     steps:
@@ -60,7 +60,7 @@ jobs:
         CXX: ${{ matrix.cxx }}
       run: cmake -S battle-engine -B build -G "${{ matrix.gen }}" -DCMAKE_BUILD_TYPE=Release
     - name: Build
-      run: cmake --build build --config release
+      run: cmake --build build --config Release
 
   build-docker-image:
     name: Build docker image
