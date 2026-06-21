@@ -44,7 +44,7 @@
       <td th:if="${bodies.associatedBody != null}" class="overview-body" th:with="body=${bodies.associatedBody}">
         <span th:text="${body.name}"></span>
         <a href="#" th:href="@{/overview(body=${body.id})}">
-          <img
+          <img class="overview-body-image"
               th:src="@{/static/skins/{skin}/overview-bodies/{type}_{image}.webp(skin=${skin},type=${body.type},image=${body.image})}"
               width="50" height="50">
         </a>
@@ -53,10 +53,9 @@
         <span th:unless="${body.ongoingBuildingKind != null}">free</span>
       </td>
       <td th:unless="${bodies.associatedBody != null}"></td>
-      <td class="overview-body" colspan="2" th:with="body=${bodies.selectedBody}">
-        <img
-            th:src="@{/static/skins/{skin}/overview-bodies/{type}_{image}.webp(skin=${skin},type=${body.type},image=${body.image})}"
-            width="200" height="200">
+      <td class="selected-overview-body" colspan="2" th:with="body=${bodies.selectedBody}">
+        <img class="selected-overview-body-image"
+            th:src="@{/static/skins/{skin}/overview-bodies/{type}_{image}.webp(skin=${skin},type=${body.type},image=${body.image})}">
         <th:block th:if="${body.ongoingBuildingKind != null}">
           <a th:href="@{/buildings(body=${body.id})}"
              th:text="#{${'items.' + body.ongoingBuildingKind + '.name'}} + ' (' + ${body.ongoingBuildingLevel} + ')'"></a>
@@ -70,7 +69,7 @@
           <div th:each="body : ${bodies.otherPlanets}" class="overview-body">
             <span th:text="${body.name}"></span>
             <a href="#" th:href="@{/overview(body=${body.id})}">
-              <img
+              <img class="overview-body-image"
                   th:src="@{/static/skins/{skin}/overview-bodies/{type}_{image}.webp(skin=${skin},type=${body.type},image=${body.image})}"
                   width="88" height="88">
             </a>

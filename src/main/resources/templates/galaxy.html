@@ -22,7 +22,7 @@
       <th:block th:if="${slot}">
         <td th:text="${i}"></td>
         <td th:class="${position == i && kind == T(com.github.retro_game.retro_game.dto.CoordinatesKindDto).PLANET ? 'highlight' : ''}">
-          <img
+          <img class="galaxy-tooltip-image"
               th:src="@{/static/skins/{skin}/bodies/{type}_{image}.webp(skin=${skin},type=${slot.planetType},image=${slot.planetImage})}"
               data-tooltip data-tooltip-html th:data-tooltip-title="
                 '<table>' +
@@ -30,7 +30,7 @@
                     '<th colspan=2>' + ${slot.planetName} + '</th>' +
                   '</tr>' +
                   '<tr>' +
-                    '<td><img src=\'' + @{/static/skins/{skin}/bodies/{type}_{image}.webp(skin=${skin},type=${slot.planetType},image=${slot.planetImage})} + '\' width=55 height=55></td>' +
+                    '<td><img class=\'galaxy-tooltip-image-preview\' src=\'' + @{/static/skins/{skin}/bodies/{type}_{image}.webp(skin=${skin},type=${slot.planetType},image=${slot.planetImage})} + '\' width=55 height=55></td>' +
                     '<td>' +
                       (${slot.own} ? '<p><a href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=${i},kind='PLANET',mission='DEPLOYMENT')} + '\'>' + #{mission.DEPLOYMENT} + '</a></p>' : '') +
                       (${!slot.own} ? '<p><a href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=${i},kind='PLANET',mission='ATTACK')} + '\'>' + #{mission.ATTACK} + '</a></p>' : '') +
@@ -58,7 +58,7 @@
                     '<th colspan=2>' + ${slot.moonName} + '</th>' +
                   '</tr>' +
                   '<tr>' +
-                    '<td><img src=\'' + @{/static/skins/{skin}/bodies/MOON_{image}.webp(skin=${skin},image=${slot.moonImage})} + '\' width=55 height=55></td>' +
+                    '<td><img class=\'galaxy-tooltip-image\' src=\'' + @{/static/skins/{skin}/bodies/MOON_{image}.webp(skin=${skin},image=${slot.moonImage})} + '\' width=55 height=55></td>' +
                     '<td>' +
                       (${slot.own} ? '<p><a href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=${i},kind='MOON',mission='DEPLOYMENT')} + '\'>' + #{mission.DEPLOYMENT} + '</a></p>' : '') +
                       (${!slot.own} ? '<p><a href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=${i},kind='MOON',mission='ATTACK')} + '\'>' + #{mission.ATTACK} + '</a></p>' : '') +
