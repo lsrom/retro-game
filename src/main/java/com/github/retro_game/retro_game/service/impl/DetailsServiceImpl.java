@@ -157,7 +157,7 @@ class DetailsServiceImpl implements DetailsService {
 
     // Base weapons, shield and armor are read from the editable content catalog.
     var definition = CatalogService.getInstance().getDefinition(k.name());
-    return new UnitDetailsDto(weapons, shield, armor, (int) item.getCapacity(), item.getConsumption(user),
+    return new UnitDetailsDto(weapons, shield, armor, (int) unitService.getCapacity(k, user), item.getConsumption(user),
         unitService.getSpeed(k, user), definition.getWeapons(), definition.getShield(), definition.getArmor(),
         item.getBaseSpeed(user), rapidFireAgainst, rapidFireFrom);
   }

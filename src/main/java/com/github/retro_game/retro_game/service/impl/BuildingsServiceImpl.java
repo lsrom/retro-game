@@ -38,6 +38,7 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   private final EventRepository eventRepository;
   private BodyServiceInternal bodyServiceInternal;
   private EventScheduler eventScheduler;
+  private UnitService unitService;
 
   private class State {
     final Map<BuildingKind, Integer> buildings;
@@ -114,6 +115,11 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
   @Autowired
   public void setEventScheduler(EventScheduler eventScheduler) {
     this.eventScheduler = eventScheduler;
+  }
+
+  @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
   }
 
   @PostConstruct
@@ -262,8 +268,10 @@ public class BuildingsServiceImpl implements BuildingsServiceInternal {
       var missingResources = new Resources(cost);
       missingResources.sub(body.getResources());
       missingResources.max(0.0);
-      var neededSmallCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.SMALL_CARGO, missingResources);
-      var neededLargeCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.LARGE_CARGO, missingResources);
+      var neededSmallCargoes = unitService.getNumUnitsForCapacity(UnitKind.SMALL_CARGO, body.getUser(),
+          missingResources);
+      var neededLargeCargoes = unitService.getNumUnitsForCapacity(UnitKind.LARGE_CARGO, body.getUser(),
+          missingResources);
       var accumulationTime = ItemTimeUtils.calcAccumulationTime(body.getUpdatedAt(), missingResources, production);
 
       var hasEnoughFields = state.usedFields < state.maxFields;

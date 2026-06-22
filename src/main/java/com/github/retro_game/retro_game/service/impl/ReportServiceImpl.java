@@ -48,6 +48,7 @@ class ReportServiceImpl implements ReportServiceInternal {
   private final UserRepository userRepository;
   private BodyServiceInternal bodyServiceInternal;
   private ActivityService activityService;
+  private UnitService unitService;
 
   public ReportServiceImpl(EspionageReportRepository espionageReportRepository,
                            HarvestReportRepository harvestReportRepository, OtherReportRepository otherReportRepository,
@@ -71,6 +72,11 @@ class ReportServiceImpl implements ReportServiceInternal {
   @Autowired
   public void setActivityService(ActivityService activityService) {
     this.activityService = activityService;
+  }
+
+  @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
   }
 
   @PostConstruct
@@ -420,12 +426,10 @@ class ReportServiceImpl implements ReportServiceInternal {
           Math.min(
               0.75 * (2.0 * resources.getMetal() + resources.getCrystal() + resources.getDeuterium()),
               2.0 * resources.getMetal() + resources.getDeuterium()));
-      int neededSmallCargoes = (int) Math.ceil(
-          neededCapacity / CatalogItem.of(UnitKind.SMALL_CARGO.name()).getCapacity());
-      int neededLargeCargoes = (int) Math.ceil(
-          neededCapacity / CatalogItem.of(UnitKind.LARGE_CARGO.name()).getCapacity());
+      int neededSmallCargoes = (int) Math.ceil(neededCapacity / unitService.getCapacity(UnitKind.SMALL_CARGO, user));
+      int neededLargeCargoes = (int) Math.ceil(neededCapacity / unitService.getCapacity(UnitKind.LARGE_CARGO, user));
       int neededEspionageProbes = (int) Math.ceil(
-          neededCapacity / CatalogItem.of(UnitKind.ESPIONAGE_PROBE.name()).getCapacity());
+          neededCapacity / unitService.getCapacity(UnitKind.ESPIONAGE_PROBE, user));
 
       simplifiedReports.add(new SimplifiedEspionageReportDto(report.getId(), report.getAt(), report.getEnemyId(),
           report.getEnemyName(), Converter.convert(report.getCoordinates()), report.getActivity(),

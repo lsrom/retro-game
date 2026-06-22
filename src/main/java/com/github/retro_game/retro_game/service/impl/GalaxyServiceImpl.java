@@ -9,8 +9,8 @@ import com.github.retro_game.retro_game.dto.NoobProtectionRankDto;
 import com.github.retro_game.retro_game.dto.StatisticsSummaryDto;
 import com.github.retro_game.retro_game.entity.GalaxySlot;
 import com.github.retro_game.retro_game.entity.UnitKind;
-import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.repository.GalaxySlotRepository;
+import com.github.retro_game.retro_game.repository.UserRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
 import com.github.retro_game.retro_game.service.ActivityService;
 import com.github.retro_game.retro_game.service.GalaxyService;
@@ -32,16 +32,20 @@ class GalaxyServiceImpl implements GalaxyService {
   private final AllianceTagCache allianceTagCache;
   private final StatisticsCache statisticsCache;
   private final UserAllianceCache userAllianceCache;
+  private final UserRepository userRepository;
   private ActivityService activityService;
   private NoobProtectionService noobProtectionService;
+  private UnitService unitService;
   private UserServiceInternal userServiceInternal;
 
   public GalaxyServiceImpl(GalaxySlotRepository galaxySlotRepository, AllianceTagCache allianceTagCache,
-                           StatisticsCache statisticsCache, UserAllianceCache userAllianceCache) {
+                           StatisticsCache statisticsCache, UserAllianceCache userAllianceCache,
+                           UserRepository userRepository) {
     this.galaxySlotRepository = galaxySlotRepository;
     this.allianceTagCache = allianceTagCache;
     this.statisticsCache = statisticsCache;
     this.userAllianceCache = userAllianceCache;
+    this.userRepository = userRepository;
   }
 
   @Autowired
@@ -55,6 +59,11 @@ class GalaxyServiceImpl implements GalaxyService {
   }
 
   @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
+  }
+
+  @Autowired
   public void setUserServiceInternal(UserServiceInternal userServiceInternal) {
     this.userServiceInternal = userServiceInternal;
   }
@@ -62,6 +71,7 @@ class GalaxyServiceImpl implements GalaxyService {
   @Override
   public Map<Integer, GalaxySlotDto> getSlots(int galaxy, int system) {
     long userId = CustomUser.getCurrentUserId();
+    var user = userRepository.getOne(userId);
     logger.info("Viewing galaxy: userId={} galaxy={} system={}", userId, galaxy, system);
 
     long now = Instant.now().getEpochSecond();
@@ -113,7 +123,7 @@ class GalaxyServiceImpl implements GalaxyService {
 
       var debrisMetal = slot.getDebrisMetal() != null ? slot.getDebrisMetal() : 0L;
       var debrisCrystal = slot.getDebrisCrystal() != null ? slot.getDebrisCrystal() : 0L;
-      var recyclerCapacity = CatalogItem.of(UnitKind.RECYCLER.name()).getCapacity();
+      var recyclerCapacity = unitService.getCapacity(UnitKind.RECYCLER, user);
       var neededRecyclers = (int) Math.ceil((double) (debrisMetal + debrisCrystal) / recyclerCapacity);
 
       Long allianceId = userAllianceCache.getUserAlliance(slot.getUserId());

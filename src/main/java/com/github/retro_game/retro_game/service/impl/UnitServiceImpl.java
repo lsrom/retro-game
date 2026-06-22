@@ -1,14 +1,27 @@
 package com.github.retro_game.retro_game.service.impl;
 
+import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.entity.UnitType;
 import com.github.retro_game.retro_game.entity.User;
 import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.CatalogService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 @Service
 class UnitServiceImpl implements UnitService {
+  private final double hyperspaceTechnologyExpandsCargo;
+
+  UnitServiceImpl(@Value("${retro-game.hyperspace-technology-expands-cargo:0.0}")
+                  double hyperspaceTechnologyExpandsCargo) {
+    Assert.isTrue(hyperspaceTechnologyExpandsCargo >= 0.0,
+        "retro-game.hyperspace-technology-expands-cargo must be at least 0");
+    this.hyperspaceTechnologyExpandsCargo = hyperspaceTechnologyExpandsCargo;
+  }
+
   @Override
   public int getSpeed(UnitKind kind, User user) {
     // Propulsion (base speed and drive) is code-only behavior; the catalog item
@@ -36,6 +49,27 @@ class UnitServiceImpl implements UnitService {
         return speed + speed / 10 * 3 * level;
     }
     return 0;
+  }
+
+  @Override
+  public long getCapacity(UnitKind kind, User user) {
+    long capacity = CatalogItem.of(kind.name()).getCapacity();
+    int level = user.getTechnologyLevel(TechnologyKind.HYPERSPACE_TECHNOLOGY);
+    return Math.round(capacity * (1.0 + hyperspaceTechnologyExpandsCargo * level));
+  }
+
+  @Override
+  public long getNumUnitsForCapacity(UnitKind kind, User user, Resources resources) {
+    var neededCapacity = resources.getMetal() + resources.getCrystal() + resources.getDeuterium();
+    return getNumUnitsForCapacity(kind, user, neededCapacity);
+  }
+
+  @Override
+  public long getNumUnitsForCapacity(UnitKind kind, User user, double neededCapacity) {
+    assert CatalogItem.of(kind.name()).getUnitType() == UnitType.FLEET && kind != UnitKind.SOLAR_SATELLITE;
+    var unitCapacity = getCapacity(kind, user);
+    assert unitCapacity > 0;
+    return (long) Math.ceil(neededCapacity / unitCapacity);
   }
 
   // The base weapons, shield and armor come from the editable content catalog;

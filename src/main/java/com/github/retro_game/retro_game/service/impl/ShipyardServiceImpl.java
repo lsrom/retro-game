@@ -6,7 +6,6 @@ import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.model.ItemCostUtils;
 import com.github.retro_game.retro_game.model.ItemRequirementsUtils;
 import com.github.retro_game.retro_game.model.ItemTimeUtils;
-import com.github.retro_game.retro_game.model.ItemUtils;
 import com.github.retro_game.retro_game.service.exception.*;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -31,6 +30,7 @@ public class ShipyardServiceImpl implements ShipyardServiceInternal {
   private final int missileSiloAbmPerLevel;
   private final int missileSiloImPerLevel;
   private BodyServiceInternal bodyServiceInternal;
+  private UnitService unitService;
 
   public ShipyardServiceImpl(
           ItemTimeUtils itemTimeUtils,
@@ -48,6 +48,11 @@ public class ShipyardServiceImpl implements ShipyardServiceInternal {
   @Autowired
   public void setBodyServiceInternal(BodyServiceInternal bodyServiceInternal) {
     this.bodyServiceInternal = bodyServiceInternal;
+  }
+
+  @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
   }
 
   @Override
@@ -150,8 +155,10 @@ public class ShipyardServiceImpl implements ShipyardServiceInternal {
       var missingResources = new Resources(cost);
       missingResources.sub(body.getResources());
       missingResources.max(0.0);
-      var neededSmallCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.SMALL_CARGO, missingResources);
-      var neededLargeCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.LARGE_CARGO, missingResources);
+      var neededSmallCargoes = unitService.getNumUnitsForCapacity(UnitKind.SMALL_CARGO, body.getUser(),
+          missingResources);
+      var neededLargeCargoes = unitService.getNumUnitsForCapacity(UnitKind.LARGE_CARGO, body.getUser(),
+          missingResources);
       var accumulationTime = ItemTimeUtils.calcAccumulationTime(body.getUpdatedAt(), missingResources, production);
 
       var maxBuildable = 0;

@@ -32,6 +32,7 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
   private final UserRepository userRepository;
   private BodyServiceInternal bodyServiceInternal;
   private EventScheduler eventScheduler;
+  private UnitService unitService;
 
   public TechnologyServiceImpl(@Value("${retro-game.technology-queue-capacity}") int technologyQueueCapacity,
                                ItemTimeUtils itemTimeUtils, EventRepository eventRepository,
@@ -78,6 +79,11 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
   @Autowired
   public void setEventScheduler(EventScheduler eventScheduler) {
     this.eventScheduler = eventScheduler;
+  }
+
+  @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
   }
 
   @Override
@@ -223,8 +229,10 @@ public class TechnologyServiceImpl implements TechnologyServiceInternal {
       var missingResources = new Resources(cost);
       missingResources.sub(body.getResources());
       missingResources.max(0.0);
-      var neededSmallCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.SMALL_CARGO, missingResources);
-      var neededLargeCargoes = ItemUtils.calcNumUnitsForCapacity(UnitKind.LARGE_CARGO, missingResources);
+      var neededSmallCargoes = unitService.getNumUnitsForCapacity(UnitKind.SMALL_CARGO, body.getUser(),
+          missingResources);
+      var neededLargeCargoes = unitService.getNumUnitsForCapacity(UnitKind.LARGE_CARGO, body.getUser(),
+          missingResources);
       var accumulationTime = ItemTimeUtils.calcAccumulationTime(body.getUpdatedAt(), missingResources, production);
 
       var isQueueNotFull = queueSize < technologyQueueCapacity;

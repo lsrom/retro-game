@@ -15,6 +15,7 @@ import com.github.retro_game.retro_game.service.BodyCreationService;
 import com.github.retro_game.retro_game.service.impl.BodyServiceInternal;
 import com.github.retro_game.retro_game.service.impl.CombatReportServiceInternal;
 import com.github.retro_game.retro_game.service.impl.ReportServiceInternal;
+import com.github.retro_game.retro_game.service.impl.UnitService;
 import io.vavr.Function3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,19 +60,24 @@ public class AttackMissionHandler {
   private BodyCreationService bodyCreationService;
   private CombatReportServiceInternal combatReportServiceInternal;
   private ReportServiceInternal reportServiceInternal;
+  private UnitService unitService;
   private MissionHandlerUtils missionHandlerUtils;
 
-  public AttackMissionHandler(@Value("${retro-game.fleet-rebuild-factor:0.0}") double fleetRebuildFactor,
-                              @Value("${retro-game.defense-rebuild-factor:0.7}") double defenseRebuildFactor,
-                              @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
-                              @Value("${retro-game.defense-debris-factor:0.0}") double defenseDebrisFactor,
-                              @Value("${retro-game.max-moon-chance:0.2}") double maxMoonChance,
-                              @Value("${retro-game.moon-chance-resource-percent:100000}")
-                              long moonChanceResourcePercent,
-                              @Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
-                              BattleEngine battleEngine, BodyRepository bodyRepository,
-                              DebrisFieldRepository debrisFieldRepository, EventRepository eventRepository,
-                              FlightRepository flightRepository, PartyRepository partyRepository) {
+  public AttackMissionHandler(
+          @Value("${retro-game.fleet-rebuild-factor:0.0}") double fleetRebuildFactor,
+          @Value("${retro-game.defense-rebuild-factor:0.7}") double defenseRebuildFactor,
+          @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
+          @Value("${retro-game.defense-debris-factor:0.0}") double defenseDebrisFactor,
+          @Value("${retro-game.max-moon-chance:0.2}") double maxMoonChance,
+          @Value("${retro-game.moon-chance-resource-percent:100000}") long moonChanceResourcePercent,
+          @Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
+          BattleEngine battleEngine,
+          BodyRepository bodyRepository,
+          DebrisFieldRepository debrisFieldRepository,
+          EventRepository eventRepository,
+          FlightRepository flightRepository,
+          PartyRepository partyRepository
+  ) {
     this.fleetRebuildFactor = fleetRebuildFactor;
     this.defenseRebuildFactor = defenseRebuildFactor;
     this.fleetDebrisFactor = fleetDebrisFactor;
@@ -102,6 +108,11 @@ public class AttackMissionHandler {
   @Autowired
   public void setReportServiceInternal(ReportServiceInternal reportServiceInternal) {
     this.reportServiceInternal = reportServiceInternal;
+  }
+
+  @Autowired
+  public void setUnitService(UnitService unitService) {
+    this.unitService = unitService;
   }
 
   @Autowired
@@ -598,7 +609,7 @@ public class AttackMissionHandler {
     var i = 0;
     for (var flight : flights) {
       boolean excludeEspionageProbes = !espionageProbeRaiding;
-      var capacity = calcCapacity(flight.getUnits(), excludeEspionageProbes);
+      var capacity = calcCapacity(flight.getStartUser(), flight.getUnits(), excludeEspionageProbes);
       capacity -= (long) Math.ceil(flight.getResources().total());
       capacity = Math.max(0L, capacity);
       states[i++] = new FlightPlunderState(flight, new Resources(), capacity);
@@ -652,7 +663,7 @@ public class AttackMissionHandler {
   }
 
   // TODO: Move somewhere else.
-  private static long calcCapacity(Map<UnitKind, Integer> units, boolean excludeEspionageProbes) {
+  private long calcCapacity(User user, Map<UnitKind, Integer> units, boolean excludeEspionageProbes) {
     var capacity = 0L;
     for (var kind : fightUnitKinds) {
       var count = units.getOrDefault(kind, 0);
@@ -663,7 +674,7 @@ public class AttackMissionHandler {
       if (excludeEspionageProbes && kind == UnitKind.ESPIONAGE_PROBE) {
         continue;
       }
-      capacity += (long) count * CatalogItem.of(kind.name()).getCapacity();
+      capacity += count * unitService.getCapacity(kind, user);
     }
     return capacity;
   }

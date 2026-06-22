@@ -16,9 +16,20 @@ public class UnitDetailsDto {
   private final Map<UnitKindDto, Integer> rapidFireAgainst;
   private final Map<UnitKindDto, Integer> rapidFireFrom;
 
-  public UnitDetailsDto(double weapons, double shield, double armor, int capacity, int consumption, int speed,
-                        double baseWeapons, double baseShield, double baseArmor, int baseSpeed,
-                        Map<UnitKindDto, Integer> rapidFireAgainst, Map<UnitKindDto, Integer> rapidFireFrom) {
+  public UnitDetailsDto(
+          double weapons,
+          double shield,
+          double armor,
+          int capacity,
+          int consumption,
+          int speed,
+          double baseWeapons,
+          double baseShield,
+          double baseArmor,
+          int baseSpeed,
+          Map<UnitKindDto, Integer> rapidFireAgainst,
+          Map<UnitKindDto, Integer> rapidFireFrom
+  ) {
     this.weapons = weapons;
     this.shield = shield;
     this.armor = armor;

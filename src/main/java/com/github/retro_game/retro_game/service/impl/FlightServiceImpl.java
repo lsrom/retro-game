@@ -198,7 +198,7 @@ class FlightServiceImpl implements FlightServiceInternal {
             kind -> {
               int count = body.getUnitsCount(kind);
               CatalogItem item = CatalogItem.of(kind.name());
-              int capacity = (int) item.getCapacity();
+              int capacity = (int) unitService.getCapacity(kind, user);
               int consumption = item.getConsumption(user);
               int speed = unitService.getSpeed(kind, user);
               double weapons = unitService.getWeapons(kind, user);
@@ -428,7 +428,7 @@ class FlightServiceImpl implements FlightServiceInternal {
     int distance = calculateDistance(body.getCoordinates(), coordinates);
     int duration = calculateDuration(distance, params.getFactor(), maxSpeed);
     double consumption = calculateConsumption(user, distance, params.getFactor(), maxSpeed, units);
-    long capacity = calculateCapacity(units);
+    long capacity = calculateCapacity(user, units);
 
     Resources bodyResources = body.getResources();
     if (bodyResources.getDeuterium() < consumption) {
@@ -648,10 +648,10 @@ class FlightServiceImpl implements FlightServiceInternal {
         .sum());
   }
 
-  private long calculateCapacity(Map<UnitKind, Integer> units) {
+  private long calculateCapacity(User user, Map<UnitKind, Integer> units) {
     assert !units.isEmpty();
     return units.entrySet().stream()
-        .mapToLong(e -> (long) e.getValue() * CatalogItem.of(e.getKey().name()).getCapacity())
+        .mapToLong(e -> e.getValue() * unitService.getCapacity(e.getKey(), user))
         .sum();
   }
 
@@ -1077,13 +1077,13 @@ class FlightServiceImpl implements FlightServiceInternal {
 
       long totalCapacity = 0;
       for (var entry : flight.getUnits().entrySet()) {
-        totalCapacity += (long) entry.getValue() * CatalogItem.of(entry.getKey().name()).getCapacity();
+        totalCapacity += entry.getValue() * unitService.getCapacity(entry.getKey(), flight.getStartUser());
       }
       totalCapacity -= (long) Math.ceil(flightResources.getMetal() + flightResources.getCrystal() +
           flightResources.getDeuterium());
       var numRecyclers = flight.getUnitsCount(UnitKind.RECYCLER);
       assert numRecyclers >= 1;
-      long recCapacity = (long) numRecyclers * CatalogItem.of(UnitKind.RECYCLER.name()).getCapacity();
+      long recCapacity = numRecyclers * unitService.getCapacity(UnitKind.RECYCLER, flight.getStartUser());
       long capacity = Math.min(recCapacity, totalCapacity);
 
       DebrisField debrisField = debrisFieldOptional.get();
