@@ -5,6 +5,7 @@ import com.github.retro_game.retro_game.repository.EventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Component;
@@ -31,7 +32,8 @@ public class EventScheduler implements Runnable {
   private FlightServiceInternal flightServiceInternal;
   private TechnologyServiceInternal technologyServiceInternal;
 
-  public EventScheduler(TaskExecutor eventSchedulerThread, EventRepository eventRepository) {
+  public EventScheduler(@Qualifier("gameTaskSchedulerThread") TaskExecutor eventSchedulerThread,
+                        EventRepository eventRepository) {
     this.eventSchedulerThread = eventSchedulerThread;
     this.eventRepository = eventRepository;
   }

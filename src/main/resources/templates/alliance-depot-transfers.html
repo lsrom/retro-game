@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{allianceDepot}">Alliance Depot</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <table th:if="${error}">
+    <tr>
+      <th th:text="#{error}">Error</th>
+    </tr>
+    <tr>
+      <td class="error" th:text="${#messages.msg('automaticResourceTransferError.' + error)}"></td>
+    </tr>
+  </table>
+
+  <table>
+    <tr>
+      <th colspan="11" th:text="#{automaticResourceTransfers}">Automatic resource transfers</th>
+    </tr>
+    <tr>
+      <td colspan="11">
+        <span th:text="#{automaticResourceTransferSlots}">Slots</span>:
+        <span th:text="${#lists.size(transfers)}">0</span> / <span th:text="${maxTransfers}">0</span>
+      </td>
+    </tr>
+    <tr>
+      <th th:text="#{target}">Target</th>
+      <th th:text="#{ship}">Ship</th>
+      <th th:text="#{ships}">Ships</th>
+      <th th:text="#{metal}">Metal</th>
+      <th th:text="#{crystal}">Crystal</th>
+      <th th:text="#{deuterium}">Deuterium</th>
+      <th th:text="#{speedFactor}">Speed factor</th>
+      <th th:text="#{scheduledTime}">Scheduled time</th>
+      <th th:text="#{nextRun}">Next run</th>
+      <th th:text="#{lastError}">Last error</th>
+      <th th:text="#{actions}">Actions</th>
+    </tr>
+    <tr th:if="${#lists.isEmpty(transfers)}">
+      <td colspan="11" th:text="#{noAutomaticResourceTransfers}">No automatic resource transfers</td>
+    </tr>
+    <tr th:each="transfer : ${transfers}" th:with="r=${transfer.resources}">
+      <td>
+        <span th:text="${transfer.targetBodyName}">Colony</span>
+        <a th:href="@{/galaxy(body=${bodyId},galaxy=${transfer.targetCoordinates.galaxy},system=${transfer.targetCoordinates.system},position=${transfer.targetCoordinates.position},kind=${transfer.targetCoordinates.kind})}"
+           th:text="'[' + ${transfer.targetCoordinates} + ']'"></a>
+      </td>
+      <td th:text="#{${'items.' + transfer.shipKind + '.name'}}">Large Cargo</td>
+      <td th:text="${#numbers.formatInteger(transfer.shipCount, 1, 'DEFAULT')}">10</td>
+      <td th:text="${#numbers.formatInteger(r.metal, 1, 'DEFAULT')}">1000</td>
+      <td th:text="${#numbers.formatInteger(r.crystal, 1, 'DEFAULT')}">1000</td>
+      <td th:text="${#numbers.formatInteger(r.deuterium, 1, 'DEFAULT')}">1000</td>
+      <td th:text="${transfer.speedFactor * 10} + '%'">100%</td>
+      <td th:text="${#numbers.formatInteger(transfer.runHour, 2) + ':' + #numbers.formatInteger(transfer.runMinute, 2)}">
+        08:00
+      </td>
+      <td data-timer th:data-timer="${transfer.nextRunAt.toInstant().epochSecond}"></td>
+      <td th:text="${transfer.lastError != null ? transfer.lastError : '-'}">-</td>
+      <td>
+        <form th:action="@{/alliance-depot/transfers/toggle}" method="post">
+          <input type="hidden" name="body" th:value="${bodyId}">
+          <input type="hidden" name="transfer" th:value="${transfer.id}">
+          <button th:text="${transfer.enabled ? #messages.msg('disable') : #messages.msg('enable')}">Disable</button>
+        </form>
+        <form th:action="@{/alliance-depot/transfers/delete}" method="post">
+          <input type="hidden" name="body" th:value="${bodyId}">
+          <input type="hidden" name="transfer" th:value="${transfer.id}">
+          <button th:text="#{delete}">Delete</button>
+        </form>
+      </td>
+    </tr>
+  </table>
+
+  <form th:action="@{/alliance-depot/transfers}" method="post">
+    <input type="hidden" name="body" th:value="${bodyId}">
+    <table>
+      <tr>
+        <th colspan="2" th:text="#{newAutomaticResourceTransfer}">New automatic resource transfer</th>
+      </tr>
+      <tr th:if="${transferLimitReached}">
+        <td colspan="2" th:text="#{automaticResourceTransferLimitReached}">Automatic resource transfer limit reached</td>
+      </tr>
+      <tr>
+        <td>
+          <label for="targetBody" th:text="#{target}">Target</label>
+        </td>
+        <td>
+          <select id="targetBody" name="targetBody" required>
+            <option th:each="body : ${bodies}" th:if="${body.id != bodyId}" th:with="c=${body.coordinates}"
+                    th:value="${body.id}" th:text="${body.name} + ' [' + ${c} + ']'"></option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="shipKind" th:text="#{ship}">Ship</label>
+        </td>
+        <td>
+          <select id="shipKind" name="shipKind" required>
+            <option th:each="kind : ${cargoKinds}" th:value="${kind}"
+                    th:text="#{${'items.' + kind + '.name'}}"></option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="shipCount" th:text="#{ships}">Ships</label>
+        </td>
+        <td>
+          <input id="shipCount" name="shipCount" type="number" value="1" min="1" required>
+        </td>
+      </tr>
+      <tr>
+        <th colspan="2" th:text="#{resources}">Resources</th>
+      </tr>
+      <tr>
+        <td>
+          <label for="metal" th:text="#{metal}">Metal</label>
+        </td>
+        <td>
+          <input id="metal" name="metal" type="number" value="0" min="0" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="crystal" th:text="#{crystal}">Crystal</label>
+        </td>
+        <td>
+          <input id="crystal" name="crystal" type="number" value="0" min="0" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="deuterium" th:text="#{deuterium}">Deuterium</label>
+        </td>
+        <td>
+          <input id="deuterium" name="deuterium" type="number" value="0" min="0" required>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="speedFactor" th:text="#{speedFactor}">Speed factor</label>
+        </td>
+        <td>
+          <select id="speedFactor" name="speedFactor">
+            <option value="10">100%</option>
+            <option value="9">90%</option>
+            <option value="8">80%</option>
+            <option value="7">70%</option>
+            <option value="6">60%</option>
+            <option value="5">50%</option>
+            <option value="4">40%</option>
+            <option value="3">30%</option>
+            <option value="2">20%</option>
+            <option value="1">10%</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <label for="runTime" th:text="#{scheduledTime}">Scheduled time</label>
+        </td>
+        <td>
+          <input id="runTime" name="runTime" type="time" value="08:00" required>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <button th:disabled="${ctx.onVacation || transferLimitReached}" th:text="#{create}">Create</button>
+        </td>
+      </tr>
+    </table>
+  </form>
+</div>
+</body>
+</html>

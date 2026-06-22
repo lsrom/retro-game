@@ -56,6 +56,9 @@
         <a th:href="@{/alliance(body=${bodyId})}" th:with="summary=${@allianceService.getCurrentUserAlliance(bodyId)}"
            th:text="#{alliance} + ${summary?.numApplications > 0 ? ' (' + summary?.numApplications + ')' : ''}">Alliance</a>
       </li>
+      <li th:if="${ctx.curBody.buildings.getOrDefault(T(com.github.retro_game.retro_game.dto.BuildingKindDto).ALLIANCE_DEPOT, 0) > 0}">
+        <a th:href="@{/alliance-depot/transfers(body=${bodyId})}" th:text="#{allianceDepot}">Alliance Depot</a>
+      </li>
       <li th:if="${@environment.getProperty('retro-game.allow-trader') == 'true'}">
         <a th:href="@{/trader(body=${bodyId})}" th:text="#{trader}">Trader</a>
       </li>
