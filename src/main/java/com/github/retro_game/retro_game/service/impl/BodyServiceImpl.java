@@ -674,9 +674,9 @@ class BodyServiceImpl implements BodyServiceInternal {
     }
 
     // Base production.
-    int metalBaseProduction = this.metalBaseProduction * productionSpeed;
-    int crystalBaseProduction = this.crystalBaseProduction * productionSpeed;
-    int deuteriumBaseProduction = this.deuteriumBaseProduction * productionSpeed;
+    long metalBaseProduction = (long) this.metalBaseProduction * productionSpeed;
+    long crystalBaseProduction = (long) this.crystalBaseProduction * productionSpeed;
+    long deuteriumBaseProduction = (long) this.deuteriumBaseProduction * productionSpeed;
 
     ProductionItemsDto items = getProductionItems(body);
     ProductionFactors factors = body.getProductionFactors();
@@ -684,7 +684,7 @@ class BodyServiceImpl implements BodyServiceInternal {
     // Metal mine.
     int metalMineLevel = items.getMetalMineLevel();
     double metalMineFactor = 0.1 * factors.getMetalMineFactor();
-    int metalMineProduction = (int) (metalMineBaseProduction * metalMineLevel * Math.pow(1.1, metalMineLevel) *
+    long metalMineProduction = (long) (metalMineBaseProduction * metalMineLevel * Math.pow(1.1, metalMineLevel) *
         metalMineFactor) * productionSpeed;
     int metalMineMaxEnergyUsage = (int) Math.ceil(metalMineBaseEnergyUsage * metalMineLevel *
         Math.pow(1.1, metalMineLevel) * metalMineFactor);
@@ -692,7 +692,7 @@ class BodyServiceImpl implements BodyServiceInternal {
     // Crystal mine.
     int crystalMineLevel = items.getCrystalMineLevel();
     double crystalMineFactor = 0.1 * factors.getCrystalMineFactor();
-    int crystalMineProduction = (int) (crystalMineBaseProduction * crystalMineLevel *
+    long crystalMineProduction = (long) (crystalMineBaseProduction * crystalMineLevel *
         Math.pow(1.1, crystalMineLevel) * crystalMineFactor) * productionSpeed;
     int crystalMineMaxEnergyUsage = (int) Math.ceil(crystalMineBaseEnergyUsage * crystalMineLevel *
         Math.pow(1.1, crystalMineLevel) * crystalMineFactor);
@@ -700,7 +700,7 @@ class BodyServiceImpl implements BodyServiceInternal {
     // Deuterium synthesizer.
     int deuteriumSynthesizerLevel = items.getDeuteriumSynthesizerLevel();
     double deuteriumSynthesizerFactor = 0.1 * factors.getDeuteriumSynthesizerFactor();
-    int deuteriumSynthesizerProduction = (int) (deuteriumSynthesizerBaseProduction * deuteriumSynthesizerLevel *
+    long deuteriumSynthesizerProduction = (long) (deuteriumSynthesizerBaseProduction * deuteriumSynthesizerLevel *
         Math.pow(1.1, deuteriumSynthesizerLevel) * (1.28 - 0.002 * body.getTemperature()) *
         deuteriumSynthesizerFactor) * productionSpeed;
     int deuteriumSynthesizerMaxEnergyUsage = (int) Math.ceil(deuteriumSynthesizerBaseEnergyUsage *
@@ -713,13 +713,13 @@ class BodyServiceImpl implements BodyServiceInternal {
         Math.pow(1.1, solarPlantLevel) * solarPlantFactor);
 
     // Fusion reactor.
-    int fusionReactorDeuteriumUsage = 0;
+    long fusionReactorDeuteriumUsage = 0;
     int fusionReactorEnergyProduction = 0;
     int fusionReactorLevel = items.getFusionReactorLevel();
     if (fusionReactorLevel != 0) {
       var energyTechnologyLevel = body.getUser().getTechnologyLevel(TechnologyKind.ENERGY_TECHNOLOGY);
       double fusionReactorFactor = 0.1 * factors.getFusionReactorFactor();
-      fusionReactorDeuteriumUsage = (int) Math.ceil(fusionReactorBaseDeuteriumUsage * fusionReactorLevel *
+      fusionReactorDeuteriumUsage = (long) Math.ceil(fusionReactorBaseDeuteriumUsage * fusionReactorLevel *
           Math.pow(1.1, fusionReactorLevel) * fusionReactorFactor) * productionSpeed;
       fusionReactorEnergyProduction = (int) Math.round(Math.floor(fusionReactorBaseEnergyProduction *
           fusionReactorLevel * Math.pow(1.05 + 0.01 * energyTechnologyLevel, fusionReactorLevel)) *
@@ -750,25 +750,25 @@ class BodyServiceImpl implements BodyServiceInternal {
     int deuteriumSynthesizerCurrentEnergyUsage = (int) (deuteriumSynthesizerMaxEnergyUsage * efficiency);
 
     // Calculate bonus from plasma technology if enabled
-    int plasmaMetalBonus = 0;
-    int plasmaCrystalBonus = 0;
-    int plasmaDeuteriumBonus = 0;
+    long plasmaMetalBonus = 0;
+    long plasmaCrystalBonus = 0;
+    long plasmaDeuteriumBonus = 0;
     if (plasmaTechnologyAffectsProduction) {
       var plasmaTechLevel = body.getUser().getTechnologyLevel(TechnologyKind.PLASMA_TECHNOLOGY);
-      plasmaMetalBonus = (int) Math.round(metalMineProduction * plasmaTechLevel * 0.01 * efficiency);
-      plasmaCrystalBonus = (int) Math.round(crystalMineProduction * plasmaTechLevel * 0.0066 * efficiency);
-      plasmaDeuteriumBonus = (int) Math.round(deuteriumSynthesizerProduction * plasmaTechLevel * 0.0033 * efficiency);
+      plasmaMetalBonus = Math.round(metalMineProduction * plasmaTechLevel * 0.01 * efficiency);
+      plasmaCrystalBonus = Math.round(crystalMineProduction * plasmaTechLevel * 0.0066 * efficiency);
+      plasmaDeuteriumBonus = Math.round(deuteriumSynthesizerProduction * plasmaTechLevel * 0.0033 * efficiency);
     }
 
     // Mines production with efficiency.
-    metalMineProduction = (int) (metalMineProduction * efficiency);
-    crystalMineProduction = (int) (crystalMineProduction * efficiency);
-    deuteriumSynthesizerProduction = (int) (deuteriumSynthesizerProduction * efficiency);
+    metalMineProduction = (long) (metalMineProduction * efficiency);
+    crystalMineProduction = (long) (crystalMineProduction * efficiency);
+    deuteriumSynthesizerProduction = (long) (deuteriumSynthesizerProduction * efficiency);
 
     // Final production.
-    int metalProduction = metalBaseProduction + metalMineProduction + plasmaMetalBonus;
-    int crystalProduction = crystalBaseProduction + crystalMineProduction + plasmaCrystalBonus;
-    int deuteriumProduction = deuteriumBaseProduction + deuteriumSynthesizerProduction + plasmaDeuteriumBonus - fusionReactorDeuteriumUsage;
+    long metalProduction = metalBaseProduction + metalMineProduction + plasmaMetalBonus;
+    long crystalProduction = crystalBaseProduction + crystalMineProduction + plasmaCrystalBonus;
+    long deuteriumProduction = deuteriumBaseProduction + deuteriumSynthesizerProduction + plasmaDeuteriumBonus - fusionReactorDeuteriumUsage;
 
     return new ProductionDto(efficiency, metalBaseProduction, crystalBaseProduction, deuteriumBaseProduction,
         metalMineProduction, metalMineCurrentEnergyUsage, metalMineMaxEnergyUsage, crystalMineProduction,

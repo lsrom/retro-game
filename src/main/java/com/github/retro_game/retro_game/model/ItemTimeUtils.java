@@ -113,7 +113,7 @@ public class ItemTimeUtils {
     return Math.max(Math.max(m, c), d);
   }
 
-  private static Long calcAccumulationDuration(double resources, int production) {
+  private static Long calcAccumulationDuration(double resources, long production) {
     assert production >= 0;
     if (resources > 0 && production == 0) {
       return null;
