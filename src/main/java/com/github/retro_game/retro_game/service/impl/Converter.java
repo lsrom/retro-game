@@ -317,7 +317,7 @@ public class Converter {
     ResourcesDto resourcesDto = entity.getResources() != null ? Converter.convert(entity.getResources()) : null;
     return new OtherReportDto(entity.getId(), entity.getAt(), Converter.convert(entity.getKind()),
         Converter.convert(entity.getStartCoordinates()), Converter.convert(entity.getTargetCoordinates()), resourcesDto,
-        entity.getParam());
+        entity.getParam(), entity.getText());
   }
 
   private static OtherReportKindDto convert(OtherReportKind entity) {
@@ -332,6 +332,8 @@ public class Converter {
         return OtherReportKindDto.RETURN;
       case MISSILE_ATTACK:
         return OtherReportKindDto.MISSILE_ATTACK;
+      case AUTOMATIC_TRANSFER_FAILED:
+        return OtherReportKindDto.AUTOMATIC_TRANSFER_FAILED;
       default:
         throw new IllegalArgumentException("Illegal value for OtherReportKind");
     }

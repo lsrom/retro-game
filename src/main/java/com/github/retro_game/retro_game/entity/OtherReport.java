@@ -62,6 +62,9 @@ public class OtherReport {
   @Column(name = "param", updatable = false)
   private Double param;
 
+  @Column(name = "text", updatable = false)
+  private String text;
+
   public long getId() {
     return id;
   }
@@ -128,5 +131,13 @@ public class OtherReport {
 
   public void setParam(Double param) {
     this.param = param;
+  }
+
+  public String getText() {
+    return text;
+  }
+
+  public void setText(String text) {
+    this.text = text;
   }
 }

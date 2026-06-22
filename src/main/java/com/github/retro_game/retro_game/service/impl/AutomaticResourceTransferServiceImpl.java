@@ -3,6 +3,7 @@ package com.github.retro_game.retro_game.service.impl;
 import com.github.retro_game.retro_game.controller.form.AutomaticResourceTransferForm;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.repository.AutomaticResourceTransferRepository;
 import com.github.retro_game.retro_game.repository.BodyRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
@@ -32,15 +33,24 @@ class AutomaticResourceTransferServiceImpl implements AutomaticResourceTransferS
   private final AutomaticResourceTransferRepository transferRepository;
   private final BodyRepository bodyRepository;
   private final FlightService flightService;
+  private final BodyServiceInternal bodyServiceInternal;
+  private final ReportServiceInternal reportServiceInternal;
+  private final UnitService unitService;
   private final TransactionTemplate transactionTemplate;
 
   AutomaticResourceTransferServiceImpl(AutomaticResourceTransferRepository transferRepository,
                                        BodyRepository bodyRepository,
                                        FlightService flightService,
+                                       BodyServiceInternal bodyServiceInternal,
+                                       ReportServiceInternal reportServiceInternal,
+                                       UnitService unitService,
                                        PlatformTransactionManager transactionManager) {
     this.transferRepository = transferRepository;
     this.bodyRepository = bodyRepository;
     this.flightService = flightService;
+    this.bodyServiceInternal = bodyServiceInternal;
+    this.reportServiceInternal = reportServiceInternal;
+    this.unitService = unitService;
 
     var transactionDefinition = new DefaultTransactionDefinition();
     transactionDefinition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -161,6 +171,30 @@ class AutomaticResourceTransferServiceImpl implements AutomaticResourceTransferS
       return null;
     }
 
+    Body sourceBody = bodyServiceInternal.getUpdated(transfer.getSourceBody().getId());
+    User user = sourceBody.getUser();
+    UnitKind shipKind = transfer.getShipKind();
+    int availableShips = sourceBody.getUnitsCount(shipKind);
+    int missingShips = transfer.getShipCount() - availableShips;
+    if (missingShips > 0) {
+      String text = String.format("Missing ships: %d %s available, %d required, %d missing.",
+          availableShips, shipKind, transfer.getShipCount(), missingShips);
+      createFailureReport(transfer, now, text);
+      transfer.setLastError(NotEnoughUnitsException.class.getSimpleName());
+      return null;
+    }
+
+    double requiredFuel = calculateConsumption(user, sourceBody.getCoordinates(), transfer.getTargetBody().getCoordinates(),
+        transfer.getSpeedFactor(), shipKind, transfer.getShipCount());
+    double availableFuel = Math.floor(sourceBody.getResources().getDeuterium());
+    if (availableFuel < requiredFuel) {
+      String text = String.format("Not enough fuel: %.0f deuterium available, %.0f required, %.0f missing.",
+          availableFuel, requiredFuel, requiredFuel - availableFuel);
+      createFailureReport(transfer, now, text);
+      transfer.setLastError(NotEnoughDeuteriumException.class.getSimpleName());
+      return null;
+    }
+
     return new SendFleetParamsDto(
         transfer.getSourceBody().getId(),
         Map.of(Converter.convert(transfer.getShipKind()), transfer.getShipCount()),
@@ -232,6 +266,41 @@ class AutomaticResourceTransferServiceImpl implements AutomaticResourceTransferS
       }
     }
     return true;
+  }
+
+  private void createFailureReport(AutomaticResourceTransfer transfer, Date at, String text) {
+    reportServiceInternal.createAutomaticTransferFailedReport(
+        transfer.getUser(),
+        at,
+        transfer.getSourceBody().getCoordinates(),
+        transfer.getTargetBody().getCoordinates(),
+        text);
+  }
+
+  private double calculateConsumption(User user, Coordinates sourceCoordinates, Coordinates targetCoordinates,
+                                      int factor, UnitKind shipKind, int shipCount) {
+    int maxSpeed = unitService.getSpeed(shipKind, user);
+    int distance = calculateDistance(sourceCoordinates, targetCoordinates);
+    double f = 0.1 * factor;
+    var consumption = CatalogItem.of(shipKind.name()).getConsumption(user);
+    double x = f * Math.sqrt((double) maxSpeed / unitService.getSpeed(shipKind, user)) + 1.0;
+    return 1 + Math.round(shipCount * ((double) consumption * distance / 35000.0) * x * x);
+  }
+
+  private int calculateDistance(Coordinates a, Coordinates b) {
+    if (a.getGalaxy() != b.getGalaxy()) {
+      int diff = Math.abs(a.getGalaxy() - b.getGalaxy());
+      return 20000 * Math.min(diff, 5 - diff);
+    }
+    if (a.getSystem() != b.getSystem()) {
+      int diff = Math.abs(a.getSystem() - b.getSystem());
+      return 95 * Math.min(diff, 500 - diff) + 2700;
+    }
+    if (a.getPosition() != b.getPosition()) {
+      int diff = Math.abs(a.getPosition() - b.getPosition());
+      return 5 * diff + 1000;
+    }
+    return 5;
   }
 
   private int getRunHour(String runTime) {

@@ -29,4 +29,7 @@ public interface ReportServiceInternal extends ReportService {
   void createReturnReport(Flight flight);
 
   void createMissileAttackReport(Flight flight, int totalDestroyed);
+
+  void createAutomaticTransferFailedReport(User user, Date at, Coordinates startCoordinates,
+                                           Coordinates targetCoordinates, String text);
 }

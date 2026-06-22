@@ -12,9 +12,11 @@ public class OtherReportDto {
   private final CoordinatesDto targetCoordinates;
   private final ResourcesDto resources;
   private final Double param;
+  private final String text;
 
   public OtherReportDto(long id, Date at, OtherReportKindDto kind, CoordinatesDto startCoordinates,
-                        CoordinatesDto targetCoordinates, @Nullable ResourcesDto resources, @Nullable Double param) {
+                        CoordinatesDto targetCoordinates, @Nullable ResourcesDto resources, @Nullable Double param,
+                        @Nullable String text) {
     this.id = id;
     this.at = at;
     this.kind = kind;
@@ -22,6 +24,7 @@ public class OtherReportDto {
     this.targetCoordinates = targetCoordinates;
     this.resources = resources;
     this.param = param;
+    this.text = text;
   }
 
   public long getId() {
@@ -50,5 +53,9 @@ public class OtherReportDto {
 
   public Double getParam() {
     return param;
+  }
+
+  public String getText() {
+    return text;
   }
 }

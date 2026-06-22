@@ -40,3 +40,6 @@ begin
     alter table automatic_resource_transfers alter column interval_minutes drop not null;
   end if;
 end $$;
+
+alter table other_reports
+  add column if not exists text text;

@@ -64,5 +64,9 @@ class AutomaticResourceTransferSchemaInitializer {
           end if;
         end $$;
         """);
+    jdbcTemplate.execute("""
+        alter table other_reports
+          add column if not exists text text
+        """);
   }
 }

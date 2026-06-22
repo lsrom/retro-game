@@ -6,4 +6,5 @@ public enum OtherReportKind {
   HOSTILE_ESPIONAGE,
   RETURN,
   MISSILE_ATTACK,
+  AUTOMATIC_TRANSFER_FAILED,
 }

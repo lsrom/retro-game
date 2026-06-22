@@ -699,6 +699,21 @@ class ReportServiceImpl implements ReportServiceInternal {
   }
 
   @Override
+  @CacheEvict(cacheNames = "reportsSummaries", key = "#user.id")
+  public void createAutomaticTransferFailedReport(User user, Date at, Coordinates startCoordinates,
+                                                  Coordinates targetCoordinates, String text) {
+    OtherReport report = new OtherReport();
+    report.setUser(user);
+    report.setDeleted(false);
+    report.setAt(at);
+    report.setKind(OtherReportKind.AUTOMATIC_TRANSFER_FAILED);
+    report.setStartCoordinates(startCoordinates);
+    report.setTargetCoordinates(targetCoordinates);
+    report.setText(text);
+    otherReportRepository.save(report);
+  }
+
+  @Override
   @Transactional
   @CacheEvict(cacheNames = "reportsSummaries",
       key = "T(com.github.retro_game.retro_game.security.CustomUser).currentUserId")

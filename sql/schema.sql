@@ -461,7 +461,8 @@ create table other_reports (
   metal double precision check (metal >= 0),
   crystal double precision check (crystal >= 0),
   deuterium double precision check (deuterium >= 0),
-  param double precision
+  param double precision,
+  text text
 );
 
 create index other_reports_user_id_deleted_at_idx

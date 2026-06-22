@@ -72,6 +72,10 @@
                 th:utext="#{otherReportMissileAttackFormat(${start}, ${target}, ${numUnitsHtml})}"
                 th:remove="tag"></div>
           </th:block>
+          <th:block th:case="${T(com.github.retro_game.retro_game.dto.OtherReportKindDto).AUTOMATIC_TRANSFER_FAILED}">
+            <div th:utext="#{otherReportAutomaticTransferFailedFormat(${start}, ${target})}" th:remove="tag"></div>
+            <div th:text="${report.text}" th:remove="tag"></div>
+          </th:block>
         </td>
       </tr>
       <tr>
