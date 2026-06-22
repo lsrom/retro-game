@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.function.Supplier;
 import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,16 +24,25 @@ public class AllianceDepotController {
   private final AutomaticResourceTransferService automaticResourceTransferService;
   private final BodyService bodyService;
   private final UserService userService;
+  private final boolean allianceDepotAutoTransfer;
 
   public AllianceDepotController(AutomaticResourceTransferService automaticResourceTransferService,
                                  BodyService bodyService,
-                                 UserService userService) {
+                                 UserService userService,
+                                 @Value("${retro-game.alliance-depot-auto-transfer:false}")
+                                 boolean allianceDepotAutoTransfer) {
     this.automaticResourceTransferService = automaticResourceTransferService;
     this.bodyService = bodyService;
     this.userService = userService;
+    this.allianceDepotAutoTransfer = allianceDepotAutoTransfer;
   }
 
   private String perform(long bodyId, Supplier<Integer> action) {
+    if (!allianceDepotAutoTransfer) {
+      return "redirect:/alliance-depot/transfers?body=" + bodyId + "&error=" +
+          AutomaticResourceTransferError.FEATURE_DISABLED;
+    }
+
     AutomaticResourceTransferError error = null;
     try {
       action.get();
@@ -66,6 +76,18 @@ public class AllianceDepotController {
                           @RequestParam(required = false) AutomaticResourceTransferError error,
                           Model model) {
     UserContextDto ctx = userService.getCurrentUserContext(bodyId);
+    if (!allianceDepotAutoTransfer) {
+      model.addAttribute("bodyId", bodyId);
+      model.addAttribute("ctx", ctx);
+      model.addAttribute("error", AutomaticResourceTransferError.FEATURE_DISABLED);
+      model.addAttribute("transfers", List.of());
+      model.addAttribute("maxTransfers", 0);
+      model.addAttribute("transferLimitReached", true);
+      model.addAttribute("bodies", List.of());
+      model.addAttribute("cargoKinds", List.of());
+      return "alliance-depot-transfers";
+    }
+
     int allianceDepotLevel = ctx.curBody().buildings().getOrDefault(BuildingKindDto.ALLIANCE_DEPOT, 0);
     int maxTransfers = allianceDepotLevel / 3;
     var transfers = automaticResourceTransferService.getTransfers(bodyId);
@@ -115,6 +137,7 @@ public class AllianceDepotController {
     BODY_DOES_NOT_EXIST,
     CONCURRENCY,
     EMPTY_RESOURCES,
+    FEATURE_DISABLED,
     TRANSFER_LIMIT_REACHED,
     TRANSFER_DOES_NOT_EXIST,
     WRONG_SHIP,

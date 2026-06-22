@@ -87,7 +87,7 @@
           <label for="targetBody" th:text="#{target}">Target</label>
         </td>
         <td>
-          <select id="targetBody" name="targetBody" required>
+          <select id="targetBody" class="automatic-transfer-select" name="targetBody" required>
             <option th:each="body : ${bodies}" th:if="${body.id != bodyId}" th:with="c=${body.coordinates}"
                     th:value="${body.id}" th:text="${body.name} + ' [' + ${c} + ']'"></option>
           </select>
@@ -98,7 +98,7 @@
           <label for="shipKind" th:text="#{ship}">Ship</label>
         </td>
         <td>
-          <select id="shipKind" name="shipKind" required>
+          <select id="shipKind" class="automatic-transfer-select" name="shipKind" required>
             <option th:each="kind : ${cargoKinds}" th:value="${kind}"
                     th:text="#{${'items.' + kind + '.name'}}"></option>
           </select>
@@ -144,7 +144,7 @@
           <label for="speedFactor" th:text="#{speedFactor}">Speed factor</label>
         </td>
         <td>
-          <select id="speedFactor" name="speedFactor">
+          <select id="speedFactor" class="automatic-transfer-select" name="speedFactor">
             <option value="10">100%</option>
             <option value="9">90%</option>
             <option value="8">80%</option>

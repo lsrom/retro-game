@@ -35,6 +35,13 @@
             <strong th:text="#{goToJumpGate}">Go to Jump Gate</strong>
           </a>
         </p>
+        <p th:if="${kind == 'ALLIANCE_DEPOT' && details.currentLevel > 0 && @environment.getProperty('retro-game.alliance-depot-auto-transfer') == 'true'}">
+          <span th:text="#{automaticResourceTransfersDescription}">Schedule daily cargo transfers between your planets.</span>
+          <br>
+          <a th:href="@{/alliance-depot/transfers(body=${bodyId})}">
+            <strong th:text="#{automaticResourceTransfers}">Automatic resource transfers</strong>
+          </a>
+        </p>
       </td>
     </tr>
     <tr>
