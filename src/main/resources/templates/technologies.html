@@ -91,7 +91,7 @@
         </h2>
         <p th:text="#{${'items.' + technology.kind + '.description'}}"></p>
         <th:block
-            th:with="extraDescription=${@technologyDescriptionService.getExtraDescription(technology.kind)}">
+            th:with="extraDescription=${@technologyDescriptionService.getExtraDescription(technology.kind, technology.currentLevel)}">
           <p th:if="${extraDescription != null}" th:text="${extraDescription}"></p>
         </th:block>
         <div class="item-info-bottom">

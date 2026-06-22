@@ -4,5 +4,5 @@ import org.springframework.lang.Nullable;
 
 public interface TechnologyDescriptionService {
   @Nullable
-  String getExtraDescription(String kind);
+  String getExtraDescription(String kind, int currentLevel);
 }

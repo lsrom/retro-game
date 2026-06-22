@@ -49,6 +49,8 @@
       <td th:text="#{capacity}">Capacity</td>
       <td>
         <span th:text="${#numbers.formatInteger(details.capacity, 1, 'DEFAULT')}"></span>
+        <span th:if="${details.capacityBonus > 0}"
+              th:text="${' (+' + #numbers.formatInteger(details.capacityBonus, 1, 'DEFAULT') + ')'}"></span>
       </td>
     </tr>
     <tr th:if="${details.consumption != 0}">

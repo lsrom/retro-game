@@ -82,8 +82,14 @@ $(function () {
       for (var i = 0; i < resourceNames.length; i++) {
         var name = resourceNames[i];
         var capacity = resourceCapacity[name];
-        var current = resourceBase[name] + resourceProduction[name] * elapsedHours;
-        current = Math.max(0, Math.min(current, capacity));
+        var base = resourceBase[name];
+        var produced = resourceProduction[name] * elapsedHours;
+        var current;
+        if (produced > 0) {
+          current = base + Math.min(Math.max(0, capacity - base), produced);
+        } else {
+          current = Math.max(0, base + produced);
+        }
         resourceBar.attr('data-current-resources-' + name, current);
         var cell = $('[data-resource-value="' + name + '"]');
         cell.text(prettyNumber(Math.floor(current)));

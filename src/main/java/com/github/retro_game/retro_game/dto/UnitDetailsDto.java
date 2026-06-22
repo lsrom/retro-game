@@ -7,6 +7,7 @@ public class UnitDetailsDto {
   private final double shield;
   private final double armor;
   private final int capacity;
+  private final int capacityBonus;
   private final int consumption;
   private final int speed;
   private final double baseWeapons;
@@ -21,6 +22,7 @@ public class UnitDetailsDto {
           double shield,
           double armor,
           int capacity,
+          int capacityBonus,
           int consumption,
           int speed,
           double baseWeapons,
@@ -34,6 +36,7 @@ public class UnitDetailsDto {
     this.shield = shield;
     this.armor = armor;
     this.capacity = capacity;
+    this.capacityBonus = capacityBonus;
     this.consumption = consumption;
     this.speed = speed;
     this.baseWeapons = baseWeapons;
@@ -58,6 +61,10 @@ public class UnitDetailsDto {
 
   public int getCapacity() {
     return capacity;
+  }
+
+  public int getCapacityBonus() {
+    return capacityBonus;
   }
 
   public int getConsumption() {
