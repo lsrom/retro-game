@@ -18,6 +18,7 @@
      inline @environment lookup: Thymeleaf 3.1 evaluates this element's
      attributes in a restricted context that forbids bean access. -->
 <body th:data-production-speed="${productionSpeed}"
+      th:data-server-time="${serverTimeEpochSeconds}"
       th:data-fleet-speed="${fleetSpeed}"
       th:data-metal-mine-base-production="${metalMineBaseProduction}"
       th:data-crystal-mine-base-production="${crystalMineBaseProduction}"

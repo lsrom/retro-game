@@ -48,8 +48,17 @@ $(function () {
 
   var timers = $('[data-timer]');
   if (timers.length > 0) {
+    var serverTime = +$(document.body).attr('data-server-time');
+    var loadedAt = Date.now();
+    var getNow = isFinite(serverTime)
+      ? function () {
+        return serverTime + Math.floor((Date.now() - loadedAt) / 1000);
+      }
+      : function () {
+        return Date.now() / 1000 | 0;
+      };
     var updateTimers = function () {
-      var now = new Date().getTime() / 1000 | 0;
+      var now = getNow();
       for (var i = 0; i < timers.length; i++) {
         var timer = timers[i];
         var t = +$(timer).attr('data-timer');

@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -45,5 +46,6 @@ public class GameConfigModelAdvice {
   @ModelAttribute
   public void addLayoutConfig(Model model) {
     model.addAllAttributes(layoutConfig);
+    model.addAttribute("serverTimeEpochSeconds", Instant.now().getEpochSecond());
   }
 }
