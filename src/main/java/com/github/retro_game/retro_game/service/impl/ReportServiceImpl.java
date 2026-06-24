@@ -185,6 +185,28 @@ class ReportServiceImpl implements ReportServiceInternal {
       throw new ReportDoesNotExistException();
     }
 
+    return getRepeatFleet(userId, report);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public RepeatFleetDto getRepeatFleet(long bodyId, CoordinatesDto coordinates) {
+    long userId = CustomUser.getCurrentUserId();
+    var user = userRepository.getOne(userId);
+    var coords = Converter.convert(coordinates);
+    var reports = simplifiedCombatReportRepository
+        .findByUserAndDeletedIsFalseAndResultAndCoordinates_GalaxyAndCoordinates_SystemAndCoordinates_PositionAndCoordinates_KindAndCombatReportIdIsNotNullOrderByAtDesc(
+            user, CombatResult.WIN, coords.getGalaxy(), coords.getSystem(), coords.getPosition(), coords.getKind());
+    for (var report : reports) {
+      try {
+        return getRepeatFleet(userId, report);
+      } catch (ReportDoesNotExistException ignored) {
+      }
+    }
+    throw new ReportDoesNotExistException();
+  }
+
+  private RepeatFleetDto getRepeatFleet(long userId, SimplifiedCombatReport report) {
     var combatReport =
         combatReportRepository.findById(report.getCombatReportId()).orElseThrow(ReportDoesNotExistException::new);
     var data = CombatReportSerialization.deserialize(combatReport.getData());

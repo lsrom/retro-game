@@ -7,9 +7,14 @@ import com.github.retro_game.retro_game.dto.ActiveStateDto;
 import com.github.retro_game.retro_game.dto.GalaxySlotDto;
 import com.github.retro_game.retro_game.dto.NoobProtectionRankDto;
 import com.github.retro_game.retro_game.dto.StatisticsSummaryDto;
+import com.github.retro_game.retro_game.entity.CombatResult;
+import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.GalaxySlot;
 import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.entity.User;
+import com.github.retro_game.retro_game.repository.CombatReportRepository;
 import com.github.retro_game.retro_game.repository.GalaxySlotRepository;
+import com.github.retro_game.retro_game.repository.SimplifiedCombatReportRepository;
 import com.github.retro_game.retro_game.repository.UserRepository;
 import com.github.retro_game.retro_game.security.CustomUser;
 import com.github.retro_game.retro_game.service.ActivityService;
@@ -21,14 +26,21 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 class GalaxyServiceImpl implements GalaxyService {
   private static final Logger logger = LoggerFactory.getLogger(GalaxyServiceImpl.class);
   private final GalaxySlotRepository galaxySlotRepository;
+  private final CombatReportRepository combatReportRepository;
+  private final SimplifiedCombatReportRepository simplifiedCombatReportRepository;
   private final AllianceTagCache allianceTagCache;
   private final StatisticsCache statisticsCache;
   private final UserAllianceCache userAllianceCache;
@@ -40,8 +52,11 @@ class GalaxyServiceImpl implements GalaxyService {
 
   public GalaxyServiceImpl(GalaxySlotRepository galaxySlotRepository, AllianceTagCache allianceTagCache,
                            StatisticsCache statisticsCache, UserAllianceCache userAllianceCache,
-                           UserRepository userRepository) {
+                           UserRepository userRepository, CombatReportRepository combatReportRepository,
+                           SimplifiedCombatReportRepository simplifiedCombatReportRepository) {
     this.galaxySlotRepository = galaxySlotRepository;
+    this.combatReportRepository = combatReportRepository;
+    this.simplifiedCombatReportRepository = simplifiedCombatReportRepository;
     this.allianceTagCache = allianceTagCache;
     this.statisticsCache = statisticsCache;
     this.userAllianceCache = userAllianceCache;
@@ -77,6 +92,7 @@ class GalaxyServiceImpl implements GalaxyService {
     long now = Instant.now().getEpochSecond();
 
     List<GalaxySlot> slots = galaxySlotRepository.findAllByGalaxyAndSystem(galaxy, system);
+    var attackAgainPositions = getAttackAgainPositions(user, galaxy, system);
 
     // Get the activities of bodies.
     List<Long> ids = new ArrayList<>();
@@ -130,14 +146,35 @@ class GalaxyServiceImpl implements GalaxyService {
       String allianceTag = allianceId == null ? null : allianceTagCache.getTag(allianceId);
 
       boolean own = slot.getUserId() == userId;
+      boolean attackAgainAvailable = attackAgainPositions.contains(slot.getPosition());
 
       GalaxySlotDto s = new GalaxySlotDto(slot.getUserId(), slot.getUserName(), rank, onVacation, banned,
           noobProtectionRank, slot.getPlanetName(), Converter.convert(slot.getPlanetType()), slot.getPlanetImage(),
           slot.getMoonName(), slot.getMoonImage(), activity, debrisMetal, debrisCrystal, neededRecyclers, allianceId,
-          allianceTag, own, shortInactive, longInactive);
+          allianceTag, own, shortInactive, longInactive, attackAgainAvailable);
       ret.put(slot.getPosition(), s);
     }
     return ret;
+  }
+
+  private HashSet<Integer> getAttackAgainPositions(User user, int galaxy, int system) {
+    var reports = simplifiedCombatReportRepository
+        .findByUserAndDeletedIsFalseAndResultAndCoordinates_GalaxyAndCoordinates_SystemAndCoordinates_KindAndCombatReportIdIsNotNullOrderByAtDesc(
+            user, CombatResult.WIN, galaxy, system, CoordinatesKind.PLANET);
+    var combatReportIds = reports.stream()
+        .map(report -> report.getCombatReportId())
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet());
+    var combatReports = combatReportRepository.findAllById(combatReportIds).stream()
+        .collect(Collectors.toMap(report -> report.getId(), Function.identity()));
+    var positions = new HashSet<Integer>();
+    for (var report : reports) {
+      var combatReport = combatReports.get(report.getCombatReportId());
+      if (combatReport != null && Arrays.stream(combatReport.getAttackers()).anyMatch(id -> id == user.getId())) {
+        positions.add(report.getCoordinates().getPosition());
+      }
+    }
+    return positions;
   }
 
   @Override

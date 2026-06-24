@@ -9,5 +9,6 @@ public record GalaxySlotDto(long userId, String userName, int rank, boolean onVa
                             int activity,
                             long debrisMetal, long debrisCrystal, int neededRecyclers,
                             @Nullable Long allianceId, @Nullable String allianceTag,
-                            boolean own, boolean shortInactive, boolean longInactive) {
+                            boolean own, boolean shortInactive, boolean longInactive,
+                            boolean attackAgainAvailable) {
 }

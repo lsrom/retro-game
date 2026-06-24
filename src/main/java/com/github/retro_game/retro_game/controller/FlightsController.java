@@ -282,4 +282,47 @@ public class FlightsController {
     }
     return response;
   }
+
+  @PostMapping("/flights/attack-again")
+  @ResponseBody
+  @PreAuthorize("hasPermission(#request.body, 'ACCESS')")
+  @Activity(bodies = "#request.body")
+  public AttackAgainResponse attackAgain(@RequestBody @Valid AttackAgainRequest request) {
+    AttackAgainResponse response = new AttackAgainResponse();
+    try {
+      CoordinatesDto coordinates = new CoordinatesDto(request.getGalaxy(), request.getSystem(), request.getPosition(),
+          request.getKind());
+      var fleet = reportService.getRepeatFleet(request.getBody(), coordinates);
+      var params = new SendFleetParamsDto(request.getBody(), fleet.units(), MissionDto.ATTACK, null,
+          fleet.coordinates(), 10, new ResourcesDto(0, 0, 0), null, true);
+      flightService.send(params);
+      response.setSuccess(true);
+      response.setUnits(fleet.units());
+    } catch (NoMoreFreeSlotsException e) {
+      response.setError("NO_MORE_FREE_SLOTS");
+    } catch (NotEnoughDeuteriumException e) {
+      response.setError("NOT_ENOUGH_DEUTERIUM");
+    } catch (NotEnoughCapacityException e) {
+      response.setError("NOT_ENOUGH_CAPACITY");
+    } catch (NoUnitSelectedException | NotEnoughUnitsException e) {
+      response.setError("NOT_ENOUGH_UNITS");
+    } catch (ReportDoesNotExistException e) {
+      response.setError("REPORT_DOES_NOT_EXIST");
+    } catch (BodyDoesNotExistException e) {
+      response.setError("BODY_DOES_NOT_EXIST");
+    } catch (NoobProtectionException e) {
+      response.setError("NOOB_PROTECTION");
+    } catch (TargetOnVacationException e) {
+      response.setError("TARGET_ON_VACATION");
+    } catch (WrongTargetException e) {
+      response.setError("WRONG_TARGET");
+    } catch (WrongTargetKindException e) {
+      response.setError("WRONG_TARGET_KIND");
+    } catch (WrongTargetUserException e) {
+      response.setError("WRONG_TARGET_USER");
+    } catch (ConcurrencyFailureException e) {
+      response.setError("CONCURRENCY");
+    }
+    return response;
+  }
 }

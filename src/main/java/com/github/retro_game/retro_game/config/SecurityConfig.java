@@ -73,6 +73,7 @@ public class SecurityConfig {
             .anyRequest().authenticated())
         .csrf(csrf -> csrf
             .ignoringRequestMatchers(
+                "/flights/attack-again",
                 "/flights/send-probes",
                 "/messages/private/delete",
                 "/messages/private/delete-all",

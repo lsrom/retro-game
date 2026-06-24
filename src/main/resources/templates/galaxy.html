@@ -123,6 +123,10 @@
                                  slot.noobProtectionRank != T(com.github.retro_game.retro_game.dto.NoobProtectionRankDto).EQUAL}">
             M
           </button>
+          <button data-attack-again th:data-galaxy="${galaxy}" th:data-system="${system}" th:data-position="${i}"
+                  data-kind="PLANET" th:title="#{attackAgain}" th:disabled="${!slot.attackAgainAvailable}">
+            A
+          </button>
         </td>
       </th:block>
       <th:block th:unless="${slot}">

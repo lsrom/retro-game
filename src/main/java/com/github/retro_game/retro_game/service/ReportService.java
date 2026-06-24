@@ -16,6 +16,8 @@ public interface ReportService {
 
   RepeatFleetDto getRepeatFleet(long bodyId, long reportId);
 
+  RepeatFleetDto getRepeatFleet(long bodyId, CoordinatesDto coordinates);
+
   void deleteSimplifiedCombatReport(long bodyId, long reportId);
 
   void deleteAllSimplifiedCombatReports(long bodyId);
