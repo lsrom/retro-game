@@ -1,4 +1,4 @@
-FROM maven:3.9-eclipse-temurin-21 AS builder
+FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /retro-game-src
 COPY . .
 RUN \
@@ -6,7 +6,8 @@ RUN \
   apt-get update && \
   apt-get install -y --no-install-recommends \
     build-essential \
-    cmake && \
+    cmake \
+    maven && \
   rm -rf /var/lib/apt/lists/* && \
   # Build the battle engine.
   cmake -B build -DCMAKE_BUILD_TYPE=Release battle-engine && \
