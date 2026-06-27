@@ -25,12 +25,14 @@ import com.github.retro_game.retro_game.service.impl.ReportServiceInternal;
 import com.github.retro_game.retro_game.service.impl.UnitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.Date;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -41,31 +43,19 @@ public class ExpeditionMissionHandler {
   private static final String PIRATE_USER_NAME = "Pirates";
   private static final String ALIEN_USER_NAME = "Aliens";
   private static final Logger logger = LoggerFactory.getLogger(ExpeditionMissionHandler.class);
-  private static final String NOTHING_REPORT_TEXT = "Expedition reports nothing of interest happened during the " +
-      "mission. Fleet returned safely without any results.";
-  private static final String ONE_HOUR_DELAY_REPORT_TEXT = "Expedition captain ran into and old friend on a space " +
-      "station and they were drinking the whole night. Because of this, expedition will return later.";
-  private static final String TWO_HOURS_DELAY_REPORT_TEXT = "Expedition encountered malfunction on capital ship " +
-      "engines which caused delay.";
-  private static final String THREE_HOURS_DELAY_REPORT_TEXT = "Terrible epidemic of moribundus spread across the " +
-      "entire expedition fleet, causing massive delay.";
-  private static final String FLEET_LOSS_REPORT_TEXT = "Last thing we heard from expedition fleet was something " +
-      "about taking suspicious alien egg on board. After that, only some screams. The fleet is lost.";
-  private static final String PIRATES_REPORT_TEXT = "Fleet has encountered pirates. Unlike the ones with straw hat " +
-      "flag, they were not friendly.";
-  private static final String ALIENS_REPORT_TEXT = "Fleet has encountered aliens.";
-  private static final String ORE_ASTEROID_REPORT_TEXT = "Expedition fleet found a giant asteroid rich with minerals " +
-      "and they were able to extract them. The fleet is bringing back %d metal and %d crystal.";
-  private static final String GAS_CLOUD_REPORT_TEXT = "Expedition fleet detected extreme amounts of gas molecules " +
-      "and was able to extract %d deuterium.";
-  private static final String SPECTACULAR_SUPERNOVA_REPORT_TEXT = "Fleet brought back stunning pictures of exploding " +
-      "supernova. It was all they could talk about and they didn't manage to get anything else done.";
-  private static final String WARP_WINDOW_REPORT_TEXT = "Expedition found warp singularity in interstellar space and " +
-      "used it to get back sooner.";
-  private static final String RESCUE_SHIPS_REPORT_TEXT = "Expedition fleet discovered abandoned ships floating in " +
-      "space. Fleet engineers were able to repair some of them and they were added to the fleet. Found ships: %s.";
-  private static final String RESCUE_FLEET_REPORT_TEXT = "Long range sensors revealed dead fleet floating in space. " +
-      "Upon careful inspection, some ships were repaired and brought back. Found ships: %s.";
+  private static final String NOTHING_REPORT_KEY = "otherReportExpedition.nothing";
+  private static final String ONE_HOUR_DELAY_REPORT_KEY = "otherReportExpedition.delay.oneHour";
+  private static final String TWO_HOURS_DELAY_REPORT_KEY = "otherReportExpedition.delay.twoHours";
+  private static final String THREE_HOURS_DELAY_REPORT_KEY = "otherReportExpedition.delay.threeHours";
+  private static final String FLEET_LOSS_REPORT_KEY = "otherReportExpedition.fleetLoss";
+  private static final String PIRATES_REPORT_KEY = "otherReportExpedition.pirates";
+  private static final String ALIENS_REPORT_KEY = "otherReportExpedition.aliens";
+  private static final String ORE_ASTEROID_REPORT_KEY = "otherReportExpedition.oreAsteroid";
+  private static final String GAS_CLOUD_REPORT_KEY = "otherReportExpedition.gasCloud";
+  private static final String SPECTACULAR_SUPERNOVA_REPORT_KEY = "otherReportExpedition.spectacularSupernova";
+  private static final String WARP_WINDOW_REPORT_KEY = "otherReportExpedition.warpWindow";
+  private static final String RESCUE_SHIPS_REPORT_KEY = "otherReportExpedition.rescueShips";
+  private static final String RESCUE_FLEET_REPORT_KEY = "otherReportExpedition.rescueFleet";
 
   private final ActivityService activityService;
   private final BattleEngine battleEngine;
@@ -73,6 +63,7 @@ public class ExpeditionMissionHandler {
   private final CombatReportServiceInternal combatReportServiceInternal;
   private final EventScheduler eventScheduler;
   private final FlightRepository flightRepository;
+  private final MessageSource messageSource;
   private final MissionHandlerUtils missionHandlerUtils;
   private final ReportServiceInternal reportServiceInternal;
   private final UnitService unitService;
@@ -80,14 +71,16 @@ public class ExpeditionMissionHandler {
   public ExpeditionMissionHandler(ActivityService activityService, BattleEngine battleEngine,
                                   BodyServiceInternal bodyServiceInternal,
                                   CombatReportServiceInternal combatReportServiceInternal, EventScheduler eventScheduler,
-                                  FlightRepository flightRepository, MissionHandlerUtils missionHandlerUtils,
-                                  ReportServiceInternal reportServiceInternal, UnitService unitService) {
+                                  FlightRepository flightRepository, MessageSource messageSource,
+                                  MissionHandlerUtils missionHandlerUtils, ReportServiceInternal reportServiceInternal,
+                                  UnitService unitService) {
     this.activityService = activityService;
     this.battleEngine = battleEngine;
     this.bodyServiceInternal = bodyServiceInternal;
     this.combatReportServiceInternal = combatReportServiceInternal;
     this.eventScheduler = eventScheduler;
     this.flightRepository = flightRepository;
+    this.messageSource = messageSource;
     this.missionHandlerUtils = missionHandlerUtils;
     this.reportServiceInternal = reportServiceInternal;
     this.unitService = unitService;
@@ -116,50 +109,49 @@ public class ExpeditionMissionHandler {
             " holdUntil='{}' eventType={}",
         flight.getId(), flight.getStartUser().getId(), flight.getStartBody().getId(), flight.getTargetCoordinates(),
         flight.getHoldUntil(), eventType);
-    if (eventType == ExpeditionEventType.Nothing) {
-      reportServiceInternal.createExpeditionReport(flight, NOTHING_REPORT_TEXT);
-    } else if (eventType == ExpeditionEventType.Delay) {
-      handleDelay(flight);
-    } else if (eventType == ExpeditionEventType.FleetLoss) {
-      handleFleetLoss(flight);
-      return;
-    } else if (eventType == ExpeditionEventType.Pirates) {
-      if (!handlePirates(flight)) {
+    switch (eventType) {
+      case Nothing -> reportServiceInternal.createExpeditionReport(flight, getMessage(flight, NOTHING_REPORT_KEY));
+      case Delay -> handleDelay(flight);
+      case FleetLoss -> {
+        handleFleetLoss(flight);
         return;
       }
-    } else if (eventType == ExpeditionEventType.Aliens) {
-      if (!handleAliens(flight)) {
+      case Pirates -> {
+        if (!handlePirates(flight)) {
+          return;
+        }
+      }
+      case Aliens -> {
+        if (!handleAliens(flight)) {
+          return;
+        }
+      }
+      case OreAsteroid -> handleOreAsteroid(flight);
+      case GasCloud -> handleGasCloud(flight);
+      case SpectacularSupernova ->
+          reportServiceInternal.createExpeditionReport(flight, getMessage(flight, SPECTACULAR_SUPERNOVA_REPORT_KEY));
+      case WarpWindow -> {
+        handleWarpWindow(flight);
         return;
       }
-    } else if (eventType == ExpeditionEventType.OreAsteroid) {
-      handleOreAsteroid(flight);
-    } else if (eventType == ExpeditionEventType.GasCloud) {
-      handleGasCloud(flight);
-    } else if (eventType == ExpeditionEventType.SpectacularSupernova) {
-      reportServiceInternal.createExpeditionReport(flight, SPECTACULAR_SUPERNOVA_REPORT_TEXT);
-    } else if (eventType == ExpeditionEventType.WarpWindow) {
-      handleWarpWindow(flight);
-      return;
-    } else if (eventType == ExpeditionEventType.RescueShips) {
-      handleRescueShips(flight);
-    } else if (eventType == ExpeditionEventType.RescueFleet) {
-      handleRescueFleet(flight);
+      case RescueShips -> handleRescueShips(flight);
+      case RescueFleet -> handleRescueFleet(flight);
     }
     missionHandlerUtils.scheduleReturn(flight);
   }
 
   private void handleFleetLoss(Flight flight) {
-    reportServiceInternal.createExpeditionReport(flight, FLEET_LOSS_REPORT_TEXT);
+    reportServiceInternal.createExpeditionReport(flight, getMessage(flight, FLEET_LOSS_REPORT_KEY));
     flightRepository.delete(flight);
   }
 
   private boolean handlePirates(Flight flight) {
-    return handleHostileEncounter(flight, PIRATES_REPORT_TEXT,
+    return handleHostileEncounter(flight, getMessage(flight, PIRATES_REPORT_KEY),
         calculateEncounterFleet(flight, PIRATE_USER_ID, PIRATE_USER_NAME, 0.3, 0.4, false));
   }
 
   private boolean handleAliens(Flight flight) {
-    return handleHostileEncounter(flight, ALIENS_REPORT_TEXT,
+    return handleHostileEncounter(flight, getMessage(flight, ALIENS_REPORT_KEY),
         calculateEncounterFleet(flight, ALIEN_USER_ID, ALIEN_USER_NAME, 0.6, 0.3, true));
   }
 
@@ -167,14 +159,14 @@ public class ExpeditionMissionHandler {
     var rescuedFleet = calculateEncounterFleet(flight, 0L, "Rescued ships", 0.05, 0.0, false);
     addRescuedShips(flight, rescuedFleet.combatant().unitGroups());
     reportServiceInternal.createExpeditionReport(flight,
-        String.format(RESCUE_SHIPS_REPORT_TEXT, formatFoundShips(rescuedFleet.combatant().unitGroups())));
+        getMessage(flight, RESCUE_SHIPS_REPORT_KEY, formatFoundShips(flight, rescuedFleet.combatant().unitGroups())));
   }
 
   private void handleRescueFleet(Flight flight) {
     var rescuedFleet = calculateEncounterFleet(flight, 0L, "Rescued fleet", 0.2, 0.0, false);
     addRescuedShips(flight, rescuedFleet.combatant().unitGroups());
     reportServiceInternal.createExpeditionReport(flight,
-        String.format(RESCUE_FLEET_REPORT_TEXT, formatFoundShips(rescuedFleet.combatant().unitGroups())));
+        getMessage(flight, RESCUE_FLEET_REPORT_KEY, formatFoundShips(flight, rescuedFleet.combatant().unitGroups())));
   }
 
   private void handleOreAsteroid(Flight flight) {
@@ -186,7 +178,7 @@ public class ExpeditionMissionHandler {
     Resources resources = flight.getResources();
     resources.setMetal(resources.getMetal() + metal);
     resources.setCrystal(resources.getCrystal() + crystal);
-    reportServiceInternal.createExpeditionReport(flight, String.format(ORE_ASTEROID_REPORT_TEXT, metal, crystal));
+    reportServiceInternal.createExpeditionReport(flight, getMessage(flight, ORE_ASTEROID_REPORT_KEY, metal, crystal));
   }
 
   private void handleGasCloud(Flight flight) {
@@ -195,12 +187,12 @@ public class ExpeditionMissionHandler {
 
     Resources resources = flight.getResources();
     resources.setDeuterium(resources.getDeuterium() + deuterium);
-    reportServiceInternal.createExpeditionReport(flight, String.format(GAS_CLOUD_REPORT_TEXT, deuterium));
+    reportServiceInternal.createExpeditionReport(flight, getMessage(flight, GAS_CLOUD_REPORT_KEY, deuterium));
   }
 
   private void handleWarpWindow(Flight flight) {
     flight.setReturnAt(flight.getHoldUntil());
-    reportServiceInternal.createExpeditionReport(flight, WARP_WINDOW_REPORT_TEXT);
+    reportServiceInternal.createExpeditionReport(flight, getMessage(flight, WARP_WINDOW_REPORT_KEY));
 
     Body body = flight.getStartBody();
     activityService.handleBodyActivity(body.getId(), flight.getReturnAt().toInstant().getEpochSecond());
@@ -319,8 +311,9 @@ public class ExpeditionMissionHandler {
     flight.setUnits(units);
   }
 
-  private static String formatFoundShips(Map<UnitKind, Long> ships) {
+  private String formatFoundShips(Flight flight, Map<UnitKind, Long> ships) {
     StringBuilder builder = new StringBuilder();
+    Locale locale = getLocale(flight);
     for (UnitKind kind : UnitKind.values()) {
       long count = ships.getOrDefault(kind, 0L);
       if (count <= 0) {
@@ -329,21 +322,17 @@ public class ExpeditionMissionHandler {
       if (!builder.isEmpty()) {
         builder.append(", ");
       }
-      builder.append(count).append(' ').append(formatUnitKind(kind));
+      builder.append(count).append(' ').append(messageSource.getMessage("items." + kind + ".name", null, locale));
     }
     return builder.toString();
   }
 
-  private static String formatUnitKind(UnitKind kind) {
-    StringBuilder builder = new StringBuilder();
-    String[] words = kind.name().toLowerCase().split("_");
-    for (String word : words) {
-      if (!builder.isEmpty()) {
-        builder.append(' ');
-      }
-      builder.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
-    }
-    return builder.toString();
+  private String getMessage(Flight flight, String key, Object... args) {
+    return messageSource.getMessage(key, args.length == 0 ? null : args, getLocale(flight));
+  }
+
+  private static Locale getLocale(Flight flight) {
+    return Locale.forLanguageTag(flight.getStartUser().getLanguage());
   }
 
   private static void addCombatShips(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
@@ -431,15 +420,12 @@ public class ExpeditionMissionHandler {
     long returnAt = flight.getReturnAt().toInstant().getEpochSecond() + delayHours * 3600L;
     flight.setReturnAt(Date.from(Instant.ofEpochSecond(returnAt)));
 
-    String reportText;
-    if (delayHours == 1) {
-      reportText = ONE_HOUR_DELAY_REPORT_TEXT;
-    } else if (delayHours == 2) {
-      reportText = TWO_HOURS_DELAY_REPORT_TEXT;
-    } else {
-      reportText = THREE_HOURS_DELAY_REPORT_TEXT;
-    }
-    reportServiceInternal.createExpeditionReport(flight, reportText);
+    String reportKey = switch (delayHours) {
+      case 1 -> ONE_HOUR_DELAY_REPORT_KEY;
+      case 2 -> TWO_HOURS_DELAY_REPORT_KEY;
+      default -> THREE_HOURS_DELAY_REPORT_KEY;
+    };
+    reportServiceInternal.createExpeditionReport(flight, getMessage(flight, reportKey));
   }
 
   private int pickDelayHours() {
