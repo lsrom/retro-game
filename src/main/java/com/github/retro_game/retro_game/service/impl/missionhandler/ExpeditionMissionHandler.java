@@ -56,6 +56,20 @@ public class ExpeditionMissionHandler {
   private static final String WARP_WINDOW_REPORT_KEY = "otherReportExpedition.warpWindow";
   private static final String RESCUE_SHIPS_REPORT_KEY = "otherReportExpedition.rescueShips";
   private static final String RESCUE_FLEET_REPORT_KEY = "otherReportExpedition.rescueFleet";
+  private static final List<UnitKind> EXPEDITION_ENCOUNTER_SHIPS = List.of(
+      UnitKind.ESPIONAGE_PROBE,
+      UnitKind.SMALL_CARGO,
+      UnitKind.LARGE_CARGO,
+      UnitKind.RECYCLER,
+      UnitKind.LITTLE_FIGHTER,
+      UnitKind.HEAVY_FIGHTER,
+      UnitKind.CRUISER,
+      UnitKind.BATTLESHIP,
+      UnitKind.BATTLE_CRUISER,
+      UnitKind.BOMBER,
+      UnitKind.DESTROYER,
+      UnitKind.DEATH_STAR
+  );
 
   private final ActivityService activityService;
   private final BattleEngine battleEngine;
@@ -289,11 +303,14 @@ public class ExpeditionMissionHandler {
         flight.getStartUser().getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY), strongerTechnology);
 
     var units = new EnumMap<UnitKind, Long>(UnitKind.class);
-    addCombatShips(units, flight.getUnits(), sizeFactor);
+    int highestEncounterShipIndex = getHighestEncounterShipIndex(flight.getUnits());
+    if (highestEncounterShipIndex > 0) {
+      addEncounterShips(units, flight.getUnits(), sizeFactor, highestEncounterShipIndex);
+    }
 
     long fleetUnits = flight.getUnits().values().stream().mapToLong(Integer::longValue).sum();
     if (units.isEmpty()) {
-      units.put(UnitKind.LITTLE_FIGHTER, Math.max(1L, Math.round(fleetUnits * sizeFactor)));
+      units.put(UnitKind.ESPIONAGE_PROBE, Math.max(1L, Math.round(fleetUnits * sizeFactor)));
     }
 
     var combatant = new Combatant(userId, flight.getTargetCoordinates(), weaponsTechnology, shieldingTechnology,
@@ -335,15 +352,21 @@ public class ExpeditionMissionHandler {
     return Locale.forLanguageTag(flight.getStartUser().getLanguage());
   }
 
-  private static void addCombatShips(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
-                                     double sizeFactor) {
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.LITTLE_FIGHTER, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.HEAVY_FIGHTER, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.CRUISER, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.BATTLESHIP, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.BATTLE_CRUISER, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.BOMBER, sizeFactor, 1);
-    addScaledHostileUnits(hostileUnits, expeditionUnits, UnitKind.DESTROYER, sizeFactor, 1);
+  private static int getHighestEncounterShipIndex(Map<UnitKind, Integer> expeditionUnits) {
+    int highestIndex = -1;
+    for (int i = 0; i < EXPEDITION_ENCOUNTER_SHIPS.size(); i++) {
+      if (expeditionUnits.getOrDefault(EXPEDITION_ENCOUNTER_SHIPS.get(i), 0) > 0) {
+        highestIndex = i;
+      }
+    }
+    return highestIndex;
+  }
+
+  private static void addEncounterShips(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
+                                        double sizeFactor, int maxExclusiveIndex) {
+    for (int i = 0; i < maxExclusiveIndex; i++) {
+      addScaledHostileUnits(hostileUnits, expeditionUnits, EXPEDITION_ENCOUNTER_SHIPS.get(i), sizeFactor, 1);
+    }
   }
 
   private static void addScaledHostileUnits(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
