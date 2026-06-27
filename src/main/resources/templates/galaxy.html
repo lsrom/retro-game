@@ -145,12 +145,24 @@
     </tr>
     <tr th:with="astrophysics=${ctx.technologies.get(T(com.github.retro_game.retro_game.dto.TechnologyKindDto).ASTROPHYSICS)}">
       <td>
-        <a th:if="${astrophysics != null && astrophysics > 0}"
-           th:href="@{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=16,kind='PLANET',mission='EXPEDITION')}"
-           th:title="#{mission.EXPEDITION}" th:text="16"></a>
-        <span th:unless="${astrophysics != null && astrophysics > 0}">16</span>
+        <span>16</span>
       </td>
-      <td></td>
+      <td th:class="${position == 16 && kind == T(com.github.retro_game.retro_game.dto.CoordinatesKindDto).PLANET ? 'highlight' : ''}">
+        <img class="galaxy-tooltip-image"
+             th:src="@{/static/skins/{skin}/bodies/EXPEDITION.webp(skin=${skin})}"
+             data-tooltip data-tooltip-html th:data-tooltip-title="
+                '<table>' +
+                  '<tr>' +
+                    '<th colspan=2>' + #{unknownSpace} + '</th>' +
+                  '</tr>' +
+                  '<tr>' +
+                    '<td><img class=\'galaxy-tooltip-image-preview\' src=\'' + @{/static/skins/{skin}/bodies/EXPEDITION.webp(skin=${skin})} + '\' width=55 height=55></td>' +
+                    '<td>' +
+                      (${astrophysics != null && astrophysics > 0} ? '<p><a class=\'btn\' href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=16,kind='PLANET',mission='EXPEDITION')} + '\'>' + #{mission.EXPEDITION} + '</a></p>' : '') +
+                    '</td>' +
+                  '</tr>' +
+                '</table>'" width="30" height="30">
+      </td>
       <td th:text="#{unknownSpace}">Unknown space</td>
       <td></td>
       <td></td>

@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.Instant;
 import java.util.*;
@@ -36,6 +37,7 @@ class FlightServiceImpl implements FlightServiceInternal {
   private final boolean astrophysicsBasedColonization;
   private final int maxPlanets;
   private final int fleetSpeed;
+  private final int expeditionHoldingTime;
   private final BodyInfoCache bodyInfoCache;
   private final BodyRepository bodyRepository;
   private final DebrisFieldRepository debrisFieldRepository;
@@ -57,14 +59,18 @@ class FlightServiceImpl implements FlightServiceInternal {
 
   FlightServiceImpl(@Value("${retro-game.astrophysics-based-colonization}") boolean astrophysicsBasedColonization,
                     @Value("${retro-game.max-planets}") int maxPlanets,
-                    @Value("${retro-game.fleet-speed}") int fleetSpeed, BodyInfoCache bodyInfoCache,
+                    @Value("${retro-game.fleet-speed}") int fleetSpeed,
+                    @Value("${retro-game.expedition-holding-time:3600}") int expeditionHoldingTime,
+                    BodyInfoCache bodyInfoCache,
                     BodyRepository bodyRepository, DebrisFieldRepository debrisFieldRepository,
                     EventRepository eventRepository, FlightRepository flightRepository,
                     FlightViewRepository flightViewRepository, PartyRepository partyRepository,
                     UserRepository userRepository) {
+    Assert.isTrue(expeditionHoldingTime >= 0, "retro-game.expedition-holding-time must be at least 0");
     this.astrophysicsBasedColonization = astrophysicsBasedColonization;
     this.maxPlanets = maxPlanets;
     this.fleetSpeed = fleetSpeed;
+    this.expeditionHoldingTime = expeditionHoldingTime;
     this.bodyInfoCache = bodyInfoCache;
     this.bodyRepository = bodyRepository;
     this.debrisFieldRepository = debrisFieldRepository;
@@ -530,7 +536,7 @@ class FlightServiceImpl implements FlightServiceInternal {
         flight.setHoldUntil(Date.from(Instant.ofEpochSecond(holdUntil)));
         flight.setReturnAt(Date.from(Instant.ofEpochSecond(holdUntil + duration)));
       } else if (mission == Mission.EXPEDITION) {
-        long holdUntil = arrivalAt + 3600L;
+        long holdUntil = arrivalAt + expeditionHoldingTime;
         flight.setHoldUntil(Date.from(Instant.ofEpochSecond(holdUntil)));
         flight.setReturnAt(Date.from(Instant.ofEpochSecond(holdUntil + duration)));
       } else {
