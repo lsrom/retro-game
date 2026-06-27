@@ -11,4 +11,5 @@ public enum MissionDto {
   TRANSPORT,
 
   MISSILE_ATTACK,
+  EXPEDITION,
 }

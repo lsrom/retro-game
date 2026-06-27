@@ -283,6 +283,8 @@ public class Converter {
         return MissionDto.TRANSPORT;
       case MISSILE_ATTACK:
         return MissionDto.MISSILE_ATTACK;
+      case EXPEDITION:
+        return MissionDto.EXPEDITION;
       default:
         throw new IllegalArgumentException("Illegal value for Mission");
     }
@@ -308,6 +310,8 @@ public class Converter {
         return Mission.TRANSPORT;
       case MISSILE_ATTACK:
         return Mission.MISSILE_ATTACK;
+      case EXPEDITION:
+        return Mission.EXPEDITION;
       default:
         throw new IllegalArgumentException("Illegal value for MissionDto");
     }
@@ -334,6 +338,8 @@ public class Converter {
         return OtherReportKindDto.MISSILE_ATTACK;
       case AUTOMATIC_TRANSFER_FAILED:
         return OtherReportKindDto.AUTOMATIC_TRANSFER_FAILED;
+      case EXPEDITION:
+        return OtherReportKindDto.EXPEDITION;
       default:
         throw new IllegalArgumentException("Illegal value for OtherReportKind");
     }

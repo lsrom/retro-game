@@ -7,4 +7,5 @@ public enum OtherReportKind {
   RETURN,
   MISSILE_ATTACK,
   AUTOMATIC_TRANSFER_FAILED,
+  EXPEDITION,
 }

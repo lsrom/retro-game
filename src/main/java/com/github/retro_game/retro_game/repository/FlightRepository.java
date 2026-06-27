@@ -2,6 +2,7 @@ package com.github.retro_game.retro_game.repository;
 
 import com.github.retro_game.retro_game.entity.Body;
 import com.github.retro_game.retro_game.entity.Flight;
+import com.github.retro_game.retro_game.entity.Mission;
 import com.github.retro_game.retro_game.entity.Party;
 import com.github.retro_game.retro_game.entity.User;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,8 @@ import java.util.List;
 
 public interface FlightRepository extends JpaRepository<Flight, Long> {
   int countByStartUser(User user);
+
+  int countByStartUserAndMission(User user, Mission mission);
 
   boolean existsByStartBodyInOrTargetBodyIn(Collection<Body> startBodies, Collection<Body> targetBodies);
 

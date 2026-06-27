@@ -143,6 +143,21 @@
         <td></td>
       </th:block>
     </tr>
+    <tr th:with="astrophysics=${ctx.technologies.get(T(com.github.retro_game.retro_game.dto.TechnologyKindDto).ASTROPHYSICS)}">
+      <td>
+        <a th:if="${astrophysics != null && astrophysics > 0}"
+           th:href="@{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=16,kind='PLANET',mission='EXPEDITION')}"
+           th:title="#{mission.EXPEDITION}" th:text="16"></a>
+        <span th:unless="${astrophysics != null && astrophysics > 0}">16</span>
+      </td>
+      <td></td>
+      <td th:text="#{unknownSpace}">Unknown space</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
     <tr>
       <th colspan="7">
         <span th:text="#{time}">Time</span>:

@@ -80,6 +80,8 @@ public class FlightsController {
       error = FlightErrorDto.PARTY_DOES_NOT_EXIST;
     } catch (ReportDoesNotExistException e) {
       error = FlightErrorDto.REPORT_DOES_NOT_EXIST;
+    } catch (RequirementsNotMetException e) {
+      error = FlightErrorDto.REQUIREMENTS_NOT_MET;
     } catch (TargetOnVacationException e) {
       error = FlightErrorDto.TARGET_ON_VACATION;
     } catch (TargetOutOfRangeException e) {

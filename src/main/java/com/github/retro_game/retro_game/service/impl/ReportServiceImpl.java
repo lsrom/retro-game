@@ -113,6 +113,17 @@ class ReportServiceImpl implements ReportServiceInternal {
                                            BattleResult result, int numRounds, Resources attackersLoss,
                                            Resources defendersLoss, Resources plunder, Resources debris,
                                            MoonCreationResultDto moonCreationResult, CombatReport combatReport) {
+    createSimplifiedCombatReport(user, isAttacker, at, enemy.getId(), enemy.getName(), coordinates, result, numRounds,
+        attackersLoss, defendersLoss, plunder, debris, moonCreationResult, combatReport);
+  }
+
+  @Override
+  @CacheEvict(cacheNames = "reportsSummaries", key = "#user.id")
+  public void createSimplifiedCombatReport(User user, boolean isAttacker, Date at, Long enemyId, String enemyName,
+                                           Coordinates coordinates, BattleResult result, int numRounds,
+                                           Resources attackersLoss, Resources defendersLoss, Resources plunder,
+                                           Resources debris, MoonCreationResultDto moonCreationResult,
+                                           CombatReport combatReport) {
     // 0 rounds (no battle at all) implies attackers win.
     assert numRounds != 0 || result == BattleResult.ATTACKERS_WIN;
     // Draw implies 6 rounds.
@@ -135,7 +146,7 @@ class ReportServiceImpl implements ReportServiceInternal {
 
     var combatReportId = !lostContact && combatReport != null ? combatReport.getId() : null;
     var report =
-        new SimplifiedCombatReport(0, user, false, at, enemy.getId(), enemy.getName(), coordinates, res, aLoss, dLoss,
+        new SimplifiedCombatReport(0, user, false, at, enemyId, enemyName, coordinates, res, aLoss, dLoss,
             plunder, (long) debris.getMetal(), (long) debris.getCrystal(), moonCreationResult.chance(),
             moonCreationResult.created(), combatReportId);
     simplifiedCombatReportRepository.save(report);
@@ -717,6 +728,20 @@ class ReportServiceImpl implements ReportServiceInternal {
     report.setStartCoordinates(flight.getStartBody().getCoordinates());
     report.setTargetCoordinates(flight.getTargetCoordinates());
     report.setParam((double) totalDestroyed);
+    otherReportRepository.save(report);
+  }
+
+  @Override
+  @CacheEvict(cacheNames = "reportsSummaries", key = "#flight.startUser.id")
+  public void createExpeditionReport(Flight flight, String text) {
+    OtherReport report = new OtherReport();
+    report.setUser(flight.getStartUser());
+    report.setDeleted(false);
+    report.setAt(flight.getHoldUntil());
+    report.setKind(OtherReportKind.EXPEDITION);
+    report.setStartCoordinates(flight.getStartBody().getCoordinates());
+    report.setTargetCoordinates(flight.getTargetCoordinates());
+    report.setText(text);
     otherReportRepository.save(report);
   }
 

@@ -29,7 +29,7 @@ public class SendFleetForm {
   @Range(min = 1, max = 500)
   private int system;
 
-  @Range(min = 1, max = 15)
+  @Range(min = 1, max = 16)
   private int position;
 
   @NotNull

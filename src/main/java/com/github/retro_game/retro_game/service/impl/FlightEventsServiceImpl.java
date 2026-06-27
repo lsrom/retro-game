@@ -97,7 +97,8 @@ class FlightEventsServiceImpl implements FlightEventsService {
 
       var recalled = flight.getArrivalAt() == null;
       var arriving = !recalled && flight.getArrivalAt().after(now);
-      var holding = !recalled && mission == MissionDto.HOLD && flight.getHoldUntil().after(now);
+      var holding = !recalled && (mission == MissionDto.HOLD || mission == MissionDto.EXPEDITION) &&
+          flight.getHoldUntil().after(now);
       var returning = recalled || (mission != MissionDto.DEPLOYMENT && mission != MissionDto.MISSILE_ATTACK);
 
       if (arriving && arrivingPredicate.test(flight)) {
