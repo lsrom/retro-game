@@ -52,6 +52,7 @@ public class ExpeditionMissionHandler {
     private static final String TWO_HOURS_DELAY_REPORT_KEY = "otherReportExpedition.delay.twoHours";
     private static final String THREE_HOURS_DELAY_REPORT_KEY = "otherReportExpedition.delay.threeHours";
     private static final String FLEET_LOSS_REPORT_KEY = "otherReportExpedition.fleetLoss";
+    private static final String FLEET_LOSS_AVOIDED_REPORT_KEY = "otherReportExpedition.fleetLossAvoided";
     private static final String PIRATES_REPORT_KEY = "otherReportExpedition.pirates";
     private static final String ALIENS_REPORT_KEY = "otherReportExpedition.aliens";
     private static final String ORE_ASTEROID_REPORT_KEY = "otherReportExpedition.oreAsteroid";
@@ -139,8 +140,9 @@ public class ExpeditionMissionHandler {
                     reportServiceInternal.createExpeditionReport(flight, getMessage(flight, NOTHING_REPORT_KEY));
             case Delay -> handleDelay(flight);
             case FleetLoss -> {
-                handleFleetLoss(flight);
-                return;
+                if (!handleFleetLoss(flight)) {
+                    return;
+                }
             }
             case Pirates -> {
                 if (!handlePirates(flight)) {
@@ -166,9 +168,24 @@ public class ExpeditionMissionHandler {
         missionHandlerUtils.scheduleReturn(flight);
     }
 
-    private void handleFleetLoss(Flight flight) {
+    private boolean handleFleetLoss(Flight flight) {
+        double roll = ThreadLocalRandom.current().nextDouble(100.0);
+        double safetyThreshold = calculateFleetLossSafetyThreshold(flight);
+        if (roll < safetyThreshold) {
+            reportServiceInternal.createExpeditionReport(flight, getMessage(flight, FLEET_LOSS_AVOIDED_REPORT_KEY));
+            return true;
+        }
+
         reportServiceInternal.createExpeditionReport(flight, getMessage(flight, FLEET_LOSS_REPORT_KEY));
         flightRepository.delete(flight);
+        return false;
+    }
+
+    private static double calculateFleetLossSafetyThreshold(Flight flight) {
+        int espionageProbes = flight.getUnitsCount(UnitKind.ESPIONAGE_PROBE);
+        int espionageTechnology = flight.getStartUser().getTechnologyLevel(TechnologyKind.ESPIONAGE_TECHNOLOGY);
+        int computerTechnology = flight.getStartUser().getTechnologyLevel(TechnologyKind.COMPUTER_TECHNOLOGY);
+        return Math.sqrt(Math.pow(espionageProbes, 0.45) * espionageTechnology * computerTechnology);
     }
 
     private boolean handlePirates(Flight flight) {
