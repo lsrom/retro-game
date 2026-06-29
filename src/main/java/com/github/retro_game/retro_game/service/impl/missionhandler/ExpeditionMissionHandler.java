@@ -396,13 +396,14 @@ public class ExpeditionMissionHandler {
 
         var units = new EnumMap<UnitKind, Long>(UnitKind.class);
         int highestEncounterShipIndex = getHighestEncounterShipIndex(flight.getUnits());
-        long fleetUnits = flight.getUnits().values().stream().mapToLong(Integer::longValue).sum();
+        long fleetValue = calculateFleetMetalCrystalValue(flight.getUnits());
+        long targetValue = Math.max(1L, Math.round(fleetValue * sizeFactor));
         if (highestEncounterShipIndex > 0) {
-            addEncounterShips(units, Math.max(1L, Math.round(fleetUnits * sizeFactor)), highestEncounterShipIndex);
+            addEncounterShips(units, targetValue, highestEncounterShipIndex);
         }
 
         if (units.isEmpty()) {
-            units.put(UnitKind.ESPIONAGE_PROBE, Math.max(1L, Math.round(fleetUnits * sizeFactor)));
+            units.put(UnitKind.ESPIONAGE_PROBE, calculateUnitCount(UnitKind.ESPIONAGE_PROBE, targetValue));
         }
 
         var combatant = new Combatant(userId, flight.getTargetCoordinates(), weaponsTechnology, shieldingTechnology,
@@ -454,23 +455,60 @@ public class ExpeditionMissionHandler {
         return highestIndex;
     }
 
-    private static void addEncounterShips(EnumMap<UnitKind, Long> hostileUnits, long targetUnits,
+    private static long calculateFleetMetalCrystalValue(Map<UnitKind, Integer> units) {
+        long value = 0L;
+        for (var entry : units.entrySet()) {
+            value += entry.getValue() * getMetalCrystalValue(entry.getKey());
+        }
+        return value;
+    }
+
+    private static long getMetalCrystalValue(UnitKind kind) {
+        Resources cost = ItemCostUtils.getCost(kind);
+        return Math.round(cost.getMetal() + cost.getCrystal());
+    }
+
+    private static long calculateUnitCount(UnitKind kind, long targetValue) {
+        long unitValue = getMetalCrystalValue(kind);
+        if (unitValue <= 0) {
+            return 1L;
+        }
+        return Math.max(1L, Math.round((double) targetValue / unitValue));
+    }
+
+    private static void addEncounterShips(EnumMap<UnitKind, Long> hostileUnits, long targetValue,
                                           int maxExclusiveIndex) {
-        if (targetUnits <= 0 || maxExclusiveIndex <= 0) {
+        if (targetValue <= 0 || maxExclusiveIndex <= 0) {
             return;
         }
 
-        int selectedTypes = (int) Math.min(targetUnits, maxExclusiveIndex);
         int offset = ThreadLocalRandom.current().nextInt(maxExclusiveIndex);
-        long remainingUnits = targetUnits;
-        for (int i = 0; i < selectedTypes; i++) {
-            int remainingTypes = selectedTypes - i;
-            long maxUnits = remainingUnits - remainingTypes + 1;
-            long units = remainingTypes == 1 ? remainingUnits : ThreadLocalRandom.current().nextLong(1, maxUnits + 1);
+        long remainingValue = targetValue;
+        for (int i = 0; i < maxExclusiveIndex; i++) {
             UnitKind unitKind = EXPEDITION_ENCOUNTER_SHIPS.get((offset + i) % maxExclusiveIndex);
+            long unitValue = getMetalCrystalValue(unitKind);
+            if (unitValue <= 0 || remainingValue < unitValue) {
+                continue;
+            }
+
+            long maxUnits = remainingValue / unitValue;
+            long units = hasAffordableEncounterShipAfter(remainingValue, i, offset, maxExclusiveIndex)
+                    ? ThreadLocalRandom.current().nextLong(1, maxUnits + 1)
+                    : maxUnits;
             hostileUnits.put(unitKind, units);
-            remainingUnits -= units;
+            remainingValue -= units * unitValue;
         }
+    }
+
+    private static boolean hasAffordableEncounterShipAfter(long value, int index, int offset, int maxExclusiveIndex) {
+        for (int i = index + 1; i < maxExclusiveIndex; i++) {
+            UnitKind unitKind = EXPEDITION_ENCOUNTER_SHIPS.get((offset + i) % maxExclusiveIndex);
+            long unitValue = getMetalCrystalValue(unitKind);
+            if (unitValue > 0 && value >= unitValue) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static int randomEncounterTechnology(int expeditionTechnology, boolean strongerTechnology) {
