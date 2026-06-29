@@ -75,6 +75,16 @@ public class ExpeditionMissionHandler {
             UnitKind.DESTROYER,
             UnitKind.DEATH_STAR
     );
+    private static final Map<UnitKind, Long> PIRATE_BASE_FLEET = Map.of(
+            UnitKind.LITTLE_FIGHTER, 5L,
+            UnitKind.CRUISER, 3L,
+            UnitKind.BATTLESHIP, 2L
+    );
+    private static final Map<UnitKind, Long> ALIEN_BASE_FLEET = Map.of(
+            UnitKind.HEAVY_FIGHTER, 5L,
+            UnitKind.BATTLE_CRUISER, 3L,
+            UnitKind.DESTROYER, 2L
+    );
 
     private final ActivityService activityService;
     private final BattleEngine battleEngine;
@@ -196,7 +206,8 @@ public class ExpeditionMissionHandler {
                         flight,
                         PIRATE_USER_ID,
                         PIRATE_USER_NAME,
-                        ThreadLocalRandom.current().nextDouble(0.01, 0.1),
+                        ThreadLocalRandom.current().nextDouble(0.33, 0.88),
+                        PIRATE_BASE_FLEET,
                         false
                 )
         );
@@ -210,7 +221,8 @@ public class ExpeditionMissionHandler {
                         flight,
                         ALIEN_USER_ID,
                         ALIEN_USER_NAME,
-                        ThreadLocalRandom.current().nextDouble(0.25, 0.69),
+                        ThreadLocalRandom.current().nextDouble(0.44, 0.99),
+                        ALIEN_BASE_FLEET,
                         true
                 )
         );
@@ -221,7 +233,8 @@ public class ExpeditionMissionHandler {
                 flight,
                 0L,
                 "Rescued ships",
-                ThreadLocalRandom.current().nextDouble(0.01, 0.04),
+                ThreadLocalRandom.current().nextDouble(0.01, 0.09),
+                Map.of(),
                 false
         );
         addRescuedShips(flight, rescuedFleet.combatant().unitGroups());
@@ -240,7 +253,8 @@ public class ExpeditionMissionHandler {
                 flight,
                 0L,
                 "Rescued fleet",
-                ThreadLocalRandom.current().nextDouble(0.05, 0.15),
+                ThreadLocalRandom.current().nextDouble(0.11, 0.25),
+                Map.of(),
                 false
         );
         addRescuedShips(flight, rescuedFleet.combatant().unitGroups());
@@ -256,7 +270,7 @@ public class ExpeditionMissionHandler {
 
     private void handleOreAsteroid(Flight flight) {
         long maxResources = (long) Math.floor(
-                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.05, 0.21)
+                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.05, 0.33)
         );
         long totalResources = pickResourceAmount(maxResources);
         long metal = totalResources == 0 ? 0 : ThreadLocalRandom.current().nextLong(totalResources + 1);
@@ -270,7 +284,7 @@ public class ExpeditionMissionHandler {
 
     private void handleGasCloud(Flight flight) {
         long maxDeuterium = (long) Math.floor(
-                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.01, 0.13)
+                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.01, 0.22)
         );
         long deuterium = pickResourceAmount(maxDeuterium);
 
@@ -402,6 +416,7 @@ public class ExpeditionMissionHandler {
             long userId,
             String userName,
             double sizeFactor,
+            Map<UnitKind, Long> baseFleet,
             boolean strongerTechnology
     ) {
         int weaponsTechnology = randomEncounterTechnology(
@@ -412,6 +427,7 @@ public class ExpeditionMissionHandler {
                 flight.getStartUser().getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY), strongerTechnology);
 
         var units = new EnumMap<UnitKind, Long>(UnitKind.class);
+        units.putAll(baseFleet);
         int highestEncounterShipIndex = getHighestEncounterShipIndex(flight.getUnits());
         long fleetValue = calculateFleetMetalCrystalValue(flight.getUnits());
         long targetValue = Math.max(1L, Math.round(fleetValue * sizeFactor));
@@ -512,7 +528,7 @@ public class ExpeditionMissionHandler {
             long units = hasAffordableEncounterShipAfter(remainingValue, i, offset, maxExclusiveIndex)
                     ? ThreadLocalRandom.current().nextLong(1, maxUnits + 1)
                     : maxUnits;
-            hostileUnits.put(unitKind, units);
+            hostileUnits.merge(unitKind, units, Long::sum);
             remainingValue -= units * unitValue;
         }
     }
