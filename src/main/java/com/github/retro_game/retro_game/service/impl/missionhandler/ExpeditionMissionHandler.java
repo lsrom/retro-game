@@ -98,6 +98,7 @@ public class ExpeditionMissionHandler {
     private final double fleetDebrisFactor;
     private final MessageSource messageSource;
     private final MissionHandlerUtils missionHandlerUtils;
+    private final int productionSpeed;
     private final ReportServiceInternal reportServiceInternal;
     private final StatisticsCache statisticsCache;
     private final UnitService unitService;
@@ -109,8 +110,10 @@ public class ExpeditionMissionHandler {
                                     FlightRepository flightRepository,
                                     @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
                                     MessageSource messageSource,
-                                    MissionHandlerUtils missionHandlerUtils, ReportServiceInternal reportServiceInternal,
-                                    StatisticsCache statisticsCache, UnitService unitService) {
+                                    MissionHandlerUtils missionHandlerUtils,
+                                    @Value("${retro-game.production-speed}") int productionSpeed,
+                                    ReportServiceInternal reportServiceInternal, StatisticsCache statisticsCache,
+                                    UnitService unitService) {
         this.activityService = activityService;
         this.battleEngine = battleEngine;
         this.bodyServiceInternal = bodyServiceInternal;
@@ -121,6 +124,7 @@ public class ExpeditionMissionHandler {
         this.fleetDebrisFactor = fleetDebrisFactor;
         this.messageSource = messageSource;
         this.missionHandlerUtils = missionHandlerUtils;
+        this.productionSpeed = productionSpeed;
         this.reportServiceInternal = reportServiceInternal;
         this.statisticsCache = statisticsCache;
         this.unitService = unitService;
@@ -273,12 +277,12 @@ public class ExpeditionMissionHandler {
     }
 
     private void handleOreAsteroid(Flight flight) {
-        double bonus = calculateMaxResourceMultiplier() * 0.01;
         long availableCargo = getRemainingCargoSpace(flight);
+        long cap = Math.min(calculateMaxResources(), availableCargo);
         long maxResources = (long) Math.floor(
-                availableCargo * ThreadLocalRandom.current().nextDouble(0.03, 0.33) + bonus
+                availableCargo * ThreadLocalRandom.current().nextDouble(0.03, 0.33)
         );
-        long totalResources = pickResourceAmount(Math.min(maxResources, availableCargo));
+        long totalResources = pickResourceAmount(Math.min(maxResources, cap));
         long metal = totalResources == 0 ? 0 : ThreadLocalRandom.current().nextLong(totalResources + 1);
         long crystal = totalResources - metal;
 
@@ -289,12 +293,12 @@ public class ExpeditionMissionHandler {
     }
 
     private void handleGasCloud(Flight flight) {
-        double bonus = calculateMaxResourceMultiplier() * 0.01;
         long availableCargo = getRemainingCargoSpace(flight);
+        long cap = Math.min(calculateMaxResources(), availableCargo);
         long maxDeuterium = (long) Math.floor(
-                availableCargo * ThreadLocalRandom.current().nextDouble(0.02, 0.22) + bonus
+                availableCargo * ThreadLocalRandom.current().nextDouble(0.02, 0.22)
         );
-        long deuterium = pickResourceAmount(Math.min(maxDeuterium, availableCargo));
+        long deuterium = pickResourceAmount(Math.min(maxDeuterium, cap));
 
         Resources resources = flight.getResources();
         resources.setDeuterium(resources.getDeuterium() + deuterium);
@@ -330,12 +334,15 @@ public class ExpeditionMissionHandler {
         return Math.max(0L, capacity - (long) Math.ceil(flight.getResources().total()));
     }
 
-    private double calculateMaxResourceMultiplier() {
+    private long calculateMaxResources() {
         var overallRanking = statisticsCache.getLatestRanking(StatisticsKindDto.OVERALL).entries();
+        long topPlayerMultiplier;
         if (overallRanking.isEmpty()) {
-            return 1.0;
+            topPlayerMultiplier = 1;
+        } else {
+            topPlayerMultiplier = (long) Math.floor(Math.pow(overallRanking.getFirst().points(), 0.16));
         }
-        return Math.pow(overallRanking.getFirst().points(), 0.2);
+        return topPlayerMultiplier * productionSpeed * 1_000_000;
     }
 
     private static long pickResourceAmount(long maxResources) {
