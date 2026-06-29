@@ -8,6 +8,8 @@ import com.github.retro_game.retro_game.battleengine.UnitGroupStats;
 import com.github.retro_game.retro_game.dto.MoonCreationResultDto;
 import com.github.retro_game.retro_game.entity.BattleResult;
 import com.github.retro_game.retro_game.entity.Body;
+import com.github.retro_game.retro_game.entity.DebrisField;
+import com.github.retro_game.retro_game.entity.DebrisFieldKey;
 import com.github.retro_game.retro_game.entity.Event;
 import com.github.retro_game.retro_game.entity.EventKind;
 import com.github.retro_game.retro_game.entity.ExpeditionEventType;
@@ -16,6 +18,7 @@ import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
 import com.github.retro_game.retro_game.model.ItemCostUtils;
+import com.github.retro_game.retro_game.repository.DebrisFieldRepository;
 import com.github.retro_game.retro_game.repository.FlightRepository;
 import com.github.retro_game.retro_game.service.ActivityService;
 import com.github.retro_game.retro_game.service.impl.BodyServiceInternal;
@@ -25,6 +28,7 @@ import com.github.retro_game.retro_game.service.impl.ReportServiceInternal;
 import com.github.retro_game.retro_game.service.impl.UnitService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
@@ -75,8 +79,10 @@ public class ExpeditionMissionHandler {
     private final BattleEngine battleEngine;
     private final BodyServiceInternal bodyServiceInternal;
     private final CombatReportServiceInternal combatReportServiceInternal;
+    private final DebrisFieldRepository debrisFieldRepository;
     private final EventScheduler eventScheduler;
     private final FlightRepository flightRepository;
+    private final double fleetDebrisFactor;
     private final MessageSource messageSource;
     private final MissionHandlerUtils missionHandlerUtils;
     private final ReportServiceInternal reportServiceInternal;
@@ -84,16 +90,21 @@ public class ExpeditionMissionHandler {
 
     public ExpeditionMissionHandler(ActivityService activityService, BattleEngine battleEngine,
                                     BodyServiceInternal bodyServiceInternal,
-                                    CombatReportServiceInternal combatReportServiceInternal, EventScheduler eventScheduler,
-                                    FlightRepository flightRepository, MessageSource messageSource,
+                                    CombatReportServiceInternal combatReportServiceInternal,
+                                    DebrisFieldRepository debrisFieldRepository, EventScheduler eventScheduler,
+                                    FlightRepository flightRepository,
+                                    @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
+                                    MessageSource messageSource,
                                     MissionHandlerUtils missionHandlerUtils, ReportServiceInternal reportServiceInternal,
                                     UnitService unitService) {
         this.activityService = activityService;
         this.battleEngine = battleEngine;
         this.bodyServiceInternal = bodyServiceInternal;
         this.combatReportServiceInternal = combatReportServiceInternal;
+        this.debrisFieldRepository = debrisFieldRepository;
         this.eventScheduler = eventScheduler;
         this.flightRepository = flightRepository;
+        this.fleetDebrisFactor = fleetDebrisFactor;
         this.messageSource = messageSource;
         this.missionHandlerUtils = missionHandlerUtils;
         this.reportServiceInternal = reportServiceInternal;
@@ -319,14 +330,16 @@ public class ExpeditionMissionHandler {
         Resources attackersLoss = calculateLoss(expeditionFleet, battleOutcome.attackersOutcomes().get(0), lastRound);
         Resources defendersLoss = calculateLoss(hostileFleet.combatant(), battleOutcome.defendersOutcomes().get(0),
                 lastRound);
+        Resources debris = calcDebris(attackersLoss, defendersLoss);
+        createOrUpdateDebrisField(flight, debris);
         var emptyResources = new Resources();
         var moonCreationResult = new MoonCreationResultDto(0.0, false);
         var combatReport = combatReportServiceInternal.create(flight.getHoldUntil(), attackers, defenders, battleOutcome,
-                battleResult, attackersLoss, defendersLoss, emptyResources, emptyResources, moonCreationResult, null, seed,
+                battleResult, attackersLoss, defendersLoss, emptyResources, debris, moonCreationResult, null, seed,
                 executionTime);
         reportServiceInternal.createSimplifiedCombatReport(flight.getStartUser(), true, flight.getHoldUntil(), (Long) null,
                 hostileFleet.name(), flight.getTargetCoordinates(), battleResult, battleOutcome.numRounds(), attackersLoss,
-                defendersLoss, emptyResources, emptyResources, moonCreationResult, combatReport);
+                defendersLoss, emptyResources, debris, moonCreationResult, combatReport);
 
         applyRemainingUnits(flight, attackerStats);
         if (flight.getTotalUnitsCount() == 0) {
@@ -334,6 +347,37 @@ public class ExpeditionMissionHandler {
             return false;
         }
         return true;
+    }
+
+    private Resources calcDebris(Resources attackersLoss, Resources defendersLoss) {
+        var debris = new Resources(attackersLoss);
+        debris.add(defendersLoss);
+        debris.mul(fleetDebrisFactor);
+        debris.setDeuterium(0.0);
+        debris.floor();
+        assert debris.isNonNegative();
+        return debris;
+    }
+
+    private void createOrUpdateDebrisField(Flight flight, Resources debris) {
+        var metal = (long) debris.getMetal();
+        var crystal = (long) debris.getCrystal();
+        if (metal == 0 && crystal == 0) {
+            return;
+        }
+
+        var coords = flight.getTargetCoordinates();
+        var key = new DebrisFieldKey(coords.getGalaxy(), coords.getSystem(), coords.getPosition());
+        var dfOpt = debrisFieldRepository.findById(key);
+        if (dfOpt.isEmpty()) {
+            var df = new DebrisField(key, flight.getHoldUntil(), flight.getHoldUntil(), metal, crystal);
+            debrisFieldRepository.save(df);
+        } else {
+            var df = dfOpt.get();
+            df.setUpdatedAt(flight.getHoldUntil());
+            df.setMetal(df.getMetal() + metal);
+            df.setCrystal(df.getCrystal() + crystal);
+        }
     }
 
     private HostileFleet calculateEncounterFleet(
@@ -352,11 +396,11 @@ public class ExpeditionMissionHandler {
 
         var units = new EnumMap<UnitKind, Long>(UnitKind.class);
         int highestEncounterShipIndex = getHighestEncounterShipIndex(flight.getUnits());
+        long fleetUnits = flight.getUnits().values().stream().mapToLong(Integer::longValue).sum();
         if (highestEncounterShipIndex > 0) {
-            addEncounterShips(units, flight.getUnits(), sizeFactor, highestEncounterShipIndex);
+            addEncounterShips(units, Math.max(1L, Math.round(fleetUnits * sizeFactor)), highestEncounterShipIndex);
         }
 
-        long fleetUnits = flight.getUnits().values().stream().mapToLong(Integer::longValue).sum();
         if (units.isEmpty()) {
             units.put(UnitKind.ESPIONAGE_PROBE, Math.max(1L, Math.round(fleetUnits * sizeFactor)));
         }
@@ -410,21 +454,23 @@ public class ExpeditionMissionHandler {
         return highestIndex;
     }
 
-    private static void addEncounterShips(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
-                                          double sizeFactor, int maxExclusiveIndex) {
-        for (int i = 0; i < maxExclusiveIndex; i++) {
-            addScaledHostileUnits(hostileUnits, expeditionUnits, EXPEDITION_ENCOUNTER_SHIPS.get(i), sizeFactor, 1);
-        }
-    }
-
-    private static void addScaledHostileUnits(EnumMap<UnitKind, Long> hostileUnits, Map<UnitKind, Integer> expeditionUnits,
-                                              UnitKind unitKind, double sizeFactor, int minimum) {
-        int expeditionCount = expeditionUnits.getOrDefault(unitKind, 0);
-        if (expeditionCount <= 0) {
+    private static void addEncounterShips(EnumMap<UnitKind, Long> hostileUnits, long targetUnits,
+                                          int maxExclusiveIndex) {
+        if (targetUnits <= 0 || maxExclusiveIndex <= 0) {
             return;
         }
-        long hostileCount = Math.max(minimum, Math.round(expeditionCount * sizeFactor));
-        hostileUnits.put(unitKind, hostileCount);
+
+        int selectedTypes = (int) Math.min(targetUnits, maxExclusiveIndex);
+        int offset = ThreadLocalRandom.current().nextInt(maxExclusiveIndex);
+        long remainingUnits = targetUnits;
+        for (int i = 0; i < selectedTypes; i++) {
+            int remainingTypes = selectedTypes - i;
+            long maxUnits = remainingUnits - remainingTypes + 1;
+            long units = remainingTypes == 1 ? remainingUnits : ThreadLocalRandom.current().nextLong(1, maxUnits + 1);
+            UnitKind unitKind = EXPEDITION_ENCOUNTER_SHIPS.get((offset + i) % maxExclusiveIndex);
+            hostileUnits.put(unitKind, units);
+            remainingUnits -= units;
+        }
     }
 
     private static int randomEncounterTechnology(int expeditionTechnology, boolean strongerTechnology) {
@@ -439,9 +485,9 @@ public class ExpeditionMissionHandler {
         return new Combatant(
                 user.getId(),
                 flight.getStartBody().getCoordinates(),
-                user.getTechnologyLevel(TechnologyKind.WEAPONS_TECHNOLOGY) + ThreadLocalRandom.current().nextInt(-3, 3),
-                user.getTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY) + ThreadLocalRandom.current().nextInt(-3, 3),
-                user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY) + ThreadLocalRandom.current().nextInt(-3, 3),
+                user.getTechnologyLevel(TechnologyKind.WEAPONS_TECHNOLOGY),
+                user.getTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY),
+                user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY),
                 makeUnitGroups(flight.getUnits())
         );
     }

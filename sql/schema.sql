@@ -228,7 +228,7 @@ create index automatic_resource_transfers_due_idx on automatic_resource_transfer
 create table debris_fields (
   galaxy int not null check (galaxy between 1 and 5),
   system int not null check (system between 1 and 500),
-  position int not null check (position between 1 and 15),
+  position int not null check (position between 1 and 16),
   created_at timestamptz not null,
   updated_at timestamptz not null,
   metal bigint not null check (metal >= 0),
@@ -294,7 +294,7 @@ create table simplified_combat_reports (
   enemy_name user_name not null,
   galaxy int not null check (galaxy between 1 and 5),
   system int not null check (system between 1 and 500),
-  position int not null check (position between 1 and 15),
+  position int not null check (position between 1 and 16),
   kind int not null check (kind between 0 and 1),
   result int not null check (result between 0 and 2),
   attackers_loss bigint not null check (attackers_loss >= 0),

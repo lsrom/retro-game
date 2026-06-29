@@ -37,7 +37,7 @@ public class GalaxyController {
   public String galaxy(@RequestParam(name = "body") long bodyId,
                        @RequestParam @Range(min = 1, max = 5) int galaxy,
                        @RequestParam @Range(min = 1, max = 500) int system,
-                       @RequestParam(required = false) @Range(min = 1, max = 15) Integer position,
+                       @RequestParam(required = false) @Range(min = 1, max = 16) Integer position,
                        @RequestParam(required = false) CoordinatesKindDto kind,
                        Model model) {
     var ctx = userService.getCurrentUserContext(bodyId);
