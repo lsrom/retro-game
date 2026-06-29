@@ -5,7 +5,9 @@ import com.github.retro_game.retro_game.battleengine.BattleOutcome;
 import com.github.retro_game.retro_game.battleengine.Combatant;
 import com.github.retro_game.retro_game.battleengine.CombatantOutcome;
 import com.github.retro_game.retro_game.battleengine.UnitGroupStats;
+import com.github.retro_game.retro_game.cache.StatisticsCache;
 import com.github.retro_game.retro_game.dto.MoonCreationResultDto;
+import com.github.retro_game.retro_game.dto.StatisticsKindDto;
 import com.github.retro_game.retro_game.entity.BattleResult;
 import com.github.retro_game.retro_game.entity.Body;
 import com.github.retro_game.retro_game.entity.DebrisField;
@@ -97,6 +99,7 @@ public class ExpeditionMissionHandler {
     private final MessageSource messageSource;
     private final MissionHandlerUtils missionHandlerUtils;
     private final ReportServiceInternal reportServiceInternal;
+    private final StatisticsCache statisticsCache;
     private final UnitService unitService;
 
     public ExpeditionMissionHandler(ActivityService activityService, BattleEngine battleEngine,
@@ -107,7 +110,7 @@ public class ExpeditionMissionHandler {
                                     @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
                                     MessageSource messageSource,
                                     MissionHandlerUtils missionHandlerUtils, ReportServiceInternal reportServiceInternal,
-                                    UnitService unitService) {
+                                    StatisticsCache statisticsCache, UnitService unitService) {
         this.activityService = activityService;
         this.battleEngine = battleEngine;
         this.bodyServiceInternal = bodyServiceInternal;
@@ -119,6 +122,7 @@ public class ExpeditionMissionHandler {
         this.messageSource = messageSource;
         this.missionHandlerUtils = missionHandlerUtils;
         this.reportServiceInternal = reportServiceInternal;
+        this.statisticsCache = statisticsCache;
         this.unitService = unitService;
     }
 
@@ -269,10 +273,12 @@ public class ExpeditionMissionHandler {
     }
 
     private void handleOreAsteroid(Flight flight) {
+        double bonus = calculateMaxResourceMultiplier() * 0.01;
+        long availableCargo = getRemainingCargoSpace(flight);
         long maxResources = (long) Math.floor(
-                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.05, 0.33)
+                availableCargo * ThreadLocalRandom.current().nextDouble(0.03, 0.33) + bonus
         );
-        long totalResources = pickResourceAmount(maxResources);
+        long totalResources = pickResourceAmount(Math.min(maxResources, availableCargo));
         long metal = totalResources == 0 ? 0 : ThreadLocalRandom.current().nextLong(totalResources + 1);
         long crystal = totalResources - metal;
 
@@ -283,10 +289,12 @@ public class ExpeditionMissionHandler {
     }
 
     private void handleGasCloud(Flight flight) {
+        double bonus = calculateMaxResourceMultiplier() * 0.01;
+        long availableCargo = getRemainingCargoSpace(flight);
         long maxDeuterium = (long) Math.floor(
-                getRemainingCargoSpace(flight) * ThreadLocalRandom.current().nextDouble(0.01, 0.22)
+                availableCargo * ThreadLocalRandom.current().nextDouble(0.02, 0.22) + bonus
         );
-        long deuterium = pickResourceAmount(maxDeuterium);
+        long deuterium = pickResourceAmount(Math.min(maxDeuterium, availableCargo));
 
         Resources resources = flight.getResources();
         resources.setDeuterium(resources.getDeuterium() + deuterium);
@@ -320,6 +328,14 @@ public class ExpeditionMissionHandler {
             capacity += entry.getValue() * unitService.getCapacity(entry.getKey(), flight.getStartUser());
         }
         return Math.max(0L, capacity - (long) Math.ceil(flight.getResources().total()));
+    }
+
+    private double calculateMaxResourceMultiplier() {
+        var overallRanking = statisticsCache.getLatestRanking(StatisticsKindDto.OVERALL).entries();
+        if (overallRanking.isEmpty()) {
+            return 1.0;
+        }
+        return Math.pow(overallRanking.getFirst().points(), 0.2);
     }
 
     private static long pickResourceAmount(long maxResources) {
