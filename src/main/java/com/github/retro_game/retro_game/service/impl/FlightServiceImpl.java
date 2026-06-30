@@ -321,7 +321,9 @@ class FlightServiceImpl implements FlightServiceInternal {
       throw new HoldTimeNotSpecifiedException();
     }
 
-    if (coordinates.getPosition() == 16 && mission != Mission.EXPEDITION) {
+    boolean harvestUnknownDebrisField = mission == Mission.HARVEST &&
+        coordinates.getKind() == CoordinatesKind.DEBRIS_FIELD;
+    if (coordinates.getPosition() == 16 && mission != Mission.EXPEDITION && !harvestUnknownDebrisField) {
       logger.info("Sending fleet failed, wrong mission for unknown space: userId={} bodyId={} mission={}",
           userId, body.getId(), mission);
       throw new WrongMissionException();
