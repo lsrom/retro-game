@@ -13,7 +13,7 @@
         <table th:each="combatant : ${combatants}">
           <tr th:with="
               userInfo=${userInfos.get(combatant.userId)},
-              name=${userInfo != null ? userInfo.name : '[deleted]'}">
+              name=${combatant.userId == -1 ? #messages.msg('combatantPirates') : (combatant.userId == -2 ? #messages.msg('combatantAliens') : (userInfo != null ? userInfo.name : '[deleted]'))}">
             <th th:text="${namePrefix + ' ' + name + ' [' + combatant.coordinates + ']'}"></th>
           </tr>
           <tr>

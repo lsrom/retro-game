@@ -9,10 +9,12 @@ import com.github.retro_game.retro_game.dto.NoobProtectionRankDto;
 import com.github.retro_game.retro_game.dto.StatisticsSummaryDto;
 import com.github.retro_game.retro_game.entity.CombatResult;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
+import com.github.retro_game.retro_game.entity.DebrisField;
 import com.github.retro_game.retro_game.entity.GalaxySlot;
 import com.github.retro_game.retro_game.entity.UnitKind;
 import com.github.retro_game.retro_game.entity.User;
 import com.github.retro_game.retro_game.repository.CombatReportRepository;
+import com.github.retro_game.retro_game.repository.DebrisFieldRepository;
 import com.github.retro_game.retro_game.repository.GalaxySlotRepository;
 import com.github.retro_game.retro_game.repository.SimplifiedCombatReportRepository;
 import com.github.retro_game.retro_game.repository.UserRepository;
@@ -40,6 +42,7 @@ class GalaxyServiceImpl implements GalaxyService {
   private static final Logger logger = LoggerFactory.getLogger(GalaxyServiceImpl.class);
   private final GalaxySlotRepository galaxySlotRepository;
   private final CombatReportRepository combatReportRepository;
+  private final DebrisFieldRepository debrisFieldRepository;
   private final SimplifiedCombatReportRepository simplifiedCombatReportRepository;
   private final AllianceTagCache allianceTagCache;
   private final StatisticsCache statisticsCache;
@@ -53,9 +56,11 @@ class GalaxyServiceImpl implements GalaxyService {
   public GalaxyServiceImpl(GalaxySlotRepository galaxySlotRepository, AllianceTagCache allianceTagCache,
                            StatisticsCache statisticsCache, UserAllianceCache userAllianceCache,
                            UserRepository userRepository, CombatReportRepository combatReportRepository,
+                           DebrisFieldRepository debrisFieldRepository,
                            SimplifiedCombatReportRepository simplifiedCombatReportRepository) {
     this.galaxySlotRepository = galaxySlotRepository;
     this.combatReportRepository = combatReportRepository;
+    this.debrisFieldRepository = debrisFieldRepository;
     this.simplifiedCombatReportRepository = simplifiedCombatReportRepository;
     this.allianceTagCache = allianceTagCache;
     this.statisticsCache = statisticsCache;
@@ -154,7 +159,19 @@ class GalaxyServiceImpl implements GalaxyService {
           allianceTag, own, shortInactive, longInactive, attackAgainAvailable);
       ret.put(slot.getPosition(), s);
     }
+    debrisFieldRepository.findByKey_GalaxyAndKey_SystemAndKey_Position(galaxy, system, 16)
+        .ifPresent(debrisField -> ret.put(16, makeUnknownSpaceSlot(user, debrisField)));
     return ret;
+  }
+
+  private GalaxySlotDto makeUnknownSpaceSlot(User user, DebrisField debrisField) {
+    var debrisMetal = debrisField.getMetal();
+    var debrisCrystal = debrisField.getCrystal();
+    var recyclerCapacity = unitService.getCapacity(UnitKind.RECYCLER, user);
+    var neededRecyclers = (int) Math.ceil((double) (debrisMetal + debrisCrystal) / recyclerCapacity);
+    return new GalaxySlotDto(0L, null, 0, false, false, NoobProtectionRankDto.EQUAL,
+        null, null, 0, null, null, 60, debrisMetal, debrisCrystal, neededRecyclers,
+        null, null, false, false, false, false);
   }
 
   private HashSet<Integer> getAttackAgainPositions(User user, int galaxy, int system) {

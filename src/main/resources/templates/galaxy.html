@@ -143,6 +143,41 @@
         <td></td>
       </th:block>
     </tr>
+    <tr th:with="astrophysics=${ctx.technologies.get(T(com.github.retro_game.retro_game.dto.TechnologyKindDto).ASTROPHYSICS)},slot=${slots.get(16)}">
+      <td>
+        <span>16</span>
+      </td>
+      <td th:class="${position == 16 && kind == T(com.github.retro_game.retro_game.dto.CoordinatesKindDto).PLANET ? 'highlight' : ''}">
+        <img class="galaxy-tooltip-image"
+             th:src="@{/static/skins/{skin}/overview-bodies/EXPEDITION.webp(skin=${skin})}"
+             data-tooltip data-tooltip-html th:data-tooltip-title="
+                '<table>' +
+                  '<tr>' +
+                    '<th colspan=2>' + #{unknownSpace} + '</th>' +
+                  '</tr>' +
+                  '<tr>' +
+                    '<td><img class=\'galaxy-tooltip-image-preview\' src=\'' + @{/static/skins/{skin}/overview-bodies/EXPEDITION.webp(skin=${skin})} + '\' width=55 height=55></td>' +
+                    '<td>' +
+                      (${astrophysics != null && astrophysics > 0} ? '<p><a class=\'btn\' href=\'' + @{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=16,kind='PLANET',mission='EXPEDITION')} + '\'>' + #{mission.EXPEDITION} + '</a></p>' : '') +
+                    '</td>' +
+                  '</tr>' +
+                '</table>'" width="30" height="30">
+      </td>
+      <td th:text="#{unknownSpace}">Unknown space</td>
+      <td></td>
+      <td th:class="${position == 16 && kind == T(com.github.retro_game.retro_game.dto.CoordinatesKindDto).DEBRIS_FIELD ? 'highlight' : ''}">
+        <a th:if="${slot != null && slot.debrisMetal + slot.debrisCrystal >= 300}"
+           th:href="@{/flights/send(body=${bodyId},galaxy=${galaxy},system=${system},position=16,kind='DEBRIS_FIELD',mission='HARVEST',units[RECYCLER]=${slot.neededRecyclers})}"
+           th:title="#{sendFleet}">
+          <span th:text="${#numbers.formatInteger(slot.debrisMetal, 1, 'DEFAULT')}"></span>
+          <br>
+          <span th:text="${#numbers.formatInteger(slot.debrisCrystal, 1, 'DEFAULT')}"></span>
+        </a>
+      </td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
     <tr>
       <th colspan="7">
         <span th:text="#{time}">Time</span>:

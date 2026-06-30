@@ -11,4 +11,5 @@ public enum Mission {
   TRANSPORT,
 
   MISSILE_ATTACK,
+  EXPEDITION,
 }

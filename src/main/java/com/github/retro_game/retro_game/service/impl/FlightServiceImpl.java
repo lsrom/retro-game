@@ -12,6 +12,7 @@ import com.github.retro_game.retro_game.service.BodyCreationService;
 import com.github.retro_game.retro_game.service.CatalogService;
 import com.github.retro_game.retro_game.service.exception.*;
 import com.github.retro_game.retro_game.service.impl.missionhandler.AttackMissionHandler;
+import com.github.retro_game.retro_game.service.impl.missionhandler.ExpeditionMissionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.Instant;
 import java.util.*;
@@ -35,6 +37,7 @@ class FlightServiceImpl implements FlightServiceInternal {
   private final boolean astrophysicsBasedColonization;
   private final int maxPlanets;
   private final int fleetSpeed;
+  private final int expeditionHoldingTime;
   private final BodyInfoCache bodyInfoCache;
   private final BodyRepository bodyRepository;
   private final DebrisFieldRepository debrisFieldRepository;
@@ -44,6 +47,7 @@ class FlightServiceImpl implements FlightServiceInternal {
   private final EventRepository eventRepository;
   private final UserRepository userRepository;
   private AttackMissionHandler attackMissionHandler;
+  private ExpeditionMissionHandler expeditionMissionHandler;
   private ActivityService activityService;
   private BodyServiceInternal bodyServiceInternal;
   private BodyCreationService bodyCreationService;
@@ -55,14 +59,18 @@ class FlightServiceImpl implements FlightServiceInternal {
 
   FlightServiceImpl(@Value("${retro-game.astrophysics-based-colonization}") boolean astrophysicsBasedColonization,
                     @Value("${retro-game.max-planets}") int maxPlanets,
-                    @Value("${retro-game.fleet-speed}") int fleetSpeed, BodyInfoCache bodyInfoCache,
+                    @Value("${retro-game.fleet-speed}") int fleetSpeed,
+                    @Value("${retro-game.expedition-holding-time:3600}") int expeditionHoldingTime,
+                    BodyInfoCache bodyInfoCache,
                     BodyRepository bodyRepository, DebrisFieldRepository debrisFieldRepository,
                     EventRepository eventRepository, FlightRepository flightRepository,
                     FlightViewRepository flightViewRepository, PartyRepository partyRepository,
                     UserRepository userRepository) {
+    Assert.isTrue(expeditionHoldingTime >= 0, "retro-game.expedition-holding-time must be at least 0");
     this.astrophysicsBasedColonization = astrophysicsBasedColonization;
     this.maxPlanets = maxPlanets;
     this.fleetSpeed = fleetSpeed;
+    this.expeditionHoldingTime = expeditionHoldingTime;
     this.bodyInfoCache = bodyInfoCache;
     this.bodyRepository = bodyRepository;
     this.debrisFieldRepository = debrisFieldRepository;
@@ -76,6 +84,11 @@ class FlightServiceImpl implements FlightServiceInternal {
   @Autowired
   public void setAttackMissionHandler(AttackMissionHandler attackMissionHandler) {
     this.attackMissionHandler = attackMissionHandler;
+  }
+
+  @Autowired
+  public void setExpeditionMissionHandler(ExpeditionMissionHandler expeditionMissionHandler) {
+    this.expeditionMissionHandler = expeditionMissionHandler;
   }
 
   @Autowired
@@ -150,7 +163,8 @@ class FlightServiceImpl implements FlightServiceInternal {
 
       var recallable = flight.getMission() != Mission.MISSILE_ATTACK && flight.getArrivalAt() != null &&
           (flight.getArrivalAt().after(now) ||
-              (flight.getMission() == Mission.HOLD && flight.getHoldUntil().after(now)));
+              ((flight.getMission() == Mission.HOLD || flight.getMission() == Mission.EXPEDITION) &&
+                  flight.getHoldUntil().after(now)));
       var partyCreatable = recallable && flight.getPartyId() == null &&
           (flight.getMission() == Mission.ATTACK || flight.getMission() == Mission.DESTROY);
 
@@ -184,6 +198,10 @@ class FlightServiceImpl implements FlightServiceInternal {
 
   private int getMaxFlightSlots(User user) {
     return user.getTechnologyLevel(TechnologyKind.COMPUTER_TECHNOLOGY) + 1;
+  }
+
+  private int getMaxExpeditions(User user) {
+    return (int) Math.sqrt(user.getTechnologyLevel(TechnologyKind.ASTROPHYSICS));
   }
 
   @Override
@@ -303,6 +321,32 @@ class FlightServiceImpl implements FlightServiceInternal {
       throw new HoldTimeNotSpecifiedException();
     }
 
+    if (coordinates.getPosition() == 16 && mission != Mission.EXPEDITION) {
+      logger.info("Sending fleet failed, wrong mission for unknown space: userId={} bodyId={} mission={}",
+          userId, body.getId(), mission);
+      throw new WrongMissionException();
+    }
+    if (mission == Mission.EXPEDITION) {
+      if (coordinates.getPosition() != 16) {
+        logger.info("Sending fleet failed, expedition target is not unknown space: userId={} bodyId={}" +
+                " targetCoordinates={}",
+            userId, body.getId(), coordinates);
+        throw new WrongTargetException();
+      }
+      if (body.getUser().getTechnologyLevel(TechnologyKind.ASTROPHYSICS) < 1) {
+        logger.info("Sending fleet failed, expedition requirements not met: userId={} bodyId={}",
+            userId, body.getId());
+        throw new RequirementsNotMetException();
+      }
+      int maxExpeditions = getMaxExpeditions(body.getUser());
+      int occupiedExpeditions = flightRepository.countByStartUserAndMission(body.getUser(), Mission.EXPEDITION);
+      if (occupiedExpeditions >= maxExpeditions) {
+        logger.info("Sending fleet failed, no more free expedition slots: userId={} bodyId={} occupied={} max={}",
+            userId, body.getId(), occupiedExpeditions, maxExpeditions);
+        throw new NoMoreFreeSlotsException();
+      }
+    }
+
     // Some missions require specific ships.
     // Note that a check whether there is a death star when sending fleet on a destroy mission shouldn't be done here,
     // as death stars may be sent later using ACS. Thus, it is better to check it when handling the mission.
@@ -351,6 +395,13 @@ class FlightServiceImpl implements FlightServiceInternal {
           throw new WrongTargetKindException();
         }
       }
+      case EXPEDITION -> {
+        if (coordinates.getKind() != CoordinatesKind.PLANET) {
+          logger.info("Sending fleet failed, wrong target kind for expedition: userId={} bodyId={} targetKind={}",
+              userId, body.getId(), coordinates.getKind());
+          throw new WrongTargetKindException();
+        }
+      }
       default -> {
         if (coordinates.getKind() != CoordinatesKind.PLANET && coordinates.getKind() != CoordinatesKind.MOON) {
           logger.info("Sending fleet failed, wrong target kind: userId={} bodyId={} mission={} targetKind={}",
@@ -374,6 +425,9 @@ class FlightServiceImpl implements FlightServiceInternal {
               userId, body.getId(), coordinates);
           throw new DebrisFieldDoesNotExistException();
         }
+        targetBodyOptional = Optional.empty();
+      }
+      case EXPEDITION -> {
         targetBodyOptional = Optional.empty();
       }
       default -> {
@@ -479,6 +533,10 @@ class FlightServiceImpl implements FlightServiceInternal {
 
       if (mission == Mission.HOLD) {
         long holdUntil = arrivalAt + 3600L * params.getHoldTime();
+        flight.setHoldUntil(Date.from(Instant.ofEpochSecond(holdUntil)));
+        flight.setReturnAt(Date.from(Instant.ofEpochSecond(holdUntil + duration)));
+      } else if (mission == Mission.EXPEDITION) {
+        long holdUntil = arrivalAt + expeditionHoldingTime;
         flight.setHoldUntil(Date.from(Instant.ofEpochSecond(holdUntil)));
         flight.setReturnAt(Date.from(Instant.ofEpochSecond(holdUntil + duration)));
       } else {
@@ -791,15 +849,18 @@ class FlightServiceImpl implements FlightServiceInternal {
 
     Date now = Date.from(Instant.ofEpochSecond(Instant.now().getEpochSecond()));
     boolean recallable = flight.getMission() != Mission.MISSILE_ATTACK && flight.getArrivalAt() != null &&
-        (flight.getArrivalAt().after(now) || (flight.getMission() == Mission.HOLD && flight.getHoldUntil().after(now)));
+        (flight.getArrivalAt().after(now) ||
+            ((flight.getMission() == Mission.HOLD || flight.getMission() == Mission.EXPEDITION) &&
+                flight.getHoldUntil().after(now)));
     if (!recallable) {
       logger.info("Recalling flight failed, flight is unrecallable: userId={} flightId={}", userId, flightId);
       throw new UnrecallableFlightException();
     }
 
-    // If the mission is hold, we can recall before or after arrival.
+    // Hold and expedition missions can be recalled before arrival or during their holding phase.
     long departureAt = flight.getDepartureAt().toInstant().getEpochSecond();
-    if (flight.getMission() == Mission.HOLD && !flight.getArrivalAt().after(now)) {
+    if ((flight.getMission() == Mission.HOLD || flight.getMission() == Mission.EXPEDITION) &&
+        !flight.getArrivalAt().after(now)) {
       assert flight.getArrivalAt() != null;
       long arrivalAt = flight.getArrivalAt().toInstant().getEpochSecond();
       long returnAt = now.toInstant().getEpochSecond() + (arrivalAt - departureAt);
@@ -886,6 +947,9 @@ class FlightServiceImpl implements FlightServiceInternal {
       case HOLD:
         // Hold mission is handled twice, pass time to know which case it is.
         handleHold(flight, event.getAt());
+        break;
+      case EXPEDITION:
+        expeditionMissionHandler.handle(flight, event.getAt());
         break;
       case TRANSPORT:
         handleTransport(flight);

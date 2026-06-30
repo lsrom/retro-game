@@ -76,6 +76,10 @@
             <div th:utext="#{otherReportAutomaticTransferFailedFormat(${start}, ${target})}" th:remove="tag"></div>
             <div th:text="${report.text}" th:remove="tag"></div>
           </th:block>
+          <th:block th:case="${T(com.github.retro_game.retro_game.dto.OtherReportKindDto).EXPEDITION}">
+            <div th:utext="#{otherReportExpeditionFormat(${start}, ${target})}" th:remove="tag"></div>
+            <div th:text="${report.text}" th:remove="tag"></div>
+          </th:block>
         </td>
       </tr>
       <tr>

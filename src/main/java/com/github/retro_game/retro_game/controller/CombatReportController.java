@@ -36,6 +36,7 @@ public class CombatReportController {
     if (report != null) {
       var userIds =
           Stream.concat(report.attackers().stream(), report.defenders().stream()).map(CombatReportCombatantDto::userId)
+              .filter(userId -> userId > 0)
               .collect(Collectors.toSet());
       var userInfos = userInfoCache.getAll(userIds);
       model.addAttribute("userInfos", userInfos);

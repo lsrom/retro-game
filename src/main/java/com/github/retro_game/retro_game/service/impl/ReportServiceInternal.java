@@ -13,6 +13,12 @@ public interface ReportServiceInternal extends ReportService {
                                     Resources defendersLoss, Resources plunder, Resources debris,
                                     MoonCreationResultDto moonCreationResult, CombatReport combatReport);
 
+  void createSimplifiedCombatReport(User user, boolean isAttacker, Date at, Long enemyId, String enemyName,
+                                    Coordinates coordinates, BattleResult result, int numRounds,
+                                    Resources attackersLoss, Resources defendersLoss, Resources plunder,
+                                    Resources debris, MoonCreationResultDto moonCreationResult,
+                                    CombatReport combatReport);
+
   void createEspionageReport(Flight flight, List<Flight> holdingFlights, double counterEspionageChance);
 
   void createHarvestReport(Flight flight, int numRecyclers, long capacity, long harvestedMetal, long harvestedCrystal,
@@ -29,6 +35,8 @@ public interface ReportServiceInternal extends ReportService {
   void createReturnReport(Flight flight);
 
   void createMissileAttackReport(Flight flight, int totalDestroyed);
+
+  void createExpeditionReport(Flight flight, String text);
 
   void createAutomaticTransferFailedReport(User user, Date at, Coordinates startCoordinates,
                                            Coordinates targetCoordinates, String text);
