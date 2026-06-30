@@ -1,0 +1,648 @@
+:root {
+  --color-text: #eee;
+  --color-text-bright: #fff;
+  --color-text-muted: #999;
+  --color-transparent: transparent;
+  --color-tap-highlight: rgba(0, 0, 0, 0);
+
+  --color-surface: #344566a0;
+  --color-surface-hover: #3c4d6ea0;
+  --color-surface-current: #677899a0;
+  --color-border: #415680a0;
+  --color-border-strong: #234;
+  --color-table-header-start: #202840a0;
+  --color-table-header-end: #283850a0;
+  --color-table-highlight: #c00;
+
+  --color-danger: #ff6b6b;
+  --color-date: #5f5;
+  --color-requirement-met: #8f0;
+  --color-storage-warning: #fa0;
+  --color-own-attack: #0ff;
+  --color-own-colonization: #8f0;
+  --color-own-deployment: #0f0;
+  --color-own-espionage: #0f8;
+  --color-own-hold: #8f8;
+  --color-foreign-colonization: #f88;
+  --color-foreign-deployment: #ff0;
+  --color-foreign-espionage: #f80;
+  --color-foreign-hold: #ff8;
+  --color-vacation: #6cf;
+  --color-short-inactive: #FFB266;
+  --color-long-inactive: #A0A0A0;
+  --color-positive: #0f0;
+  --color-draw: #ff0;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+}
+
+.container nav {
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+    height: 100vh;
+  }
+
+  .container > div {
+    flex: 1 1 100%;
+    order: 2;
+    overflow: auto;
+  }
+
+  .container > div > div {
+    margin-left: auto;
+    margin-right: auto;
+    width: 624px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container > div > div {
+    width: 848px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* 1 */
+}
+
+html {
+  font-family: "JetBrains Mono", monospace; /* 2 */
+  line-height: 1.5; /* 3 */
+  font-size: 12px;
+  -webkit-text-size-adjust: 100%; /* 4 */
+  -ms-text-size-adjust: 100%; /* 4 */
+  -ms-overflow-style: scrollbar; /* 5 */
+  -webkit-tap-highlight-color: var(--color-tap-highlight); /* 6 */
+}
+
+/**
+ * Body
+ *
+ * 1. Remove the margin in all browsers.
+ */
+
+body {
+  background-image: url(background.webp);
+  color: var(--color-text);
+  font-family: "JetBrains Mono", monospace;
+  margin: 0; /* 1 */
+}
+
+/**
+ * Forms
+ *
+ * 1. Remove the default `border-radius` that macOS Chrome adds.
+ */
+
+a.btn,
+button {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0; /* 1 */
+  color: var(--color-text);
+  display: inline-block;
+  padding: .25rem .5rem;
+  text-align: center;
+  font-family: inherit;
+}
+
+a.btn.disabled,
+button:disabled {
+  color: var(--color-text-muted);
+  cursor: auto;
+  text-decoration: none;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+a.btn:not(.disabled):hover,
+button:not(:disabled):hover {
+  border: 1px solid var(--color-border-strong);
+  text-decoration: none;
+}
+
+input,
+select,
+textarea {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 100%;
+  line-height: 1.15;
+  margin: 0;
+  padding: .25rem .5rem;
+  width: 8rem;
+}
+
+textarea {
+  width: 100%;
+}
+
+/**
+ * Images
+ *
+ * 1. Remove the border on images inside links in IE 10.
+ */
+
+img {
+  border-style: none; /* 1 */
+  vertical-align: top;
+}
+
+/**
+ * Links
+ *
+ * 1. Remove the gray background on active links in IE 10.
+ * 2. Remove gaps in links underline in iOS 8+ and Safari 8+.
+ */
+
+a {
+  background-color: var(--color-transparent); /* 1 */
+  color: var(--color-text);
+  text-decoration: none;
+  -webkit-text-decoration-skip: objects; /* 2 */
+}
+
+a:hover {
+  color: var(--color-text-bright);
+  text-decoration: underline;
+}
+
+/**
+ * Lists
+ */
+
+ul {
+  list-style: none;
+}
+
+/**
+ * Tables
+ *
+ * 1. Prevent double borders.
+ */
+
+table {
+  background-color: var(--color-surface);
+  border-collapse: collapse; /* 1 */
+  max-width: 100%;
+  width: 100%;
+}
+
+th,
+td {
+  border: 1px var(--color-border) solid;
+  padding: .25rem;
+  vertical-align: middle;
+}
+
+th {
+  background: linear-gradient(var(--color-table-header-start), var(--color-table-header-end));
+  text-align: left;
+}
+
+td {
+  font-weight: normal;
+  text-align: center;
+}
+
+td.highlight {
+  border: 2px var(--color-table-highlight) solid;
+}
+
+.current {
+  background-color: var(--color-surface-current);
+}
+
+/**
+ * Texts
+ */
+
+h2 {
+  font-size: 1.3rem;
+}
+
+strong {
+  font-weight: bolder;
+}
+
+.space-between {
+  display: flex;
+  justify-content: space-between;
+}
+
+.center-block {
+  margin: auto;
+  width: 50%;
+}
+
+#top-bar {
+  display: flex;
+  margin: 1rem 0 1rem 0;
+}
+
+#top-bar-bodies > div,
+#top-bar-bodies > img {
+  display: inline-block;
+}
+
+#top-bar-bodies img {
+  height: 55px;
+  width: 55px;
+}
+
+.body-list {
+  width: 15rem;
+}
+
+#top-bar-body-pointers form {
+  display: inline-block;
+  padding-top: .25rem;
+}
+
+#top-bar-resources {
+  display: flex;
+  flex-grow: 1;
+}
+
+#top-bar-resources > div {
+  flex-grow: 1;
+  text-align: center;
+}
+
+#top-bar-resources p {
+  margin: .25rem 0 0 0;
+}
+
+#sidebar {
+  padding: 1rem;
+}
+
+#sidebar h2 {
+  font-size: 10px;
+  margin: 0;
+}
+
+#sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+#sidebar li a {
+  background-color: var(--color-surface);
+  border-left: 1px var(--color-border) solid;
+  border-right: 1px var(--color-border) solid;
+  border-top: 1px var(--color-border) solid;
+  display: block;
+  padding: .35rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+#sidebar li:last-child a {
+  border-bottom: 1px var(--color-border) solid;
+}
+
+#sidebar li a:hover {
+  background-color: var(--color-surface-hover);
+}
+
+#body-switch-sidebar {
+  padding: 1rem 0 1rem 0;
+  width: 180px;
+}
+
+#body-switch-sidebar h2 {
+  font-size: 10px;
+  margin: 0;
+  padding: 0 1rem;
+}
+
+#body-switch-sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+#body-switch-sidebar form {
+  margin: 0;
+}
+
+#body-switch-sidebar .body-switch-item {
+  background-color: var(--color-surface);
+  border-left: 1px var(--color-border) solid;
+  border-right: 1px var(--color-border) solid;
+  border-top: 1px var(--color-border) solid;
+  border-bottom: 0;
+  display: block;
+  padding: .35rem;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
+}
+
+#body-switch-sidebar li:last-child .body-switch-item {
+  border-bottom: 1px var(--color-border) solid;
+}
+
+#body-switch-sidebar .body-switch-item:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.tooltip {
+  background-color: var(--color-surface);
+  border: 1px var(--color-border-strong) solid;
+  color: var(--color-text);
+  padding: .25rem;
+}
+
+.tooltip p {
+  margin: 0;
+  padding-bottom: .25rem;
+}
+
+.event mark {
+  background: var(--color-transparent);
+  color: var(--color-text);
+}
+
+.overview-body a,
+.overview-body span {
+  display: block;
+  padding-top: .1rem;
+}
+
+.selected-overview-body-image {
+  width: 480px;
+  height: 480px;
+}
+.overview-body-image {
+  width: 120px;
+  height: 120px;
+}
+
+#overview-other-planets {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#overview-other-planets > div {
+  flex-basis: 33%;
+  padding-bottom: .5rem;
+}
+
+.item-image {
+  padding: 0;
+  vertical-align: top;
+}
+
+.item-image img {
+  height: 240px;
+  width: 240px;
+}
+
+.item-info {
+  padding: 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.item-info h2,
+.item-info p {
+  margin: 0 0 .5rem 0;
+  text-align: justify;
+}
+
+.item-info .shipyard-building-time {
+  display: flex;
+  justify-content: space-between;
+}
+
+.item-info .item-cost-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.item-action-row {
+  align-items: center;
+  display: flex;
+}
+
+.item-action-row-right {
+  justify-content: flex-end;
+}
+
+.item-info-with-bottom {
+  padding-bottom: 8rem;
+  position: relative;
+}
+
+.item-info-bottom {
+  bottom: 1rem;
+  left: 1rem;
+  position: absolute;
+  right: 1rem;
+}
+
+.item-action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.shipyard-total-building-time,
+.total-resource-cost {
+  margin-left: .5rem;
+  text-align: right;
+}
+
+.item-actions {
+  padding: .25rem;
+}
+
+.item-actions button,
+.item-actions input {
+  margin: .125rem;
+}
+
+.queue-entry-actions form {
+  display: inline-block;
+}
+
+.queue-entry-actions .queue-entry-add-action {
+  margin-right: 1rem;
+}
+
+.galaxy-tooltip-image {
+  width: 42px;
+  height: 42px;
+}
+
+.galaxy-tooltip-image-preview {
+  width: 120px;
+  height: 120px;
+}
+
+#galaxy-navigation {
+  display: flex;
+  justify-content: center;
+}
+
+#galaxy-navigation table {
+  margin: .5rem .25rem .5rem .25rem;
+  width: auto;
+}
+
+#galaxy-reload,
+#phalanx-reload {
+  text-align: center;
+}
+
+.message {
+  margin-top: .5rem;
+}
+
+#messages-pagination,
+#reports-pagination {
+  display: flex;
+  justify-content: center;
+}
+
+#messages-pagination table,
+#reports-pagination table {
+  margin-top: .5rem;
+  width: auto;
+}
+
+.report-actions form,
+.report-actions button {
+  display: inline-block;
+}
+
+.combat-report-combatants {
+  margin-bottom: .5rem;
+}
+
+.error {
+  color: var(--color-danger);
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  margin: 0.5rem 0;
+}
+
+.date {
+  color: var(--color-date);
+}
+
+.requirement-not-met {
+  color: var(--color-danger);
+}
+
+.requirement-met {
+  color: var(--color-requirement-met);
+}
+
+.no-capacity, .no-energy {
+  color: var(--color-danger);
+}
+
+/* Storage at 90%+ of capacity: warn the player before production overflows. */
+.almost-full {
+  color: var(--color-storage-warning);
+}
+
+.own-attack, .own-destroy {
+  color: var(--color-own-attack);
+}
+
+.own-colonization, .own-harvest {
+  color: var(--color-own-colonization);
+}
+
+.own-deployment, .own-transport {
+  color: var(--color-own-deployment);
+}
+
+.own-espionage {
+  color: var(--color-own-espionage);
+}
+
+.own-hold {
+  color: var(--color-own-hold);
+}
+
+.foreign-attack, .foreign-destroy {
+  color: var(--color-danger);
+}
+
+.foreign-colonization, .foreign-harvest {
+  color: var(--color-foreign-colonization);
+}
+
+.foreign-deployment, .foreign-transport {
+  color: var(--color-foreign-deployment);
+}
+
+.foreign-espionage {
+  color: var(--color-foreign-espionage);
+}
+
+.foreign-hold {
+  color: var(--color-foreign-hold);
+}
+
+.vacation {
+  color: var(--color-vacation);
+}
+
+.banned {
+  text-decoration: line-through;
+}
+
+.noob {
+  color: var(--color-positive);
+}
+
+.strong {
+  color: var(--color-danger);
+}
+
+.short-inactive {
+  color: var(--color-short-inactive);
+}
+
+.long-inactive {
+  color: var(--color-long-inactive);
+}
+
+.record-new {
+  color: var(--color-positive);
+}
+
+.win {
+  color: var(--color-positive);
+}
+
+.loss {
+  color: var(--color-danger);
+}
+
+.draw {
+  color: var(--color-draw);
+}
+
+.automatic-transfer-select {
+  width: 14rem;
+}
