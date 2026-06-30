@@ -381,7 +381,7 @@ create table harvest_reports (
   at timestamptz not null,
   galaxy int not null check (galaxy between 1 and 5),
   system int not null check (system between 1 and 500),
-  position int not null check (position between 1 and 15),
+  position int not null check (position between 1 and 16),
   kind int not null check (kind = 2),
   num_recyclers int not null check (num_recyclers >= 1),
   capacity bigint not null check (capacity >= 0),
