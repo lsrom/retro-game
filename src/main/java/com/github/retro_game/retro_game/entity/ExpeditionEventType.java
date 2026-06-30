@@ -5,7 +5,7 @@ public enum ExpeditionEventType {
   Delay(120),
   FleetLoss(10),
   Pirates(200),
-  Aliens(100),
+  Aliens(100000),
   OreAsteroid(400),
   GasCloud(200),
   SpectacularSupernova(50),

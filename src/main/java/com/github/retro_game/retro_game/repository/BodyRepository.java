@@ -21,4 +21,7 @@ public interface BodyRepository extends JpaRepository<Body, Long>, BodyRepositor
 
   @Query("select body.id from Body body where body.user.id = ?1 order by body.id")
   List<Long> findIdsByUserIdOrderById(long userId);
+
+  @Query("select body.id from Body body where body.user.id = ?1 and body.coordinates.kind = ?2 order by body.id")
+  List<Long> findIdsByUserIdAndCoordinatesKindOrderById(long userId, CoordinatesKind kind);
 }

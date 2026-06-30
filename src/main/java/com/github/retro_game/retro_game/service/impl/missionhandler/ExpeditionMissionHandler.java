@@ -10,6 +10,8 @@ import com.github.retro_game.retro_game.dto.MoonCreationResultDto;
 import com.github.retro_game.retro_game.dto.StatisticsKindDto;
 import com.github.retro_game.retro_game.entity.BattleResult;
 import com.github.retro_game.retro_game.entity.Body;
+import com.github.retro_game.retro_game.entity.Coordinates;
+import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.DebrisField;
 import com.github.retro_game.retro_game.entity.DebrisFieldKey;
 import com.github.retro_game.retro_game.entity.Event;
@@ -19,7 +21,10 @@ import com.github.retro_game.retro_game.entity.Flight;
 import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
 import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.entity.UnitType;
+import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.model.ItemCostUtils;
+import com.github.retro_game.retro_game.repository.BodyRepository;
 import com.github.retro_game.retro_game.repository.DebrisFieldRepository;
 import com.github.retro_game.retro_game.repository.FlightRepository;
 import com.github.retro_game.retro_game.service.ActivityService;
@@ -33,13 +38,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Component
@@ -57,6 +65,7 @@ public class ExpeditionMissionHandler {
     private static final String FLEET_LOSS_AVOIDED_REPORT_KEY = "otherReportExpedition.fleetLossAvoided";
     private static final String PIRATES_REPORT_KEY = "otherReportExpedition.pirates";
     private static final String ALIENS_REPORT_KEY = "otherReportExpedition.aliens";
+    private static final String VENGEFUL_ALIENS_REPORT_KEY = "otherReportExpedition.vengefulAliens";
     private static final String ORE_ASTEROID_REPORT_KEY = "otherReportExpedition.oreAsteroid";
     private static final String GAS_CLOUD_REPORT_KEY = "otherReportExpedition.gasCloud";
     private static final String SPECTACULAR_SUPERNOVA_REPORT_KEY = "otherReportExpedition.spectacularSupernova";
@@ -87,9 +96,14 @@ public class ExpeditionMissionHandler {
             UnitKind.BATTLE_CRUISER, 3L,
             UnitKind.DESTROYER, 2L
     );
+    private static final Set<UnitKind> NON_COMBAT_UNITS = Set.of(
+            UnitKind.ANTI_BALLISTIC_MISSILE,
+            UnitKind.INTERPLANETARY_MISSILE
+    );
 
     private final ActivityService activityService;
     private final BattleEngine battleEngine;
+    private final BodyRepository bodyRepository;
     private final BodyServiceInternal bodyServiceInternal;
     private final CombatReportServiceInternal combatReportServiceInternal;
     private final DebrisFieldRepository debrisFieldRepository;
@@ -102,20 +116,32 @@ public class ExpeditionMissionHandler {
     private final ReportServiceInternal reportServiceInternal;
     private final StatisticsCache statisticsCache;
     private final UnitService unitService;
+    private final double vengefulAliens;
 
-    public ExpeditionMissionHandler(ActivityService activityService, BattleEngine battleEngine,
-                                    BodyServiceInternal bodyServiceInternal,
-                                    CombatReportServiceInternal combatReportServiceInternal,
-                                    DebrisFieldRepository debrisFieldRepository, EventScheduler eventScheduler,
-                                    FlightRepository flightRepository,
-                                    @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
-                                    MessageSource messageSource,
-                                    MissionHandlerUtils missionHandlerUtils,
-                                    @Value("${retro-game.production-speed}") int productionSpeed,
-                                    ReportServiceInternal reportServiceInternal, StatisticsCache statisticsCache,
-                                    UnitService unitService) {
+    public ExpeditionMissionHandler(
+            ActivityService activityService,
+            BattleEngine battleEngine,
+            BodyRepository bodyRepository,
+            BodyServiceInternal bodyServiceInternal,
+            CombatReportServiceInternal combatReportServiceInternal,
+            DebrisFieldRepository debrisFieldRepository, EventScheduler eventScheduler,
+            FlightRepository flightRepository,
+            MessageSource messageSource,
+            MissionHandlerUtils missionHandlerUtils,
+            ReportServiceInternal reportServiceInternal, StatisticsCache statisticsCache,
+            UnitService unitService,
+            @Value("${retro-game.production-speed}") int productionSpeed,
+            @Value("${retro-game.fleet-debris-factor:0.3}") double fleetDebrisFactor,
+            @Value("${retro-game.expeditions-vengeful-aliens:0.0}") double vengefulAliens
+    ) {
+        Assert.isTrue(
+                vengefulAliens >= 0.0 && vengefulAliens <= 1.0,
+                "retro-game.expeditions-vengeful-aliens must be between 0 and 1"
+        );
+
         this.activityService = activityService;
         this.battleEngine = battleEngine;
+        this.bodyRepository = bodyRepository;
         this.bodyServiceInternal = bodyServiceInternal;
         this.combatReportServiceInternal = combatReportServiceInternal;
         this.debrisFieldRepository = debrisFieldRepository;
@@ -128,6 +154,7 @@ public class ExpeditionMissionHandler {
         this.reportServiceInternal = reportServiceInternal;
         this.statisticsCache = statisticsCache;
         this.unitService = unitService;
+        this.vengefulAliens = vengefulAliens;
     }
 
     public void handle(Flight flight, Date at) {
@@ -168,7 +195,9 @@ public class ExpeditionMissionHandler {
                 }
             }
             case Aliens -> {
-                if (!handleAliens(flight)) {
+                boolean survived = handleAliens(flight);
+                handleVengefulAliens(flight);
+                if (!survived) {
                     return;
                 }
             }
@@ -403,6 +432,84 @@ public class ExpeditionMissionHandler {
         return true;
     }
 
+    private void handleVengefulAliens(Flight flight) {
+        if (vengefulAliens == 0.0 || ThreadLocalRandom.current().nextDouble() >= vengefulAliens) {
+            return;
+        }
+
+        List<Long> planetIds = bodyRepository.findIdsByUserIdAndCoordinatesKindOrderById(
+                flight.getStartUser().getId(), CoordinatesKind.PLANET);
+        if (planetIds.isEmpty()) {
+            return;
+        }
+
+        reportServiceInternal.createExpeditionReport(flight, getMessage(flight, VENGEFUL_ALIENS_REPORT_KEY));
+
+        int attacks = ThreadLocalRandom.current().nextInt(1, 7);
+        for (int i = 0; i < attacks; i++) {
+            long planetId = planetIds.get(ThreadLocalRandom.current().nextInt(planetIds.size()));
+            Body targetBody = bodyRepository.findById(planetId).orElse(null);
+            if (targetBody == null) {
+                continue;
+            }
+
+            bodyServiceInternal.updateResourcesAndShipyard(targetBody, flight.getHoldUntil());
+            activityService.handleBodyActivity(targetBody.getId(), flight.getHoldUntil().toInstant().getEpochSecond());
+            handleVengefulAlienAttack(flight, targetBody);
+        }
+    }
+
+    private void handleVengefulAlienAttack(Flight expeditionFlight, Body targetBody) {
+        HostileFleet hostileFleet = calculateEncounterFleet(
+                expeditionFlight,
+                ALIEN_USER_ID,
+                ALIEN_USER_NAME,
+                ThreadLocalRandom.current().nextDouble(0.44, 0.99),
+                ALIEN_BASE_FLEET,
+                true
+        );
+        Combatant targetCombatant = makeBodyCombatant(targetBody);
+        var attackers = List.of(hostileFleet.combatant());
+        var defenders = List.of(targetCombatant);
+        int seed = ThreadLocalRandom.current().nextInt();
+        long startTime = System.nanoTime();
+        BattleOutcome battleOutcome = battleEngine.fight(attackers, defenders, seed);
+        long executionTime = System.nanoTime() - startTime;
+
+        int lastRound = battleOutcome.numRounds() - 1;
+        var attackerStats = battleOutcome.attackersOutcomes().get(0).getNthRoundUnitGroupsStats(lastRound);
+        var defenderStats = battleOutcome.defendersOutcomes().get(0).getNthRoundUnitGroupsStats(lastRound);
+        boolean attackersAlive = hasRemainingUnits(attackerStats);
+        boolean defendersAlive = hasRemainingUnits(defenderStats);
+        BattleResult battleResult;
+        if (attackersAlive && defendersAlive) {
+            battleResult = BattleResult.DRAW;
+        } else if (attackersAlive) {
+            battleResult = BattleResult.ATTACKERS_WIN;
+        } else {
+            battleResult = BattleResult.DEFENDERS_WIN;
+        }
+
+        Resources attackersLoss = calculateLoss(hostileFleet.combatant(), battleOutcome.attackersOutcomes().get(0),
+                lastRound);
+        Resources defendersLoss = calculateLoss(targetCombatant, battleOutcome.defendersOutcomes().get(0), lastRound);
+        Resources debris = calcDebris(attackersLoss, defendersLoss);
+        createOrUpdateDebrisField(targetBody.getCoordinates(), expeditionFlight.getHoldUntil(), debris);
+        var emptyResources = new Resources();
+        var moonCreationResult = new MoonCreationResultDto(0.0, false);
+        var combatReport = combatReportServiceInternal.create(expeditionFlight.getHoldUntil(), attackers, defenders,
+                battleOutcome, battleResult, attackersLoss, defendersLoss, emptyResources, debris, moonCreationResult,
+                null, seed, executionTime);
+        reportServiceInternal.createSimplifiedCombatReport(targetBody.getUser(), false, expeditionFlight.getHoldUntil(),
+                (Long) null, ALIEN_USER_NAME, targetBody.getCoordinates(), battleResult, battleOutcome.numRounds(),
+                attackersLoss, defendersLoss, emptyResources, debris, moonCreationResult, combatReport);
+
+        applyRemainingUnits(targetBody, defenderStats);
+        logger.info("Vengeful alien attack processed: expeditionFlightId={} userId={} targetBodyId={} targetCoordinates={} result={} seed={} executionTime={} combatReport={}",
+                expeditionFlight.getId(), expeditionFlight.getStartUser().getId(), targetBody.getId(),
+                targetBody.getCoordinates(), battleResult, seed, executionTime, combatReport.getId());
+    }
+
     private Resources calcDebris(Resources attackersLoss, Resources defendersLoss) {
         var debris = new Resources(attackersLoss);
         debris.add(defendersLoss);
@@ -414,21 +521,24 @@ public class ExpeditionMissionHandler {
     }
 
     private void createOrUpdateDebrisField(Flight flight, Resources debris) {
+        createOrUpdateDebrisField(flight.getTargetCoordinates(), flight.getHoldUntil(), debris);
+    }
+
+    private void createOrUpdateDebrisField(Coordinates coordinates, Date at, Resources debris) {
         var metal = (long) debris.getMetal();
         var crystal = (long) debris.getCrystal();
         if (metal == 0 && crystal == 0) {
             return;
         }
 
-        var coords = flight.getTargetCoordinates();
-        var key = new DebrisFieldKey(coords.getGalaxy(), coords.getSystem(), coords.getPosition());
+        var key = new DebrisFieldKey(coordinates.getGalaxy(), coordinates.getSystem(), coordinates.getPosition());
         var dfOpt = debrisFieldRepository.findById(key);
         if (dfOpt.isEmpty()) {
-            var df = new DebrisField(key, flight.getHoldUntil(), flight.getHoldUntil(), metal, crystal);
+            var df = new DebrisField(key, at, at, metal, crystal);
             debrisFieldRepository.save(df);
         } else {
             var df = dfOpt.get();
-            df.setUpdatedAt(flight.getHoldUntil());
+            df.setUpdatedAt(at);
             df.setMetal(df.getMetal() + metal);
             df.setCrystal(df.getCrystal() + crystal);
         }
@@ -586,11 +696,38 @@ public class ExpeditionMissionHandler {
         );
     }
 
+    private static Combatant makeBodyCombatant(Body body) {
+        var user = body.getUser();
+        return new Combatant(
+                user.getId(),
+                body.getCoordinates(),
+                user.getTechnologyLevel(TechnologyKind.WEAPONS_TECHNOLOGY),
+                user.getTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY),
+                user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY),
+                makeCombatUnitGroups(body.getUnits())
+        );
+    }
+
     private static EnumMap<UnitKind, Long> makeUnitGroups(Map<UnitKind, Integer> units) {
         var unitGroups = new EnumMap<UnitKind, Long>(UnitKind.class);
         for (var entry : units.entrySet()) {
             if (entry.getValue() > 0) {
                 unitGroups.put(entry.getKey(), entry.getValue().longValue());
+            }
+        }
+        return unitGroups;
+    }
+
+    private static EnumMap<UnitKind, Long> makeCombatUnitGroups(Map<UnitKind, Integer> units) {
+        var combatUnits = EnumSet.copyOf(CatalogItem.unitKindsOfType(UnitType.FLEET));
+        combatUnits.addAll(CatalogItem.unitKindsOfType(UnitType.DEFENSE));
+        combatUnits.removeAll(NON_COMBAT_UNITS);
+
+        var unitGroups = new EnumMap<UnitKind, Long>(UnitKind.class);
+        for (UnitKind kind : combatUnits) {
+            int count = units.getOrDefault(kind, 0);
+            if (count > 0) {
+                unitGroups.put(kind, (long) count);
             }
         }
         return unitGroups;
@@ -628,6 +765,15 @@ public class ExpeditionMissionHandler {
             }
         }
         flight.setUnits(units);
+    }
+
+    private static void applyRemainingUnits(Body body, EnumMap<UnitKind, UnitGroupStats> unitGroupsStats) {
+        var units = body.getUnits();
+        for (UnitKind kind : unitGroupsStats.keySet()) {
+            long remainingUnits = unitGroupsStats.get(kind).numRemainingUnits();
+            units.put(kind, Math.toIntExact(remainingUnits));
+        }
+        body.setUnits(units);
     }
 
     private void handleDelay(Flight flight) {
