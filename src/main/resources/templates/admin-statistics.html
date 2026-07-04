@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" layout:decorate="~{admin-layout}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{statistics}">Statistics</title>
+</head>
+<body>
+<div layout:fragment="content">
+  <table th:if="${statisticsUpdated}">
+    <tr>
+      <th th:text="#{success}">Success</th>
+    </tr>
+    <tr>
+      <td th:text="#{statisticsUpdated}">Statistics were updated successfully.</td>
+    </tr>
+  </table>
+
+  <table>
+    <tr>
+      <th th:text="#{statistics}">Statistics</th>
+    </tr>
+    <tr>
+      <td>
+        <p th:text="#{statisticsUpdateDescription}">
+          Recalculate statistics and refresh the cached rankings immediately.
+        </p>
+        <form th:action="@{/admin/statistics/update}" method="post"
+              onsubmit="return confirm(this.dataset.confirm)" th:data-confirm="#{statisticsUpdateConfirm}">
+          <button type="submit" th:text="#{updateStatistics}">Update statistics</button>
+        </form>
+      </td>
+    </tr>
+  </table>
+</div>
+</body>
+</html>

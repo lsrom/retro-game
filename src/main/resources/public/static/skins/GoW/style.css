@@ -56,6 +56,7 @@
 }
 
 html {
+  background-color: #0b1020;
   font-family: sans-serif; /* 2 */
   line-height: 1.15; /* 3 */
   font-size: 12px;
@@ -72,6 +73,7 @@ html {
  */
 
 body {
+  background-color: #0b1020;
   background-image: url(background.webp);
   color: #eee;
   font-family: sans-serif;

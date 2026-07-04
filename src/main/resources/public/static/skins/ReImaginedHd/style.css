@@ -4,6 +4,7 @@
   --color-text-muted: #999;
   --color-transparent: transparent;
   --color-tap-highlight: rgba(0, 0, 0, 0);
+  --color-page-background: #0b1020;
 
   --color-surface: #344566a0;
   --color-surface-hover: #3c4d6ea0;
@@ -75,6 +76,7 @@
 }
 
 html {
+  background-color: var(--color-page-background);
   font-family: "JetBrains Mono", monospace; /* 2 */
   line-height: 1.5; /* 3 */
   font-size: 12px;
@@ -91,6 +93,7 @@ html {
  */
 
 body {
+  background-color: var(--color-page-background);
   background-image: url(background.webp);
   color: var(--color-text);
   font-family: "JetBrains Mono", monospace;
