@@ -6,18 +6,34 @@
 <body>
 <div class="container">
   <nav th:fragment="body-switch" id="body-switch-sidebar">
-    <h2 th:text="#{yourBodies}">Your bodies</h2>
-    <ul>
-      <li th:each="info : ${ctx.bodies}" th:with="c=${info.coordinates}">
-        <form method="get">
-          <input name="body" type="hidden" th:value="${info.id}">
-          <input th:each="entry : ${param}" th:unless="${entry.key == 'body'}"
-                 th:name="${entry.key}" type="hidden" th:value="${entry.value[0]}">
-          <button class="body-switch-item" th:classappend="${info.id == bodyId ? ' current' : ''}"
-                  th:text="|${info.name} [${c}]|">Body [1:1:1]</button>
-        </form>
-      </li>
-    </ul>
+    <table>
+      <tbody>
+      <tr th:each="planet : ${ctx.bodies}" th:if="${planet.coordinates.planet}" th:with="pc=${planet.coordinates}">
+        <td>
+          <form method="get">
+            <input name="body" type="hidden" th:value="${planet.id}">
+            <input th:each="entry : ${param}" th:unless="${entry.key == 'body'}"
+                   th:name="${entry.key}" type="hidden" th:value="${entry.value[0]}">
+            <button class="body-switch-item" th:classappend="${planet.id == bodyId ? ' current' : ''}"
+                    th:text="|[${pc.galaxy}-${pc.system}-${pc.position}]|">[1-1-1]</button>
+          </form>
+        </td>
+        <td>
+          <form method="get" th:each="moon : ${ctx.bodies}"
+                th:if="${moon.coordinates.moon
+                  and moon.coordinates.galaxy == pc.galaxy
+                  and moon.coordinates.system == pc.system
+                  and moon.coordinates.position == pc.position}">
+            <input name="body" type="hidden" th:value="${moon.id}">
+            <input th:each="entry : ${param}" th:unless="${entry.key == 'body'}"
+                   th:name="${entry.key}" type="hidden" th:value="${entry.value[0]}">
+            <button class="body-switch-item" th:classappend="${moon.id == bodyId ? ' current' : ''}"
+                    type="submit">Moon</button>
+          </form>
+        </td>
+      </tr>
+      </tbody>
+    </table>
   </nav>
 </div>
 </body>
