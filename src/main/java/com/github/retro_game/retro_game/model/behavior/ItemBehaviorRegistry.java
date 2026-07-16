@@ -196,6 +196,7 @@ public final class ItemBehaviorRegistry {
     m.put(UnitKind.BOMBER, 25);
     m.put(UnitKind.SOLAR_SATELLITE, 1250);
     m.put(UnitKind.DESTROYER, 5);
+    m.put(UnitKind.BATTLE_CRUISER, 15);
     m.put(UnitKind.ROCKET_LAUNCHER, 200);
     m.put(UnitKind.LIGHT_LASER, 200);
     m.put(UnitKind.HEAVY_LASER, 100);

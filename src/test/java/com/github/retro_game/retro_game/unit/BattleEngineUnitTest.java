@@ -47,4 +47,28 @@ public class BattleEngineUnitTest extends IntegrationTest {
         outcome1.defendersOutcomes().get(0).unitGroupsStats()
     );
   }
+
+  @Test
+  public void testDeathStarRapidFireAgainstBattleCruiser() {
+    var attackers = Collections.singletonList(new Combatant(
+        1,
+        new Coordinates(1, 1, 1, CoordinatesKind.PLANET),
+        0, 0, 0,
+        new EnumMap<>(UnitKind.class) {{
+          put(UnitKind.DEATH_STAR, 1L);
+        }}
+    ));
+    var defenders = Collections.singletonList(new Combatant(
+        2,
+        new Coordinates(1, 1, 2, CoordinatesKind.PLANET),
+        0, 0, 0,
+        new EnumMap<>(UnitKind.class) {{
+          put(UnitKind.BATTLE_CRUISER, 1L);
+        }}
+    ));
+
+    var outcome = battleEngine.fight(attackers, defenders, 1);
+    var timesFired = outcome.attackersOutcomes().get(0).unitGroupsStats().get(0).get(UnitKind.DEATH_STAR).timesFired();
+    Assert.assertTrue(timesFired > 1);
+  }
 }

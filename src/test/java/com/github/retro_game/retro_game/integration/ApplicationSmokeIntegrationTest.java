@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,6 +47,8 @@ public class ApplicationSmokeIntegrationTest extends IntegrationTest {
   private MockMvc mockMvc;
   @Autowired
   private EntityManager entityManager;
+  @Autowired
+  private JdbcTemplate jdbcTemplate;
 
   @Test
   public void startsAndSeedsBuiltInCatalog() {
@@ -87,5 +90,31 @@ public class ApplicationSmokeIntegrationTest extends IntegrationTest {
             .with(csrf()))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Settings")));
+  }
+
+  @Test
+  public void harvestReportsAcceptUnknownSpaceDebrisFieldPosition() {
+    var userId = userService.create("harvest-report-position@test", "harvest1", "test");
+
+    jdbcTemplate.update("""
+            insert into harvest_reports (
+              user_id, deleted, at, galaxy, system, position, kind, num_recyclers, capacity,
+              harvested_metal, harvested_crystal, remaining_metal, remaining_crystal
+            ) values (?, false, now(), 1, 1, 16, 2, 1, 20000, 0, 0, 0, 0)
+            """,
+        userId);
+
+    Integer count = jdbcTemplate.queryForObject("""
+            select count(*)
+              from harvest_reports
+             where user_id = ?
+               and galaxy = 1
+               and system = 1
+               and position = 16
+               and kind = 2
+            """,
+        Integer.class, userId);
+
+    assertThat(count).isEqualTo(1);
   }
 }
