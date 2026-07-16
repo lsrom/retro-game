@@ -157,7 +157,13 @@ public final class ItemBehaviorRegistry {
 
         m.put(UnitKind.DESTROYER, new UnitBehavior(
                 List.of(new Propulsion(TechnologyKind.HYPERSPACE_DRIVE, 0, 5000, 1000)),
-                rapidFire(UnitKind.ESPIONAGE_PROBE, 5, UnitKind.SOLAR_SATELLITE, 5, UnitKind.LIGHT_LASER, 10)));
+                rapidFire(
+                        UnitKind.ESPIONAGE_PROBE, 5,
+                        UnitKind.SOLAR_SATELLITE, 5,
+                        UnitKind.BATTLE_CRUISER, 2,
+                        UnitKind.LIGHT_LASER, 10
+                )
+        ));
 
         m.put(UnitKind.DEATH_STAR, new UnitBehavior(
                 List.of(new Propulsion(TechnologyKind.HYPERSPACE_DRIVE, 0, 100, 1)),
@@ -165,9 +171,16 @@ public final class ItemBehaviorRegistry {
 
         m.put(UnitKind.BATTLE_CRUISER, new UnitBehavior(
                 List.of(new Propulsion(TechnologyKind.HYPERSPACE_DRIVE, 0, 10000, 250)),
-                rapidFire(UnitKind.ESPIONAGE_PROBE, 5, UnitKind.SOLAR_SATELLITE, 5,
-                        UnitKind.SMALL_CARGO, 3, UnitKind.LARGE_CARGO, 3, UnitKind.HEAVY_FIGHTER, 4,
-                        UnitKind.CRUISER, 4, UnitKind.BATTLESHIP, 7)));
+                rapidFire(
+                        UnitKind.ESPIONAGE_PROBE, 44,
+                        UnitKind.SOLAR_SATELLITE, 5,
+                        UnitKind.SMALL_CARGO, 3,
+                        UnitKind.LARGE_CARGO, 3,
+                        UnitKind.HEAVY_FIGHTER, 4,
+                        UnitKind.CRUISER, 4,
+                        UnitKind.BATTLESHIP, 7
+                )
+        ));
 
         // Defensive structures (rocket launcher through interplanetary missile) do
         // not fly and have no rapid fire; they fall through to UnitBehavior.NONE
