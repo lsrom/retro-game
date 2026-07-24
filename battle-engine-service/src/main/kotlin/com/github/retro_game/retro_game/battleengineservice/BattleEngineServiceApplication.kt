@@ -15,15 +15,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
 
-private const val DEFAULT_PORT = 8080
-private const val BATTLE_ENGINE_PROPERTY = "retro-game.battle-engine"
+private const val DEFAULT_PORT = 8078
 
 fun main() {
   val mapper = JavalinJackson.defaultMapper()
     .registerModule(KotlinModule.Builder().build())
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  val strategy = battleEngineStrategy(loadBattleEngineType())
+  val strategy = JavaBattleEngineStrategy()
 
   Javalin.create { config ->
     config.jsonMapper(JavalinJackson(mapper))
@@ -36,28 +35,6 @@ fun main() {
     .get("/health") { ctx -> ctx.result("OK") }
     .start(readPort())
 }
-
-private fun loadBattleEngineType(): String {
-  val configPath = Path.of("config", "application.properties")
-  require(Files.isRegularFile(configPath)) {
-    "Missing $configPath; $BATTLE_ENGINE_PROPERTY must be configured in the main application.properties"
-  }
-
-  val properties = Properties()
-  Files.newInputStream(configPath).use(properties::load)
-  val value = properties.getProperty(BATTLE_ENGINE_PROPERTY)
-  require(!value.isNullOrBlank()) {
-    "Missing $BATTLE_ENGINE_PROPERTY in $configPath"
-  }
-  return value
-}
-
-private fun battleEngineStrategy(type: String): BattleEngineStrategy =
-  when (type) {
-    "java" -> JavaBattleEngineStrategy()
-    "native" -> NativeBattleEngineStrategy()
-    else -> throw IllegalArgumentException("$BATTLE_ENGINE_PROPERTY must be java or native, got '$type'")
-  }
 
 private fun readPort(): Int = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT
 
