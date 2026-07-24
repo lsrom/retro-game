@@ -32,7 +32,7 @@ fun main() {
       val outcome = strategy.fight(request.attackers, request.defenders, request.rules, request.seed)
       ctx.json(outcome)
     }
-    .get("/sim", BattleSimHttpApi())
+    .get("/sim", BattleSimHttpApi(strategy))
     .get("/health") { ctx -> ctx.result("OK") }
     .start(readPort())
 }

@@ -1,14 +1,14 @@
 package com.github.retro_game.retro_game.battleengineservice
 
+import com.github.retro_game.retro_game.battleengine.BattleEngineStrategy
 import com.github.retro_game.retro_game.battleengine.Combatant
-import com.github.retro_game.retro_game.battleengine.CombatantCoordinates
-import com.github.retro_game.retro_game.battleengine.UnitKind
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.Handler
-import java.util.EnumMap
 
-class BattleSimHttpApi : Handler {
+class BattleSimHttpApi(
+  private val strategy: BattleEngineStrategy
+) : Handler {
   override fun handle(ctx: Context) {
     try {
       ctx.json(BattleSimQueryParser.parse(ctx.queryParamMap()))
