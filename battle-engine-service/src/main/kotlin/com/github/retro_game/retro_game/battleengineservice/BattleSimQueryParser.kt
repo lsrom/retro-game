@@ -14,31 +14,6 @@ internal object BattleSimQueryParser {
   private const val DEFAULT_COORDINATES_KIND_PLANET = 0
   private val defaultAttackerCoordinates = CombatantCoordinates(1, 1, 1, DEFAULT_COORDINATES_KIND_PLANET)
 
-  private val unitsByIndex = mapOf(
-    0 to SMALL_CARGO,
-    1 to LARGE_CARGO,
-    2 to LITTLE_FIGHTER,
-    3 to HEAVY_FIGHTER,
-    4 to CRUISER,
-    5 to BATTLESHIP,
-    6 to COLONY_SHIP,
-    7 to RECYCLER,
-    8 to ESPIONAGE_PROBE,
-    9 to BOMBER,
-    10 to SOLAR_SATELLITE,
-    11 to DESTROYER,
-    12 to DEATH_STAR,
-    13 to BATTLE_CRUISER,
-    14 to ROCKET_LAUNCHER,
-    15 to LIGHT_LASER,
-    16 to HEAVY_LASER,
-    17 to GAUSS_CANNON,
-    18 to ION_CANNON,
-    19 to PLASMA_TURRET,
-    20 to SMALL_SHIELD_DOME,
-    21 to LARGE_SHIELD_DOME,
-  )
-
   fun parse(parameters: Map<String, List<String>>): BattleSimInput {
     val defenderCoordinates = parseCoordinates(required(parameters, "enemy_pos"))
     val resources = BattleSimResources(
@@ -63,7 +38,7 @@ internal object BattleSimQueryParser {
   ): Combatant {
     val unitGroups = EnumMap<UnitKind, Long>(UnitKind::class.java)
 
-    for ((index, kind) in unitsByIndex) {
+    for ((index, kind) in BattleSimUnits.unitsByIndex) {
       val count = optionalLong(parameters, "ship_${side}0_${index}_b")
       if (count > 0) {
         unitGroups[kind] = count

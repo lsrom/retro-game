@@ -7,6 +7,14 @@ import kotlin.test.assertFailsWith
 
 class BattleSimQueryParserTest {
   @Test
+  fun `exposes websim unit indexes in order`() {
+    assertEquals(UnitKind.SMALL_CARGO, BattleSimUnits.unitsByIndex[0])
+    assertEquals(UnitKind.BATTLE_CRUISER, BattleSimUnits.unitsByIndex[13])
+    assertEquals(UnitKind.ROCKET_LAUNCHER, BattleSimUnits.unitsByIndex[14])
+    assertEquals(UnitKind.LARGE_SHIELD_DOME, BattleSimUnits.unitsByIndex[21])
+  }
+
+  @Test
   fun `parses documented websim query into defender combatant`() {
     val input = BattleSimQueryParser.parse(
       mapOf(

@@ -11,9 +11,6 @@ import com.github.retro_game.retro_game.battleengine.JavaBattleEngineStrategy
 import com.github.retro_game.retro_game.battleengine.NativeBattleEngineStrategy
 import io.javalin.Javalin
 import io.javalin.json.JavalinJackson
-import java.nio.file.Files
-import java.nio.file.Path
-import java.util.Properties
 
 private const val DEFAULT_PORT = 8078
 
@@ -32,12 +29,25 @@ fun main() {
       val outcome = strategy.fight(request.attackers, request.defenders, request.rules, request.seed)
       ctx.json(outcome)
     }
+    .get("/sim-ui") { ctx ->
+      ctx.contentType("text/html").result(classpathResourceText("public/sim-ui.html"))
+    }
+    .get("/sim-ui.js") { ctx ->
+      ctx.contentType("application/javascript").result(classpathResourceText("public/sim-ui.js"))
+    }
+    .get("/sim-units") { ctx ->
+      ctx.json(BattleSimUnits.metadata)
+    }
     .get("/sim", BattleSimHttpApi(strategy))
     .get("/health") { ctx -> ctx.result("OK") }
     .start(readPort())
 }
 
 private fun readPort(): Int = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT
+
+private fun classpathResourceText(path: String): String =
+  Thread.currentThread().contextClassLoader.getResource(path)?.readText()
+    ?: throw IllegalStateException("Classpath resource not found: $path")
 
 data class FightRequest(
   val attackers: List<Combatant>,
