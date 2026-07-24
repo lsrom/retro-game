@@ -1,6 +1,8 @@
 const form = document.getElementById('sim-form');
 const statusEl = document.getElementById('status');
 const submitButton = document.getElementById('submit-button');
+const randomizeSeedButton = document.getElementById('randomize-seed-button');
+const seedInput = document.getElementById('seed-input');
 const summaryEl = document.getElementById('summary');
 const rawOutputEl = document.getElementById('raw-output');
 const attackerUnitsEl = document.getElementById('attacker-units');
@@ -74,6 +76,20 @@ function formToParams() {
   return params;
 }
 
+function prefillFormFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  for (const [name, value] of params.entries()) {
+    const field = form.elements.namedItem(name);
+    if (field instanceof HTMLInputElement) {
+      field.value = value;
+    }
+  }
+}
+
+function randomizeSeed() {
+  seedInput.value = String(Math.floor(Math.random() * 2147483647));
+}
+
 function resourceText(resources) {
   if (!resources) {
     return '0 / 0 / 0';
@@ -114,6 +130,7 @@ async function loadUnits() {
 
   const units = await response.json();
   renderUnitInputs(units);
+  prefillFormFromQuery();
   setStatus('');
 }
 
@@ -144,6 +161,8 @@ form.addEventListener('submit', (event) => {
   event.preventDefault();
   runSimulation();
 });
+
+randomizeSeedButton.addEventListener('click', randomizeSeed);
 
 form.addEventListener('reset', () => {
   window.setTimeout(() => {

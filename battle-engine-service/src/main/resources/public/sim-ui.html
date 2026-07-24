@@ -176,13 +176,23 @@
     .actions {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 10px;
       grid-column: 1 / -1;
       padding: 4px 0;
     }
 
+    .action-group,
+    .seed-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
     .seed-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       width: min(180px, 100%);
     }
 
@@ -281,6 +291,12 @@
         flex-direction: column;
       }
 
+      .action-group,
+      .seed-controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
       .seed-field {
         width: 100%;
       }
@@ -370,11 +386,16 @@
       </section>
 
       <div class="actions">
-        <label class="seed-field">Seed
-          <input name="seed" type="number" min="0" step="1" value="1">
-        </label>
-        <button class="secondary" type="reset">Reset</button>
-        <button id="submit-button" type="submit">Run Simulation</button>
+        <div class="action-group">
+          <button class="secondary" type="reset">Reset</button>
+          <button id="submit-button" type="submit">Run Simulation</button>
+        </div>
+        <div class="seed-controls">
+          <button id="randomize-seed-button" class="secondary" type="button">Randomize</button>
+          <label class="seed-field">Seed
+            <input id="seed-input" name="seed" type="number" min="0" step="1" value="1">
+          </label>
+        </div>
       </div>
 
       <section class="results" aria-live="polite">
