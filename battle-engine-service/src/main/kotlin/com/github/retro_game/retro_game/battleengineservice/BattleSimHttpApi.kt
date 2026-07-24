@@ -14,7 +14,8 @@ class BattleSimHttpApi(
   override fun handle(ctx: Context) {
     try {
       val input = BattleSimQueryParser.parse(ctx.queryParamMap())
-      ctx.json(strategy.fight(input.attackers, input.defenders, input.rules, input.seed))
+      val outcome = strategy.fight(input.attackers, input.defenders, input.rules, input.seed)
+      ctx.json(outcome.toSimOutput(input, universeConfig))
     } catch (e: IllegalArgumentException) {
       throw BadRequestResponse(e.message ?: "Invalid simulation query")
     }
