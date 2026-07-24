@@ -1,6 +1,9 @@
 # Battle engine build
 build/
 
+# Gradle
+.gradle/
+
 # Maven
 target/
 

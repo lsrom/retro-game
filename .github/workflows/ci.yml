@@ -17,8 +17,8 @@ jobs:
       with:
         distribution: temurin
         java-version: ${{ matrix.java }}
-    - name: Test with Maven
-      run: mvn -B test
+    - name: Test with Gradle
+      run: ./gradlew --no-daemon test
 
   build-battle-engine:
     name: Build battle engine (${{ matrix.build }}) (JDK ${{ matrix.java }})
@@ -58,9 +58,9 @@ jobs:
     - name: Configure
       env:
         CXX: ${{ matrix.cxx }}
-      run: cmake -S battle-engine -B build -G "${{ matrix.gen }}" -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S battle-engine -B build/battle-engine -G "${{ matrix.gen }}" -DCMAKE_BUILD_TYPE=Release
     - name: Build
-      run: cmake --build build --config Release
+      run: cmake --build build/battle-engine --config Release
 
   build-docker-image:
     name: Build docker image

@@ -2,3 +2,8 @@ docker-compose*.yml
 Dockerfile*
 LICENSE
 README.md
+.git
+.gradle
+.idea
+build
+target

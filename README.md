@@ -16,6 +16,21 @@ This setup may expose ports to database and redis.
 Make sure you configure it properly before running on production.
 Check [etc](etc) directory if you are looking for systemd service and nginx configs.
 
+## Building
+
+Use the Gradle wrapper to build and test the application:
+
+```shell
+./gradlew test
+./gradlew bootJar
+```
+
+The native battle engine can be built with:
+
+```shell
+./gradlew buildBattleEngine
+```
+
 ## Database backup and restore
 
 Administrators can download and restore PostgreSQL backups from the Database
