@@ -1,12 +1,12 @@
 const form = document.getElementById('sim-form');
 const statusEl = document.getElementById('status');
 const submitButton = document.getElementById('submit-button');
-const randomizeSeedButton = document.getElementById('randomize-seed-button');
 const seedInput = document.getElementById('seed-input');
 const summaryEl = document.getElementById('summary');
 const rawOutputEl = document.getElementById('raw-output');
 const attackerUnitsEl = document.getElementById('attacker-units');
 const defenderUnitsEl = document.getElementById('defender-units');
+const numberFormatter = new Intl.NumberFormat();
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -90,12 +90,22 @@ function randomizeSeed() {
   seedInput.value = String(Math.floor(Math.random() * 2147483647));
 }
 
+function initializeSeed() {
+  if (!new URLSearchParams(window.location.search).has('seed')) {
+    randomizeSeed();
+  }
+}
+
 function resourceText(resources) {
   if (!resources) {
     return '0 / 0 / 0';
   }
 
-  return `${resources.metal ?? 0} / ${resources.crystal ?? 0} / ${resources.deuterium ?? 0}`;
+  return [
+    resources.metal ?? 0,
+    resources.crystal ?? 0,
+    resources.deuterium ?? 0,
+  ].map((value) => numberFormatter.format(value)).join(' / ');
 }
 
 function renderSummary(output) {
@@ -130,6 +140,7 @@ async function loadUnits() {
 
   const units = await response.json();
   renderUnitInputs(units);
+  initializeSeed();
   prefillFormFromQuery();
   setStatus('');
 }
@@ -153,6 +164,7 @@ async function runSimulation() {
   } catch (error) {
     setStatus(error.message || 'Simulation failed', true);
   } finally {
+    randomizeSeed();
     submitButton.disabled = false;
   }
 }
@@ -162,10 +174,9 @@ form.addEventListener('submit', (event) => {
   runSimulation();
 });
 
-randomizeSeedButton.addEventListener('click', randomizeSeed);
-
 form.addEventListener('reset', () => {
   window.setTimeout(() => {
+    randomizeSeed();
     summaryEl.replaceChildren();
     rawOutputEl.textContent = '{}';
     setStatus('');
