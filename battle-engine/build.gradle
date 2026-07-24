@@ -60,6 +60,7 @@ tasks.register('buildBattleEngine', Exec) {
 
 tasks.named('test') {
   useJUnitPlatform()
+  enableAssertions = true
   systemProperty 'retro-game.native-tests', System.getProperty('retro-game.native-tests', 'false')
 
   if (System.getProperty('retro-game.native-tests') == 'true') {
