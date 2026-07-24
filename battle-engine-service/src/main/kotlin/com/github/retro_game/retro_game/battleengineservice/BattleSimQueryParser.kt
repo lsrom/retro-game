@@ -41,6 +41,9 @@ internal object BattleSimQueryParser {
     for ((index, kind) in BattleSimUnits.unitsByIndex) {
       val count = optionalLong(parameters, "ship_${side}0_${index}_b")
       if (count > 0) {
+        if (side == 'a' && kind in BattleSimUnits.defensiveUnitKinds) {
+          throw AttackingFleetCannotContainDefensiveUnitsException()
+        }
         unitGroups[kind] = count
       }
     }

@@ -16,6 +16,7 @@ dependencies {
   implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
   implementation 'io.javalin:javalin:6.7.0'
   runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+  testImplementation 'io.mockk:mockk:1.14.11'
   testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }
 

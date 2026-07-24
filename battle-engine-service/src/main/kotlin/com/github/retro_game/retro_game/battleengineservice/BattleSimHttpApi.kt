@@ -16,6 +16,10 @@ class BattleSimHttpApi(
       val input = BattleSimQueryParser.parse(ctx.queryParamMap())
       val outcome = strategy.fight(input.attackers, input.defenders, input.rules, input.seed)
       ctx.json(outcome.toSimOutput(input, universeConfig))
+    } catch (e: AttackingFleetCannotContainDefensiveUnitsException) {
+      ctx.status(400)
+        .contentType("text/plain")
+        .result("ERROR: ${e.message}")
     } catch (e: IllegalArgumentException) {
       throw BadRequestResponse(e.message ?: "Invalid simulation query")
     }

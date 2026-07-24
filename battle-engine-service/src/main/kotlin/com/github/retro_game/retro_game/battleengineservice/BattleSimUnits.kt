@@ -33,6 +33,17 @@ internal object BattleSimUnits {
     BattleSimUnitMetadata(index, kind.name, kind.displayName())
   }
 
+  val defensiveUnitKinds: Set<UnitKind> = setOf(
+    ROCKET_LAUNCHER,
+    LIGHT_LASER,
+    HEAVY_LASER,
+    GAUSS_CANNON,
+    ION_CANNON,
+    PLASMA_TURRET,
+    SMALL_SHIELD_DOME,
+    LARGE_SHIELD_DOME,
+  )
+
   private fun UnitKind.displayName(): String =
     name.lowercase()
       .split('_')
@@ -44,3 +55,6 @@ data class BattleSimUnitMetadata(
   val kind: String,
   val name: String,
 )
+
+internal class AttackingFleetCannotContainDefensiveUnitsException :
+  IllegalArgumentException("Attacking fleet cannot contain defensive units.")

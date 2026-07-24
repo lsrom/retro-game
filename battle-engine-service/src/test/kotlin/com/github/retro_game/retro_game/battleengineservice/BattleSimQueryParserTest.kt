@@ -77,6 +77,20 @@ class BattleSimQueryParserTest {
   }
 
   @Test
+  fun `rejects defensive units in attacker fleet`() {
+    val error = assertFailsWith<AttackingFleetCannotContainDefensiveUnitsException> {
+      BattleSimQueryParser.parse(
+        mapOf(
+          "enemy_pos" to listOf("4:321:10"),
+          "ship_a0_14_b" to listOf("1"),
+        ),
+      )
+    }
+
+    assertEquals("Attacking fleet cannot contain defensive units.", error.message)
+  }
+
+  @Test
   fun `parses defense units and ignores zero counts`() {
     val input = BattleSimQueryParser.parse(
       mapOf(
