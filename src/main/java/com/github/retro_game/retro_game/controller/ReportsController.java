@@ -48,13 +48,15 @@ public class ReportsController {
         put(UnitKindDto.SOLAR_SATELLITE, 10);
         put(UnitKindDto.DESTROYER, 11);
         put(UnitKindDto.DEATH_STAR, 12);
-        put(UnitKindDto.BATTLE_CRUISER, 20);
+        put(UnitKindDto.BATTLE_CRUISER, 13);
         put(UnitKindDto.ROCKET_LAUNCHER, 14);
         put(UnitKindDto.LIGHT_LASER, 15);
         put(UnitKindDto.HEAVY_LASER, 16);
         put(UnitKindDto.GAUSS_CANNON, 17);
         put(UnitKindDto.ION_CANNON, 18);
         put(UnitKindDto.PLASMA_TURRET, 19);
+        put(UnitKindDto.SMALL_SHIELD_DOME, 20);
+        put(UnitKindDto.LARGE_SHIELD_DOME, 21);
       }});
 
   private final boolean espionageProbeRaiding;
