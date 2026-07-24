@@ -1,12 +1,13 @@
 package com.github.retro_game.retro_game.differential;
 
+import com.github.retro_game.retro_game.battleengine.BattleRules;
 import com.github.retro_game.retro_game.battleengine.Combatant;
+import com.github.retro_game.retro_game.battleengine.CombatantCoordinates;
 import com.github.retro_game.retro_game.battleengine.CombatantOutcome;
 import com.github.retro_game.retro_game.battleengine.JavaBattleEngineStrategy;
 import com.github.retro_game.retro_game.battleengine.NativeBattleEngineStrategy;
-import com.github.retro_game.retro_game.entity.Coordinates;
-import com.github.retro_game.retro_game.entity.CoordinatesKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitAttributes;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -24,6 +25,7 @@ public class BattleEngineDifferentialTest {
   private static final int NUM_BATTLES = 1000;
   private final JavaBattleEngineStrategy javaBattleEngine = new JavaBattleEngineStrategy();
   private final NativeBattleEngineStrategy nativeBattleEngine = new NativeBattleEngineStrategy();
+  private final BattleRules rules = makeRules();
 
   private static Combatant generateCombatant(Random random) {
     var weaponsTechnology = random.nextInt(30);
@@ -37,8 +39,17 @@ public class BattleEngineDifferentialTest {
       var n = (long) random.nextInt(1000);
       unitGroups.put(kind, n);
     }
-    return new Combatant(1, new Coordinates(1, 1, 1, CoordinatesKind.PLANET), weaponsTechnology, shieldingTechnology,
+    return new Combatant(1, new CombatantCoordinates(1, 1, 1, 0), weaponsTechnology, shieldingTechnology,
         armorTechnology, unitGroups);
+  }
+
+  private static BattleRules makeRules() {
+    var attrs = new UnitAttributes[UnitKind.values().length];
+    for (var kind : UnitKind.values()) {
+      attrs[kind.ordinal()] = new UnitAttributes(100, 100, 1000, new int[UnitKind.values().length]);
+    }
+    attrs[UnitKind.DEATH_STAR.ordinal()].rapidFire()[UnitKind.BATTLE_CRUISER.ordinal()] = 15;
+    return new BattleRules(attrs);
   }
 
   private static List<Combatant> generateCombatants(Random random) {
@@ -71,9 +82,9 @@ public class BattleEngineDifferentialTest {
       var defenders = generateCombatants(random);
 
       long t1 = System.nanoTime();
-      var javaOutcome = javaBattleEngine.fight(attackers, defenders, seed);
+      var javaOutcome = javaBattleEngine.fight(attackers, defenders, rules, seed);
       long t2 = System.nanoTime();
-      var nativeOutcome = nativeBattleEngine.fight(attackers, defenders, seed);
+      var nativeOutcome = nativeBattleEngine.fight(attackers, defenders, rules, seed);
       long t3 = System.nanoTime();
 
       javaTime += t2 - t1;

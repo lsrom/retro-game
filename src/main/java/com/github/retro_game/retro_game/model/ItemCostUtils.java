@@ -4,7 +4,7 @@ import com.github.retro_game.retro_game.entity.BuildingKind;
 import com.github.retro_game.retro_game.entity.ItemDefinition;
 import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.service.CatalogService;
 
 // A helper for cost & required energy calculation.

@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.entity;
 
+import com.github.retro_game.retro_game.battleengine.UnitKind;
+
 import jakarta.persistence.*;
 import java.util.Date;
 

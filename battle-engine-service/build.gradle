@@ -1,0 +1,28 @@
+plugins {
+  id 'org.jetbrains.kotlin.jvm'
+  id 'application'
+}
+
+group = 'com.github.retro_game'
+version = rootProject.version
+description = 'Retro Game Battle Engine Service'
+
+kotlin {
+  jvmToolchain(21)
+}
+
+dependencies {
+  implementation project(':battle-engine')
+  implementation 'com.fasterxml.jackson.module:jackson-module-kotlin:2.20.1'
+  implementation 'io.javalin:javalin:6.7.0'
+  runtimeOnly 'org.slf4j:slf4j-simple:2.0.17'
+  testImplementation 'org.jetbrains.kotlin:kotlin-test'
+}
+
+application {
+  mainClass = 'com.github.retro_game.retro_game.battleengineservice.BattleEngineServiceApplicationKt'
+}
+
+tasks.named('test') {
+  useJUnitPlatform()
+}

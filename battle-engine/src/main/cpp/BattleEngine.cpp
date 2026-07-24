@@ -968,7 +968,7 @@ Java_com_github_retro_1game_retro_1game_battleengine_NativeBattleEngineStrategy_
 }
 
 extern "C" JNIEXPORT jobject JNICALL
-Java_com_github_retro_1game_retro_1game_battleengine_NativeBattleEngineStrategy_fight(
+Java_com_github_retro_1game_retro_1game_battleengine_NativeBattleEngineStrategy_fightNative(
     JNIEnv *env, [[maybe_unused]] jobject battleEngine, jobject attackersList,
     jobject defendersList, jint seed) {
   Jni jni(env);

@@ -7,7 +7,7 @@ import com.github.retro_game.retro_game.battleengine.UnitGroupStats;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.Coordinates;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.service.CatalogService;
 
 import java.io.*;
@@ -69,10 +69,10 @@ public class CombatReportSerialization {
     stream.writeLong(combatant.userId());
 
     var coords = combatant.coordinates();
-    stream.writeInt(coords.getGalaxy());
-    stream.writeInt(coords.getSystem());
-    stream.writeInt(coords.getPosition());
-    stream.writeByte(coords.getKind().ordinal());
+    stream.writeInt(coords.galaxy());
+    stream.writeInt(coords.system());
+    stream.writeInt(coords.position());
+    stream.writeByte(coords.kind());
 
     stream.writeByte(combatant.weaponsTechnology());
     stream.writeByte(combatant.shieldingTechnology());

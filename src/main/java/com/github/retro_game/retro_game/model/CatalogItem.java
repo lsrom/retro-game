@@ -6,7 +6,7 @@ import com.github.retro_game.retro_game.entity.ItemDefinition;
 import com.github.retro_game.retro_game.entity.ItemType;
 import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.entity.UnitType;
 import com.github.retro_game.retro_game.entity.User;
 import com.github.retro_game.retro_game.model.behavior.ItemBehaviorRegistry;

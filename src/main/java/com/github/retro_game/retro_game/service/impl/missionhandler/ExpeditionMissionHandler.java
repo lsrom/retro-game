@@ -20,7 +20,7 @@ import com.github.retro_game.retro_game.entity.ExpeditionEventType;
 import com.github.retro_game.retro_game.entity.Flight;
 import com.github.retro_game.retro_game.entity.Resources;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.entity.UnitType;
 import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.model.ItemCostUtils;
@@ -30,6 +30,7 @@ import com.github.retro_game.retro_game.repository.FlightRepository;
 import com.github.retro_game.retro_game.service.ActivityService;
 import com.github.retro_game.retro_game.service.impl.BodyServiceInternal;
 import com.github.retro_game.retro_game.service.impl.CombatReportServiceInternal;
+import com.github.retro_game.retro_game.service.impl.BattleEngineCoordinates;
 import com.github.retro_game.retro_game.service.impl.EventScheduler;
 import com.github.retro_game.retro_game.service.impl.ReportServiceInternal;
 import com.github.retro_game.retro_game.service.impl.UnitService;
@@ -572,8 +573,8 @@ public class ExpeditionMissionHandler {
             units.put(UnitKind.ESPIONAGE_PROBE, calculateUnitCount(UnitKind.ESPIONAGE_PROBE, targetValue));
         }
 
-        var combatant = new Combatant(userId, flight.getTargetCoordinates(), weaponsTechnology, shieldingTechnology,
-                armorTechnology, units);
+        var combatant = new Combatant(userId, BattleEngineCoordinates.convert(flight.getTargetCoordinates()),
+                weaponsTechnology, shieldingTechnology, armorTechnology, units);
         return new HostileFleet(userName, combatant);
     }
 
@@ -688,7 +689,7 @@ public class ExpeditionMissionHandler {
         var user = flight.getStartUser();
         return new Combatant(
                 user.getId(),
-                flight.getStartBody().getCoordinates(),
+                BattleEngineCoordinates.convert(flight.getStartBody().getCoordinates()),
                 user.getTechnologyLevel(TechnologyKind.WEAPONS_TECHNOLOGY),
                 user.getTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY),
                 user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY),
@@ -700,7 +701,7 @@ public class ExpeditionMissionHandler {
         var user = body.getUser();
         return new Combatant(
                 user.getId(),
-                body.getCoordinates(),
+                BattleEngineCoordinates.convert(body.getCoordinates()),
                 user.getTechnologyLevel(TechnologyKind.WEAPONS_TECHNOLOGY),
                 user.getTechnologyLevel(TechnologyKind.SHIELDING_TECHNOLOGY),
                 user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY),

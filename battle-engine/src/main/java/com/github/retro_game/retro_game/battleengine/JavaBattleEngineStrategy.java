@@ -1,6 +1,6 @@
 package com.github.retro_game.retro_game.battleengine;
 
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -74,7 +74,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
       for (var item : combatant.unitGroups().entrySet()) {
         var kind = item.getKey().ordinal();
         var count = item.getValue();
-        var maxHull = 0.1f * unitsAttributes[kind].armor * (1.0f + 0.1f * combatant.armorTechnology());
+        var maxHull = 0.1f * unitsAttributes[kind].armor() * (1.0f + 0.1f * combatant.armorTechnology());
         for (var j = 0; j < count; j++) {
           hulls[n] = maxHull;
           kinds[n] = (byte) kind;
@@ -113,7 +113,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
       var kind = units.kinds[i];
       var id = units.ids[i];
       var combatant = combatants[id];
-      var shield = unitsAttributes[kind].shield * (1.0f + 0.1f * combatant.shieldingTechnology());
+      var shield = unitsAttributes[kind].shield() * (1.0f + 0.1f * combatant.shieldingTechnology());
       units.shields[i] = shield;
     }
   }
@@ -139,7 +139,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
       final var shooterStatsIdx = attackerId * MAX_ROUNDS * UnitKind.values().length +
           round * UnitKind.values().length + shooterKind;
 
-      final var damage = unitsAttributes[shooterKind].weapons * (1.0f + 0.1f * attacker.weaponsTechnology());
+      final var damage = unitsAttributes[shooterKind].weapons() * (1.0f + 0.1f * attacker.weaponsTechnology());
 
       while (true) {
         // Pick a random target.
@@ -164,7 +164,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
           // Does the shooter break through the shield at all?
           if (hullDamage < 0.0f) {
             // All damage absorbed by the shield. Calculate the shield damage including the bouncing effect.
-            var maxShield = unitsAttributes[targetKind].shield * (1.0f + 0.1f * defender.shieldingTechnology());
+            var maxShield = unitsAttributes[targetKind].shield() * (1.0f + 0.1f * defender.shieldingTechnology());
             var shieldDamage = 0.01f * (float) Math.floor(100.0f * damage / maxShield) * maxShield;
             shield -= shieldDamage;
 
@@ -188,7 +188,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
 
           if (hull != 0.0f) {
             // If the target's hull is less than 70%, the target might explode.
-            var maxHull = 0.1f * unitsAttributes[targetKind].armor * (1.0f + 0.1f * defender.armorTechnology());
+            var maxHull = 0.1f * unitsAttributes[targetKind].armor() * (1.0f + 0.1f * defender.armorTechnology());
             if (hull < 0.7f * maxHull) {
               r = Random.next(r);
               if (hull < (1.0f / Random.MAX * r * maxHull)) {
@@ -202,7 +202,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
           defendersUnits.hulls[targetIdx] = hull;
         }
 
-        var rapidFire = unitsAttributes[shooterKind].rapidFire[targetKind];
+        var rapidFire = unitsAttributes[shooterKind].rapidFire()[targetKind];
         if (rapidFire == 0) {
           break;
         }
@@ -268,7 +268,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   @Override
-  public BattleOutcome fight(List<Combatant> attackersList, List<Combatant> defendersList, int seed) {
+  public BattleOutcome fight(List<Combatant> attackersList, List<Combatant> defendersList, BattleRules rules, int seed) {
     // Our RNG needs a positive seed.
     // Keep the calculation of the seed in sync with the native battle engine.
     if (seed < 0)
@@ -280,9 +280,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
     var attackers = attackersList.toArray(new Combatant[0]);
     var defenders = defendersList.toArray(new Combatant[0]);
 
-    // Built per battle (not cached in a static field) so it is read after the
-    // content catalog is available, and reflects admin combat-stat edits.
-    var unitsAttributes = UnitAttributes.makeUnitsAttributes();
+    var unitsAttributes = rules.unitsAttributes();
 
     var attackersParty = makeParty(attackers, unitsAttributes);
     var defendersParty = makeParty(defenders, unitsAttributes);

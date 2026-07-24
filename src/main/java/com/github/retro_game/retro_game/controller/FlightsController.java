@@ -3,7 +3,7 @@ package com.github.retro_game.retro_game.controller;
 import com.github.retro_game.retro_game.controller.activity.Activity;
 import com.github.retro_game.retro_game.controller.form.*;
 import com.github.retro_game.retro_game.dto.*;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.entity.UnitType;
 import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.BodyService;

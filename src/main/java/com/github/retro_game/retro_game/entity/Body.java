@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.entity;
 
+import com.github.retro_game.retro_game.battleengine.UnitKind;
+
 import com.github.retro_game.retro_game.entity.QueueEntries.StoredBuildingQueueEntry;
 import com.github.retro_game.retro_game.entity.QueueEntries.StoredShipyardQueueEntry;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;

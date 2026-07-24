@@ -1,6 +1,6 @@
 package com.github.retro_game.retro_game.battleengine;
 
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 
 import java.util.EnumMap;
 import java.util.List;

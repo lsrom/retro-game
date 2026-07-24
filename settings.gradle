@@ -13,3 +13,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = 'retro-game'
+include 'battle-engine'
+include 'battle-engine-service'

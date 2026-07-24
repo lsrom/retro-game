@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.service.impl;
 
+import com.github.retro_game.retro_game.battleengine.UnitKind;
+
 import com.github.retro_game.retro_game.cache.UserInfoCache;
 import com.github.retro_game.retro_game.dto.RecordDto;
 import com.github.retro_game.retro_game.dto.ResourcesDto;

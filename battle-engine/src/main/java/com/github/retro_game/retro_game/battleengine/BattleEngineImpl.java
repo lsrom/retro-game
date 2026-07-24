@@ -1,6 +1,6 @@
 package com.github.retro_game.retro_game.battleengine;
 
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -10,9 +10,11 @@ import java.util.List;
 @Component
 public class BattleEngineImpl implements BattleEngine {
   private final BattleEngineStrategy battleEngineStrategy;
+  private final BattleRulesProvider battleRulesProvider;
 
-  public BattleEngineImpl(BattleEngineStrategy battleEngineStrategy) {
+  public BattleEngineImpl(BattleEngineStrategy battleEngineStrategy, BattleRulesProvider battleRulesProvider) {
     this.battleEngineStrategy = battleEngineStrategy;
+    this.battleRulesProvider = battleRulesProvider;
   }
 
   @Override
@@ -25,7 +27,7 @@ public class BattleEngineImpl implements BattleEngine {
       return new BattleOutcome(1, attackersOutcomes, defendersOutcomes);
     }
 
-    return battleEngineStrategy.fight(attackers, defenders, seed);
+    return battleEngineStrategy.fight(attackers, defenders, battleRulesProvider.getBattleRules(), seed);
   }
 
   private static long totalUnits(List<Combatant> combatants) {

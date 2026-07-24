@@ -1,4 +1,4 @@
-package com.github.retro_game.retro_game.entity;
+package com.github.retro_game.retro_game.battleengine;
 
 public enum UnitKind {
   SMALL_CARGO,

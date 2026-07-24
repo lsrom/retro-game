@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.service.impl.missionhandler;
 
+import com.github.retro_game.retro_game.battleengine.UnitKind;
+
 import com.github.retro_game.retro_game.battleengine.BattleEngine;
 import com.github.retro_game.retro_game.battleengine.Combatant;
 import com.github.retro_game.retro_game.battleengine.CombatantOutcome;
@@ -14,6 +16,7 @@ import com.github.retro_game.retro_game.service.ActivityService;
 import com.github.retro_game.retro_game.service.BodyCreationService;
 import com.github.retro_game.retro_game.service.impl.BodyServiceInternal;
 import com.github.retro_game.retro_game.service.impl.CombatReportServiceInternal;
+import com.github.retro_game.retro_game.service.impl.BattleEngineCoordinates;
 import com.github.retro_game.retro_game.service.impl.ReportServiceInternal;
 import com.github.retro_game.retro_game.service.impl.UnitService;
 import io.vavr.Function3;
@@ -372,7 +375,8 @@ public class AttackMissionHandler {
     var armorTech = user.getTechnologyLevel(TechnologyKind.ARMOR_TECHNOLOGY);
     assert weaponsTech >= 0 && shieldingTech >= 0 && armorTech >= 0;
     var unitGroups = makeUnitGroups(units);
-    return new Combatant(user.getId(), coordinates, weaponsTech, shieldingTech, armorTech, unitGroups);
+    return new Combatant(user.getId(), BattleEngineCoordinates.convert(coordinates), weaponsTech, shieldingTech,
+        armorTech, unitGroups);
   }
 
   private static EnumMap<UnitKind, Long> makeUnitGroups(Map<UnitKind, Integer> units) {

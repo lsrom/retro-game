@@ -6,7 +6,7 @@ import com.github.retro_game.retro_game.dto.UnitKindDto;
 import com.github.retro_game.retro_game.entity.Body;
 import com.github.retro_game.retro_game.entity.BuildingKind;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.entity.UnitType;
 import com.github.retro_game.retro_game.model.CatalogItem;
 import com.github.retro_game.retro_game.service.JumpGateService;

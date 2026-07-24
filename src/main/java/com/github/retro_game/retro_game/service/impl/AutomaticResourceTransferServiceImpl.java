@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.service.impl;
 
+import com.github.retro_game.retro_game.battleengine.UnitKind;
+
 import com.github.retro_game.retro_game.controller.form.AutomaticResourceTransferForm;
 import com.github.retro_game.retro_game.dto.*;
 import com.github.retro_game.retro_game.entity.*;

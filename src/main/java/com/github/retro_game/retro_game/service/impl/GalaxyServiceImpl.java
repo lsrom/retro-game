@@ -11,7 +11,7 @@ import com.github.retro_game.retro_game.entity.CombatResult;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
 import com.github.retro_game.retro_game.entity.DebrisField;
 import com.github.retro_game.retro_game.entity.GalaxySlot;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.entity.User;
 import com.github.retro_game.retro_game.repository.CombatReportRepository;
 import com.github.retro_game.retro_game.repository.DebrisFieldRepository;

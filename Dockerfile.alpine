@@ -8,12 +8,12 @@ RUN \
     g++ \
     make \
     musl-dev && \
-  ./gradlew --no-daemon buildBattleEngine bootJar -x test && \
+  ./gradlew --no-daemon :battle-engine:buildBattleEngine :bootJar -x test && \
   rm -rf ~/.gradle
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /retro-game
-COPY --from=0 /retro-game-src/build/battle-engine/libBattleEngine.so .
+COPY --from=0 /retro-game-src/battle-engine/build/native/libBattleEngine.so .
 COPY --from=0 /retro-game-src/build/libs/retro-game-*.jar retro-game.jar
 RUN apk --no-cache add postgresql-client
 CMD ["java", "-Djava.library.path=.", "-jar", "retro-game.jar"]

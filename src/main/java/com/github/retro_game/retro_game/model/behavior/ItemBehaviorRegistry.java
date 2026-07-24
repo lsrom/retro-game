@@ -2,7 +2,7 @@ package com.github.retro_game.retro_game.model.behavior;
 
 import com.github.retro_game.retro_game.entity.BuildingKind;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 
 import java.util.EnumMap;
 import java.util.HashMap;

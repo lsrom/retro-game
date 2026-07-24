@@ -2,6 +2,7 @@ plugins {
   id 'java'
   id 'org.springframework.boot' version '3.5.14'
   id 'io.spring.dependency-management' version '1.1.7'
+  id 'org.jetbrains.kotlin.jvm' version '2.2.21' apply false
 }
 
 group = 'com.github.retro_game'
@@ -15,6 +16,8 @@ java {
 }
 
 dependencies {
+  implementation project(':battle-engine')
+
   implementation 'com.google.guava:guava:33.4.8-jre'
   implementation 'io.hypersistence:hypersistence-utils-hibernate-63:3.15.2'
   implementation 'io.vavr:vavr:0.10.7'
@@ -56,37 +59,12 @@ springBoot {
   buildInfo()
 }
 
-def battleEngineBuildDir = layout.buildDirectory.dir('battle-engine')
-
-tasks.register('configureBattleEngine', Exec) {
-  description = 'Configures the native battle engine CMake build.'
-  group = 'build'
-  inputs.file('battle-engine/CMakeLists.txt')
-  inputs.file('battle-engine/BattleEngine.cpp')
-  outputs.dir(battleEngineBuildDir)
-  commandLine 'cmake',
-      '-S', 'battle-engine',
-      '-B', battleEngineBuildDir.get().asFile.absolutePath,
-      '-DCMAKE_BUILD_TYPE=Release'
-}
-
-tasks.register('buildBattleEngine', Exec) {
-  description = 'Builds the native battle engine shared library.'
-  group = 'build'
-  dependsOn 'configureBattleEngine'
-  inputs.dir(battleEngineBuildDir)
-  outputs.file(battleEngineBuildDir.map { it.file(System.mapLibraryName('BattleEngine')) })
-  commandLine 'cmake',
-      '--build', battleEngineBuildDir.get().asFile.absolutePath,
-      '--config', 'Release'
-}
-
 tasks.named('test') {
   useJUnitPlatform()
   systemProperty 'retro-game.native-tests', System.getProperty('retro-game.native-tests', 'false')
 
   if (System.getProperty('retro-game.native-tests') == 'true') {
-    dependsOn 'buildBattleEngine'
-    systemProperty 'java.library.path', battleEngineBuildDir.get().asFile.absolutePath
+    dependsOn ':battle-engine:buildBattleEngine'
+    systemProperty 'java.library.path', project(':battle-engine').layout.buildDirectory.dir('native').get().asFile.absolutePath
   }
 }

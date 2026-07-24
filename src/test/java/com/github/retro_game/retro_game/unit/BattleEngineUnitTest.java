@@ -4,7 +4,8 @@ import com.github.retro_game.retro_game.battleengine.BattleEngine;
 import com.github.retro_game.retro_game.battleengine.Combatant;
 import com.github.retro_game.retro_game.entity.Coordinates;
 import com.github.retro_game.retro_game.entity.CoordinatesKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.CombatantCoordinates;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.integration.IntegrationTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -21,7 +22,7 @@ public class BattleEngineUnitTest extends IntegrationTest {
   public void testSeed0() {
     var attackers = Collections.singletonList(new Combatant(
         1,
-        new Coordinates(1, 1, 1, CoordinatesKind.PLANET),
+        new CombatantCoordinates(1, 1, 1, CoordinatesKind.PLANET.ordinal()),
         10, 10, 10,
         new EnumMap<>(UnitKind.class) {{
           put(UnitKind.LITTLE_FIGHTER, 10L);
@@ -30,7 +31,7 @@ public class BattleEngineUnitTest extends IntegrationTest {
     ));
     var defenders = Collections.singletonList(new Combatant(
         2,
-        new Coordinates(1, 1, 2, CoordinatesKind.PLANET),
+        new CombatantCoordinates(1, 1, 2, CoordinatesKind.PLANET.ordinal()),
         10, 10, 10,
         new EnumMap<>(UnitKind.class) {{
           put(UnitKind.BATTLESHIP, 10L);
@@ -52,7 +53,7 @@ public class BattleEngineUnitTest extends IntegrationTest {
   public void testDeathStarRapidFireAgainstBattleCruiser() {
     var attackers = Collections.singletonList(new Combatant(
         1,
-        new Coordinates(1, 1, 1, CoordinatesKind.PLANET),
+        new CombatantCoordinates(1, 1, 1, CoordinatesKind.PLANET.ordinal()),
         0, 0, 0,
         new EnumMap<>(UnitKind.class) {{
           put(UnitKind.DEATH_STAR, 1L);
@@ -60,7 +61,7 @@ public class BattleEngineUnitTest extends IntegrationTest {
     ));
     var defenders = Collections.singletonList(new Combatant(
         2,
-        new Coordinates(1, 1, 2, CoordinatesKind.PLANET),
+        new CombatantCoordinates(1, 1, 2, CoordinatesKind.PLANET.ordinal()),
         0, 0, 0,
         new EnumMap<>(UnitKind.class) {{
           put(UnitKind.BATTLE_CRUISER, 1L);

@@ -2,7 +2,7 @@ package com.github.retro_game.retro_game.service;
 
 import com.github.retro_game.retro_game.entity.BuildingKind;
 import com.github.retro_game.retro_game.entity.TechnologyKind;
-import com.github.retro_game.retro_game.entity.UnitKind;
+import com.github.retro_game.retro_game.battleengine.UnitKind;
 import com.github.retro_game.retro_game.repository.ItemDefinitionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
