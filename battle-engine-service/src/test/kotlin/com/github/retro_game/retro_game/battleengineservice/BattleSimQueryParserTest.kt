@@ -49,6 +49,26 @@ class BattleSimQueryParserTest {
   }
 
   @Test
+  fun `parses attacker units for fight input`() {
+    val input = BattleSimQueryParser.parse(
+      mapOf(
+        "enemy_pos" to listOf("4:321:10"),
+        "ship_a0_5_b" to listOf("10"),
+        "tech_a0_0" to listOf("8"),
+        "ship_d0_14_b" to listOf("25"),
+        "seed" to listOf("123"),
+      ),
+    )
+
+    assertEquals(123, input.seed)
+    assertEquals(1, input.attackers.size)
+    assertEquals(1, input.defenders.size)
+    assertEquals(8, input.attackers.single().weaponsTechnology())
+    assertEquals(10, input.attackers.single().unitGroups()[UnitKind.BATTLESHIP])
+    assertEquals(25, input.defenders.single().unitGroups()[UnitKind.ROCKET_LAUNCHER])
+  }
+
+  @Test
   fun `parses defense units and ignores zero counts`() {
     val input = BattleSimQueryParser.parse(
       mapOf(

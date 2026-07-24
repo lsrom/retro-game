@@ -264,7 +264,7 @@ struct Jni {
     if (!ok)
       return false;
     ok &= getMethod(battleOutcome.init, battleOutcome.clazz, BATTLE_OUTCOME_CLASS_NAME, "<init>",
-                    "(ILjava/util/List;Ljava/util/List;)V");
+                    "(IILjava/util/List;Ljava/util/List;)V");
     return ok;
   }
 
@@ -434,9 +434,9 @@ struct Jni {
 
   // BattleOutcome
 
-  jobject BattleOutcome_init(int numRounds, jobject attackersOutcomes,
+  jobject BattleOutcome_init(int seed, int numRounds, jobject attackersOutcomes,
                              jobject defendersOutcomes) const {
-    return env->NewObject(battleOutcome.clazz, battleOutcome.init, numRounds, attackersOutcomes,
+    return env->NewObject(battleOutcome.clazz, battleOutcome.init, seed, numRounds, attackersOutcomes,
                           defendersOutcomes);
   }
 
@@ -903,10 +903,11 @@ jobject createCombatantOutcomes(const Jni &jni, const Combatants &combatants,
 }
 
 jobject createBattleOutcome(const Jni &jni, const Combatants &attackers,
-                            const Combatants &defenders, std::uint32_t numRounds) {
+                            const Combatants &defenders, std::int32_t seed,
+                            std::uint32_t numRounds) {
   jobject attackersOutcomes = createCombatantOutcomes(jni, attackers, numRounds);
   jobject defendersOutcomes = createCombatantOutcomes(jni, defenders, numRounds);
-  jobject battleOutcome = jni.BattleOutcome_init(static_cast<std::int32_t>(numRounds),
+  jobject battleOutcome = jni.BattleOutcome_init(seed, static_cast<std::int32_t>(numRounds),
                                                  attackersOutcomes, defendersOutcomes);
   assert(battleOutcome);
   return battleOutcome;
@@ -952,7 +953,7 @@ jobject fight(const Jni &jni, jobject attackersList, jobject defendersList, jint
   }
 
   std::uint32_t numRounds = round;
-  return createBattleOutcome(jni, *attackers, *defenders, numRounds);
+  return createBattleOutcome(jni, *attackers, *defenders, seed, numRounds);
 }
 
 } // namespace

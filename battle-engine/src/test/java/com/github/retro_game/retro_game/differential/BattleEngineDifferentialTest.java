@@ -145,6 +145,7 @@ public class BattleEngineDifferentialTest {
     var javaOutcome = javaBattleEngine.fight(attackers, defenders, rules, seed);
     var nativeOutcome = nativeBattleEngine.fight(attackers, defenders, rules, seed);
 
+    Assertions.assertEquals(javaOutcome.seed(), nativeOutcome.seed());
     Assertions.assertEquals(javaOutcome.numRounds(), nativeOutcome.numRounds());
     assertOutcomesEqual(javaOutcome.attackersOutcomes(), nativeOutcome.attackersOutcomes());
     assertOutcomesEqual(javaOutcome.defendersOutcomes(), nativeOutcome.defendersOutcomes());

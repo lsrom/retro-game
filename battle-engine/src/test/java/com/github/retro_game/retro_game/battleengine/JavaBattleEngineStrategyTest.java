@@ -54,6 +54,7 @@ class JavaBattleEngineStrategyTest {
 
     assertThat(strategy.fight(attackers, defenders, rules, 0)).isEqualTo(seedOne);
     assertThat(strategy.fight(attackers, defenders, rules, Integer.MIN_VALUE)).isEqualTo(seedOne);
+    assertThat(seedOne.seed()).isEqualTo(1);
   }
 
   @Test
@@ -62,8 +63,11 @@ class JavaBattleEngineStrategyTest {
     var defenders = List.of(combatant(UnitKind.SMALL_CARGO, 5));
     var rules = rules(10, 10, 1_000);
 
-    assertThat(strategy.fight(attackers, defenders, rules, -12345))
-        .isEqualTo(strategy.fight(attackers, defenders, rules, 12345));
+    var negativeSeed = strategy.fight(attackers, defenders, rules, -12345);
+    var positiveSeed = strategy.fight(attackers, defenders, rules, 12345);
+
+    assertThat(negativeSeed).isEqualTo(positiveSeed);
+    assertThat(negativeSeed.seed()).isEqualTo(12345);
   }
 
   @Test

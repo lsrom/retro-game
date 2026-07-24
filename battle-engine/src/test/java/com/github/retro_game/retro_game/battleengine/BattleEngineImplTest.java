@@ -101,6 +101,7 @@ class BattleEngineImplTest {
   void returnsEmptyOutcomesWithoutDelegatingWhenBothSidesAreEmpty() {
     var outcome = engine.fight(List.of(), List.of(), 123);
 
+    assertThat(outcome.seed()).isEqualTo(123);
     assertThat(outcome.numRounds()).isEqualTo(1);
     assertThat(outcome.attackersOutcomes()).isEmpty();
     assertThat(outcome.defendersOutcomes()).isEmpty();
@@ -112,7 +113,7 @@ class BattleEngineImplTest {
     var attackers = List.of(combatant(UnitKind.LITTLE_FIGHTER, 1));
     var defenders = List.of(combatant(UnitKind.SMALL_CARGO, 1));
     var rules = rules(1, 2, 3);
-    var delegatedOutcome = new BattleOutcome(4, List.of(new CombatantOutcome(List.of())),
+    var delegatedOutcome = new BattleOutcome(99, 4, List.of(new CombatantOutcome(List.of())),
         List.of(new CombatantOutcome(List.of())));
     when(rulesProvider.getBattleRules()).thenReturn(rules);
     when(strategy.fight(attackers, defenders, rules, 99)).thenReturn(delegatedOutcome);

@@ -24,10 +24,18 @@ public class BattleEngineImpl implements BattleEngine {
     if (numAttackersUnits == 0 || numDefendersUnits == 0) {
       var attackersOutcomes = makeOutcomes(attackers);
       var defendersOutcomes = makeOutcomes(defenders);
-      return new BattleOutcome(1, attackersOutcomes, defendersOutcomes);
+      return new BattleOutcome(normalizeSeed(seed), 1, attackersOutcomes, defendersOutcomes);
     }
 
     return battleEngineStrategy.fight(attackers, defenders, battleRulesProvider.getBattleRules(), seed);
+  }
+
+  private static int normalizeSeed(int seed) {
+    if (seed < 0)
+      seed = -seed;
+    if (seed < 0 || seed == 0)
+      seed = 1;
+    return seed;
   }
 
   private static long totalUnits(List<Combatant> combatants) {

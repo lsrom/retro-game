@@ -302,6 +302,6 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
     var numRounds = round;
     var attackersOutcomes = makeOutcomes(attackers, attackersParty, numRounds);
     var defendersOutcomes = makeOutcomes(defenders, defendersParty, numRounds);
-    return new BattleOutcome(numRounds, attackersOutcomes, defendersOutcomes);
+    return new BattleOutcome(seed, numRounds, attackersOutcomes, defendersOutcomes);
   }
 }
