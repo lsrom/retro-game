@@ -1,5 +1,7 @@
 package com.github.retro_game.retro_game.controller;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,8 +25,10 @@ import java.util.Map;
 public class GameConfigModelAdvice {
   private final Map<String, Object> layoutConfig;
 
-  public GameConfigModelAdvice(Environment environment) {
+  public GameConfigModelAdvice(Environment environment, ObjectProvider<BuildProperties> buildProperties) {
     layoutConfig = new LinkedHashMap<>();
+    var version = buildProperties.getIfAvailable();
+    layoutConfig.put("version", version != null ? version.getVersion() : environment.getProperty("retro-game.version", "dev"));
     layoutConfig.put("productionSpeed", environment.getProperty("retro-game.production-speed"));
     layoutConfig.put("fleetSpeed", environment.getProperty("retro-game.fleet-speed"));
     layoutConfig.put("metalMineBaseProduction", environment.getProperty("retro-game.metal-mine-base-production"));

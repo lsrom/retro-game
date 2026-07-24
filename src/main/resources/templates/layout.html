@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html th:with="version='@project.version@',
-        settings=${@userService.currentUserSettings},
+<html th:with="settings=${@userService.currentUserSettings},
         skin=${settings.skin},
         locale=${@userService.currentUserLocaleIfAuthenticated.orElse(T(java.util.Locale).default)}"
       th:lang="${locale.language}" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      th:with="version='@project.version@',skin=${@userService.currentUserSettings.skin}">
+      th:with="skin=${@userService.currentUserSettings.skin}">
 <head>
   <meta charset="UTF-8">
   <title th:text="#{createHomeworld} + ' - Retro Game'">Create homeworld - Retro Game</title>
