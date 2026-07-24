@@ -8,7 +8,8 @@ import io.javalin.http.Context
 import io.javalin.http.Handler
 
 class BattleSimHttpApi(
-  private val strategy: BattleEngineStrategy
+  private val strategy: BattleEngineStrategy,
+  private val universeConfig: UniverseConfig = UniverseConfig(),
 ) : Handler {
   override fun handle(ctx: Context) {
     try {

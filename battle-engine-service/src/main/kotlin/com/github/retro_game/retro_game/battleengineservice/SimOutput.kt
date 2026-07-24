@@ -1,0 +1,22 @@
+package com.github.retro_game.retro_game.battleengineservice
+
+import com.github.retro_game.retro_game.battleengine.BattleOutcome
+
+data class SimOutput(
+    val outcome: BattleOutcome,
+    val result: BattleResult,
+    val debris: Resources,
+    val possiblePlunder: Resources,
+    val lossesAttacker: Resources,
+    val lossesDefender: Resources,
+)
+
+enum class BattleResult {
+    FriendlyWinner, EnemyWinner, Draw
+}
+
+data class Resources(
+    val metal: Long,
+    val crystal: Long,
+    val deuterium: Long
+)
