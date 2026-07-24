@@ -29,10 +29,6 @@ internal object BattleSimUnits {
     21 to LARGE_SHIELD_DOME,
   )
 
-  val metadata: List<BattleSimUnitMetadata> = unitsByIndex.map { (index, kind) ->
-    BattleSimUnitMetadata(index, kind.name, kind.displayName())
-  }
-
   val defensiveUnitKinds: Set<UnitKind> = setOf(
     ROCKET_LAUNCHER,
     LIGHT_LASER,
@@ -42,7 +38,12 @@ internal object BattleSimUnits {
     PLASMA_TURRET,
     SMALL_SHIELD_DOME,
     LARGE_SHIELD_DOME,
+    SOLAR_SATELLITE
   )
+
+  val metadata: List<BattleSimUnitMetadata> = unitsByIndex.map { (index, kind) ->
+    BattleSimUnitMetadata(index, kind.name, kind.displayName(), kind in defensiveUnitKinds)
+  }
 
   private fun UnitKind.displayName(): String =
     name.lowercase()
@@ -54,6 +55,7 @@ data class BattleSimUnitMetadata(
   val index: Int,
   val kind: String,
   val name: String,
+  val defensive: Boolean,
 )
 
 internal class AttackingFleetCannotContainDefensiveUnitsException :

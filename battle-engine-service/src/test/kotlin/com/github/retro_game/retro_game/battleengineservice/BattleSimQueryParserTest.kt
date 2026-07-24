@@ -12,6 +12,8 @@ class BattleSimQueryParserTest {
     assertEquals(UnitKind.BATTLE_CRUISER, BattleSimUnits.unitsByIndex[13])
     assertEquals(UnitKind.ROCKET_LAUNCHER, BattleSimUnits.unitsByIndex[14])
     assertEquals(UnitKind.LARGE_SHIELD_DOME, BattleSimUnits.unitsByIndex[21])
+    assertEquals(false, BattleSimUnits.metadata.single { it.kind == "BATTLE_CRUISER" }.defensive)
+    assertEquals(true, BattleSimUnits.metadata.single { it.kind == "ROCKET_LAUNCHER" }.defensive)
   }
 
   @Test
@@ -60,6 +62,7 @@ class BattleSimQueryParserTest {
   fun `parses attacker units for fight input`() {
     val input = BattleSimQueryParser.parse(
       mapOf(
+        "attacker_pos" to listOf("2:222:7"),
         "enemy_pos" to listOf("4:321:10"),
         "ship_a0_5_b" to listOf("10"),
         "tech_a0_0" to listOf("8"),
@@ -72,6 +75,9 @@ class BattleSimQueryParserTest {
     assertEquals(1, input.attackers.size)
     assertEquals(1, input.defenders.size)
     assertEquals(8, input.attackers.single().weaponsTechnology())
+    assertEquals(2, input.attackers.single().coordinates().galaxy())
+    assertEquals(222, input.attackers.single().coordinates().system())
+    assertEquals(7, input.attackers.single().coordinates().position())
     assertEquals(10, input.attackers.single().unitGroups()[UnitKind.BATTLESHIP])
     assertEquals(25, input.defenders.single().unitGroups()[UnitKind.ROCKET_LAUNCHER])
   }

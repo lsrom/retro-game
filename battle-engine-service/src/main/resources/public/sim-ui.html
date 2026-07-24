@@ -103,16 +103,41 @@
 
     .fields {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
       padding: 14px;
+    }
+
+    .fields.single {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-bottom: 0;
+    }
+
+    .fields.technologies,
+    .fields.resources {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-bottom: 0;
+    }
+
+    .fields.resources {
+      padding-bottom: 14px;
+    }
+
+    .fields-spacer {
+      visibility: hidden;
     }
 
     .units {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px 10px;
+      gap: 10px;
       padding: 14px;
+    }
+
+    .unit-column {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-width: 0;
     }
 
     label {
@@ -155,6 +180,10 @@
       gap: 10px;
       grid-column: 1 / -1;
       padding: 4px 0;
+    }
+
+    .seed-field {
+      width: min(180px, 100%);
     }
 
     button {
@@ -240,9 +269,20 @@
         width: min(100% - 20px, 1280px);
       }
 
-      .fields,
+      .fields.single,
+      .fields.technologies,
+      .fields.resources,
       .units {
         grid-template-columns: 1fr;
+      }
+
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .seed-field {
+        width: 100%;
       }
 
       .unit-row {
@@ -265,7 +305,12 @@
         <div class="section-header">
           <h2>Attacker</h2>
         </div>
-        <div class="fields">
+        <div class="fields single">
+          <label>Position
+            <input name="attacker_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1">
+          </label>
+        </div>
+        <div class="fields technologies">
           <label>Weapons
             <input name="tech_a0_0" type="number" min="0" step="1" value="0">
           </label>
@@ -276,6 +321,17 @@
             <input name="tech_a0_2" type="number" min="0" step="1" value="0">
           </label>
         </div>
+        <div class="fields resources fields-spacer" aria-hidden="true">
+          <label>Metal
+            <input type="number" min="0" step="1" value="0" disabled>
+          </label>
+          <label>Crystal
+            <input type="number" min="0" step="1" value="0" disabled>
+          </label>
+          <label>Deuterium
+            <input type="number" min="0" step="1" value="0" disabled>
+          </label>
+        </div>
         <div id="attacker-units" class="units"></div>
       </section>
 
@@ -283,10 +339,12 @@
         <div class="section-header">
           <h2>Defender</h2>
         </div>
-        <div class="fields">
+        <div class="fields single">
           <label>Position
             <input name="enemy_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1" required>
           </label>
+        </div>
+        <div class="fields technologies">
           <label>Weapons
             <input name="tech_d0_0" type="number" min="0" step="1" value="0">
           </label>
@@ -296,6 +354,8 @@
           <label>Armor
             <input name="tech_d0_2" type="number" min="0" step="1" value="0">
           </label>
+        </div>
+        <div class="fields resources">
           <label>Metal
             <input name="enemy_metal" type="number" min="0" step="1" value="0">
           </label>
@@ -305,14 +365,14 @@
           <label>Deuterium
             <input name="enemy_deut" type="number" min="0" step="1" value="0">
           </label>
-          <label>Seed
-            <input name="seed" type="number" min="0" step="1" value="1">
-          </label>
         </div>
         <div id="defender-units" class="units"></div>
       </section>
 
       <div class="actions">
+        <label class="seed-field">Seed
+          <input name="seed" type="number" min="0" step="1" value="1">
+        </label>
         <button class="secondary" type="reset">Reset</button>
         <button id="submit-button" type="submit">Run Simulation</button>
       </div>

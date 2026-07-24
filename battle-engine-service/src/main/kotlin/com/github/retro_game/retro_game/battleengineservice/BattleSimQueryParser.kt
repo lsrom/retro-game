@@ -15,7 +15,10 @@ internal object BattleSimQueryParser {
   private val defaultAttackerCoordinates = CombatantCoordinates(1, 1, 1, DEFAULT_COORDINATES_KIND_PLANET)
 
   fun parse(parameters: Map<String, List<String>>): BattleSimInput {
-    val defenderCoordinates = parseCoordinates(required(parameters, "enemy_pos"))
+    val attackerCoordinates = optional(parameters, "attacker_pos")
+      ?.let { parseCoordinates(it, "attacker_pos") }
+      ?: defaultAttackerCoordinates
+    val defenderCoordinates = parseCoordinates(required(parameters, "enemy_pos"), "enemy_pos")
     val resources = BattleSimResources(
       metal = optionalLong(parameters, "enemy_metal"),
       crystal = optionalLong(parameters, "enemy_crystal"),
@@ -24,7 +27,7 @@ internal object BattleSimQueryParser {
 
     return BattleSimInput(
       resources = resources,
-      attacker = parseCombatant(parameters, 'a', DEFAULT_ATTACKER_USER_ID, defaultAttackerCoordinates),
+      attacker = parseCombatant(parameters, 'a', DEFAULT_ATTACKER_USER_ID, attackerCoordinates),
       defender = parseCombatant(parameters, 'd', DEFAULT_DEFENDER_USER_ID, defenderCoordinates),
       seed = optionalInt(parameters, "seed", 1),
     )
@@ -58,13 +61,13 @@ internal object BattleSimQueryParser {
     )
   }
 
-  private fun parseCoordinates(value: String): CombatantCoordinates {
+  private fun parseCoordinates(value: String, name: String): CombatantCoordinates {
     val parts = value.split(":")
-    require(parts.size == 3) { "enemy_pos must have format galaxy:system:position" }
+    require(parts.size == 3) { "$name must have format galaxy:system:position" }
     return CombatantCoordinates(
-      parsePositiveInt(parts[0], "enemy_pos galaxy"),
-      parsePositiveInt(parts[1], "enemy_pos system"),
-      parsePositiveInt(parts[2], "enemy_pos position"),
+      parsePositiveInt(parts[0], "$name galaxy"),
+      parsePositiveInt(parts[1], "$name system"),
+      parsePositiveInt(parts[2], "$name position"),
       DEFAULT_COORDINATES_KIND_PLANET,
     )
   }

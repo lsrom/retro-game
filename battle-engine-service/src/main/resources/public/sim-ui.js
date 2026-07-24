@@ -16,8 +16,25 @@ function unitInputName(side, index) {
 }
 
 function renderUnitInputs(units) {
-  attackerUnitsEl.replaceChildren(...units.map((unit) => createUnitInput('a', unit)));
-  defenderUnitsEl.replaceChildren(...units.map((unit) => createUnitInput('d', unit)));
+  attackerUnitsEl.replaceChildren(createUnitColumn('a', units, false), createUnitColumn('a', units, true));
+  defenderUnitsEl.replaceChildren(createUnitColumn('d', units, false), createUnitColumn('d', units, true));
+}
+
+function createUnitColumn(side, units, defensive) {
+  const column = document.createElement('div');
+  column.className = 'unit-column';
+
+  if (side === 'a' && defensive) {
+    column.setAttribute('aria-hidden', 'true');
+    return column;
+  }
+
+  column.replaceChildren(
+    ...units
+      .filter((unit) => unit.defensive === defensive)
+      .map((unit) => createUnitInput(side, unit)),
+  );
+  return column;
 }
 
 function createUnitInput(side, unit) {
