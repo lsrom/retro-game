@@ -13,6 +13,7 @@ internal object HistoryCsv {
     "total_debris_field",
     "plunder",
     "elapsed_time",
+    "engine",
   )
 
   fun encode(items: List<HistoryItem>): String =
@@ -30,6 +31,7 @@ internal object HistoryCsv {
             item.totalDebrisField.toString(),
             item.plunder.toString(),
             item.elapsedTime.toString(),
+            item.engine,
           ).joinToString(",") { it.toCsvCell() }
         )
       }
@@ -53,6 +55,7 @@ internal object HistoryCsv {
         totalDebrisField = parseLong(record[6], lineNumber, "total_debris_field"),
         plunder = parseLong(record[7], lineNumber, "plunder"),
         elapsedTime = parseLong(record[8], lineNumber, "elapsed_time"),
+        engine = record[9],
       )
     }
   }

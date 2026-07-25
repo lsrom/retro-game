@@ -68,5 +68,6 @@ class HistoryDatabaseTest {
       totalDebrisField = 4L,
       plunder = 5L,
       elapsedTime = 6L,
+      engine = "java",
     )
 }

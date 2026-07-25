@@ -22,7 +22,11 @@ fun main() {
     .registerModule(KotlinModule.Builder().build())
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  val strategy = if (config.useNativeCombatEngine) NativeBattleEngineStrategy() else JavaBattleEngineStrategy()
+  val (strategy, engine) = if (config.useNativeCombatEngine) {
+    NativeBattleEngineStrategy() to "native"
+  } else {
+    JavaBattleEngineStrategy() to "java"
+  }
 
   val historyDatabase = HistoryDatabase()
   val prettifiedBattleReportRenderer = PrettifiedBattleReportRenderer(::classpathResourceText)
@@ -78,7 +82,10 @@ fun main() {
     .get("/sim-units") { ctx ->
       ctx.json(BattleSimUnits.metadata)
     }
-    .get("/sim", BattleSimHttpApi(strategy = strategy, universeConfig = config, historyDatabase = historyDatabase))
+    .get(
+      "/sim",
+      BattleSimHttpApi(strategy = strategy, engine = engine, universeConfig = config, historyDatabase = historyDatabase)
+    )
     .get("/sim-history") { ctx ->
       val limit = ctx.queryParam("limit")?.toIntOrNull() ?: 100
       val offset = ctx.queryParam("offset")?.toIntOrNull() ?: 0

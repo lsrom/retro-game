@@ -11,5 +11,6 @@ data class HistoryItem(
     val totalDefenderLosses: Long,
     val totalDebrisField: Long,
     val plunder: Long,
-    val elapsedTime: Long
+    val elapsedTime: Long,
+    val engine: String,
 )

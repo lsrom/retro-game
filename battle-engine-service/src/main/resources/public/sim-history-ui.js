@@ -29,6 +29,16 @@ function formatDate(timestamp) {
   return dateFormatter.format(new Date(Number(timestamp)));
 }
 
+function formatEngine(engine) {
+  if (engine === 'java') {
+    return 'Java';
+  }
+  if (engine === 'native') {
+    return 'Native';
+  }
+  return '';
+}
+
 function makeElement(tagName, text, className) {
   const element = document.createElement(tagName);
   if (className) {
@@ -76,6 +86,7 @@ function renderRow(item, index) {
     makeElement('td', formatNumber(offset + index + 1)),
     makeElement('td', formatDate(item.utcTimestamp)),
     makeElement('td', formatNumber(item.seed)),
+    makeElement('td', formatEngine(item.engine)),
     makeElement('td', formatNumber(item.totalAttackerLosses)),
     makeElement('td', formatNumber(item.totalDefenderLosses)),
     makeElement('td', formatNumber(item.totalDebrisField)),
@@ -108,7 +119,7 @@ function renderList(items) {
   if (items.length === 0) {
     const row = document.createElement('tr');
     const cell = makeElement('td', 'No simulations found.');
-    cell.colSpan = 9;
+    cell.colSpan = 10;
     row.append(cell);
     historyBody.replaceChildren(row);
   } else {

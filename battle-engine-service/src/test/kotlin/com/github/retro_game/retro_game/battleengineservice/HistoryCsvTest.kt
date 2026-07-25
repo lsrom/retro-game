@@ -19,6 +19,7 @@ class HistoryCsvTest {
       totalDebrisField = 5L,
       plunder = 6L,
       elapsedTime = 7L,
+      engine = "native",
     )
 
     assertEquals(listOf(item), HistoryCsv.decode(HistoryCsv.encode(listOf(item))))

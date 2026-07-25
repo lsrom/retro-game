@@ -12,6 +12,7 @@ class BattleSimHttpApi(
   private val strategy: BattleEngineStrategy,
   private val universeConfig: UniverseConfig,
   private val historyDatabase: HistoryDatabase? = null,
+  private val engine: String,
 ) : Handler {
 
   override fun handle(ctx: Context) {
@@ -23,7 +24,7 @@ class BattleSimHttpApi(
       val fightDuration = System.currentTimeMillis() - time
       val output = outcome.toSimOutput(input, universeConfig, fightDuration)
 
-      historyDatabase?.save(output.toHistoryItem(input, ctx.queryString() ?: ""))
+      historyDatabase?.save(output.toHistoryItem(input, ctx.queryString() ?: "", engine))
 
       ctx.json(output)
     } catch (e: AttackingFleetCannotContainDefensiveUnitsException) {
@@ -41,7 +42,7 @@ private fun BattleSimInput.requireNonEmptyFleets() {
   require(defenders.isNotEmpty()) { "Defender fleet cannot be empty." }
 }
 
-private fun SimOutput.toHistoryItem(input: BattleSimInput, query: String): HistoryItem =
+private fun SimOutput.toHistoryItem(input: BattleSimInput, query: String, engine: String): HistoryItem =
   HistoryItem(
     id = UUID.randomUUID(),
     utcTimestamp = System.currentTimeMillis(),
@@ -52,6 +53,7 @@ private fun SimOutput.toHistoryItem(input: BattleSimInput, query: String): Histo
     totalDebrisField = debris.total(),
     plunder = possiblePlunder.total(),
     elapsedTime = elapsedTime,
+    engine = engine,
   )
 
 private fun Resources.total(): Long = metal + crystal + deuterium

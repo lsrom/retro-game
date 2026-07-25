@@ -27,7 +27,8 @@ class HistoryDatabase(
             total_defender_losses INTEGER NOT NULL,
             total_debris_field INTEGER NOT NULL,
             plunder INTEGER NOT NULL,
-            elapsed_time INTEGER NOT NULL DEFAULT 0
+            elapsed_time INTEGER NOT NULL DEFAULT 0,
+            engine TEXT NOT NULL
           )
           """.trimIndent()
         )
@@ -57,8 +58,9 @@ class HistoryDatabase(
           total_defender_losses,
           total_debris_field,
           plunder,
-          elapsed_time
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          elapsed_time,
+          engine
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
       ).use { statement ->
         statement.setString(1, item.id.toString())
@@ -70,6 +72,7 @@ class HistoryDatabase(
         statement.setLong(7, item.totalDebrisField)
         statement.setLong(8, item.plunder)
         statement.setLong(9, item.elapsedTime)
+        statement.setString(10, item.engine)
         statement.executeUpdate()
       }
     }
@@ -94,8 +97,9 @@ class HistoryDatabase(
             total_defender_losses,
             total_debris_field,
             plunder,
-            elapsed_time
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            elapsed_time,
+            engine
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           """.trimIndent()
         ).use { statement ->
           for (item in items) {
@@ -108,6 +112,7 @@ class HistoryDatabase(
             statement.setLong(7, item.totalDebrisField)
             statement.setLong(8, item.plunder)
             statement.setLong(9, item.elapsedTime)
+            statement.setString(10, item.engine)
             statement.addBatch()
           }
           statement.executeBatch()
@@ -135,7 +140,8 @@ class HistoryDatabase(
           total_defender_losses,
           total_debris_field,
           plunder,
-          elapsed_time
+          elapsed_time,
+          engine
         FROM history_items
         WHERE id = ?
         """.trimIndent()
@@ -163,7 +169,8 @@ class HistoryDatabase(
           total_defender_losses,
           total_debris_field,
           plunder,
-          elapsed_time
+          elapsed_time,
+          engine
         FROM history_items
         ORDER BY utc_timestamp DESC
         LIMIT ?
@@ -196,7 +203,8 @@ class HistoryDatabase(
           total_defender_losses,
           total_debris_field,
           plunder,
-          elapsed_time
+          elapsed_time,
+          engine
         FROM history_items
         ORDER BY utc_timestamp DESC
         """.trimIndent()
@@ -224,6 +232,7 @@ class HistoryDatabase(
       totalDebrisField = getLong("total_debris_field"),
       plunder = getLong("plunder"),
       elapsedTime = getLong("elapsed_time"),
+      engine = getString("engine"),
     )
 
   companion object {
