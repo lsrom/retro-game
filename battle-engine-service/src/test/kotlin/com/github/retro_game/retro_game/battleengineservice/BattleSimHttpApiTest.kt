@@ -24,7 +24,7 @@ class BattleSimHttpApiTest {
     every { ctx.contentType("text/plain") } returns ctx
     every { ctx.result("ERROR: Attacking fleet cannot contain defensive units.") } returns ctx
 
-    BattleSimHttpApi(strategy).handle(ctx)
+    BattleSimHttpApi(strategy, UniverseConfig()).handle(ctx)
 
     verify {
       ctx.status(400)
@@ -46,7 +46,7 @@ class BattleSimHttpApiTest {
     )
 
     val error = assertFailsWith<BadRequestResponse> {
-      BattleSimHttpApi(strategy).handle(ctx)
+      BattleSimHttpApi(strategy, UniverseConfig()).handle(ctx)
     }
 
     assertEquals("Attacker fleet cannot be empty.", error.message)
@@ -65,7 +65,7 @@ class BattleSimHttpApiTest {
     )
 
     val error = assertFailsWith<BadRequestResponse> {
-      BattleSimHttpApi(strategy).handle(ctx)
+      BattleSimHttpApi(strategy, UniverseConfig()).handle(ctx)
     }
 
     assertEquals("Defender fleet cannot be empty.", error.message)
