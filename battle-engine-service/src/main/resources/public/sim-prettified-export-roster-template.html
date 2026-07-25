@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prettified Combat Report</title>
+  <style>
+    body {
+      margin: 0;
+      background: #122130;
+      color: #f4f7fb;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 14px 16px 26px;
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .after {
+      margin-top: 34px;
+      font-weight: 700;
+    }
+
+    .combatant-title {
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .attacker-label {
+      color: #ff2020;
+    }
+
+    .defender-label {
+      color: #008f1c;
+    }
+
+    .attacker-line {
+      color: #ff8a00;
+    }
+
+    .defender-line {
+      color: #168dd1;
+    }
+
+    .separator {
+      width: min(520px, 100%);
+      margin: 18px auto 0;
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .attacker-separator {
+      color: #ff2020;
+    }
+
+    .defender-separator {
+      color: #008f1c;
+    }
+
+    .summary {
+      margin-top: 34px;
+      color: #f4f7fb;
+    }
+
+    .summary-title {
+      color: #278cff;
+      margin-top: 30px;
+    }
+
+    .number {
+      color: #ff8a00;
+      font-weight: 700;
+    }
+
+    .profit {
+      color: #ff8a00;
+      font-weight: 700;
+    }
+
+    .loss {
+      color: #ff2020;
+      font-weight: 700;
+    }
+
+    script[type="text/csv"] {
+      display: none;
+    }
+  </style>
+  <script id="unit-color-presets" type="text/csv">{{unitColorCsv}}</script>
+</head>
+<body>
+  <main>
+    {{attackerRosterInitial}}
+    {{defenderRosterInitial}}
+    <div class="after">After the battle ...</div>
+    {{attackerRosterFinal}}
+    {{defenderRosterFinal}}
+    {{rosterSummary}}
+  </main>
+</body>
+</html>

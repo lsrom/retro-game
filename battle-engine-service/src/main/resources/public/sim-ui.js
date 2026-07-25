@@ -8,6 +8,8 @@ const attackerUnitsEl = document.getElementById('attacker-units');
 const defenderUnitsEl = document.getElementById('defender-units');
 const numberFormatter = new Intl.NumberFormat();
 let unitsByKind = new Map();
+let latestOutput = null;
+let latestReportInput = null;
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -329,6 +331,49 @@ function renderOutcome(output) {
   return fragment;
 }
 
+function renderExportButton() {
+  const wrapper = makeElement('div', null, 'report-export');
+  const button = makeElement('button', 'Export Prettified', 'secondary');
+  const menu = makeElement('div', null, 'export-menu');
+  button.type = 'button';
+  button.setAttribute('aria-haspopup', 'true');
+  button.setAttribute('aria-expanded', 'false');
+  menu.hidden = true;
+
+  button.addEventListener('click', () => {
+    menu.hidden = !menu.hidden;
+    button.setAttribute('aria-expanded', String(!menu.hidden));
+  });
+
+  for (const { label, templateUrl } of window.prettifiedReportTemplates ?? []) {
+    const option = makeElement('button', label);
+    option.type = 'button';
+    option.addEventListener('click', async () => {
+      menu.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+      await exportPrettifiedWithTemplate(templateUrl);
+    });
+    menu.append(option);
+  }
+
+  wrapper.append(button, menu);
+  return wrapper;
+}
+
+async function exportPrettifiedWithTemplate(templateUrl) {
+    if (typeof window.exportPrettifiedReport !== 'function') {
+      setStatus('Prettified export is unavailable', true);
+      return;
+    }
+    if (latestOutput && latestReportInput) {
+      try {
+        await window.exportPrettifiedReport(latestOutput, latestReportInput, [...unitsByKind.values()], templateUrl);
+      } catch (error) {
+        setStatus(error.message || 'Unable to export prettified report', true);
+      }
+    }
+}
+
 function renderReport(output, input) {
   const intro = makeElement('p', 'The following fleets met in battle:');
   const rounds = [];
@@ -343,6 +388,7 @@ function renderReport(output, input) {
     ...rounds,
     makeElement('hr'),
     renderOutcome(output),
+    renderExportButton(),
   );
 }
 
@@ -459,6 +505,8 @@ async function runSimulation() {
     }
 
     const output = JSON.parse(text);
+    latestOutput = output;
+    latestReportInput = reportInput;
     renderSummary(output);
     renderReport(output, reportInput);
     setStatus('Complete');
@@ -480,6 +528,8 @@ form.addEventListener('reset', () => {
     randomizeSeed();
     summaryEl.replaceChildren();
     reportEl.replaceChildren();
+    latestOutput = null;
+    latestReportInput = null;
     setStatus('');
   });
 });

@@ -314,6 +314,43 @@
       border-top: 1px solid var(--border);
     }
 
+    .report-export {
+      display: flex;
+      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+      gap: 6px;
+      padding-top: 2px;
+    }
+
+    .export-menu {
+      display: grid;
+      min-width: 180px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    .export-menu[hidden] {
+      display: none;
+    }
+
+    .export-menu button {
+      justify-content: flex-start;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
+      min-height: 36px;
+      text-align: left;
+    }
+
+    .export-menu button:hover {
+      background: #131820;
+    }
+
     .report-side {
       display: grid;
       gap: 10px;
@@ -525,6 +562,7 @@
     </form>
   </main>
 
+  <script src="/sim-prettified-export.js"></script>
   <script src="/sim-ui.js"></script>
 </body>
 </html>

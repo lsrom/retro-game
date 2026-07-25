@@ -39,6 +39,18 @@ fun main() {
     .get("/sim-ui.js") { ctx ->
       ctx.contentType("application/javascript").result(classpathResourceText("public/sim-ui.js"))
     }
+    .get("/sim-prettified-export.js") { ctx ->
+      ctx.contentType("application/javascript").result(classpathResourceText("public/sim-prettified-export.js"))
+    }
+    .get("/sim-prettified-export-template.html") { ctx ->
+      ctx.contentType("text/html").result(classpathResourceText("public/sim-prettified-export-template.html"))
+    }
+    .get("/sim-prettified-export-classic-template.html") { ctx ->
+      ctx.contentType("text/html").result(classpathResourceText("public/sim-prettified-export-classic-template.html"))
+    }
+    .get("/sim-prettified-export-roster-template.html") { ctx ->
+      ctx.contentType("text/html").result(classpathResourceText("public/sim-prettified-export-roster-template.html"))
+    }
     .get("/sim-history-ui.js") { ctx ->
       ctx.contentType("application/javascript").result(classpathResourceText("public/sim-history-ui.js"))
     }
