@@ -3,6 +3,9 @@ const historyBody = document.getElementById('history-body');
 const previousButton = document.getElementById('previous-button');
 const nextButton = document.getElementById('next-button');
 const pageLabel = document.getElementById('page-label');
+const importButton = document.getElementById('import-button');
+const exportButton = document.getElementById('export-button');
+const importFileInput = document.getElementById('import-file-input');
 const numberFormatter = new Intl.NumberFormat();
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   dateStyle: 'medium',
@@ -134,6 +137,26 @@ async function loadList() {
   }
 }
 
+async function importCsv(file) {
+  const formData = new FormData();
+  formData.set('file', file);
+
+  setStatus('Importing');
+  const response = await fetch('/sim-history/import', {
+    method: 'POST',
+    body: formData,
+  });
+  const text = await response.text();
+  if (!response.ok) {
+    throw new Error(text || response.statusText);
+  }
+
+  const result = JSON.parse(text);
+  offset = 0;
+  await loadList();
+  setStatus(`Imported ${formatNumber(result.imported)} rows`);
+}
+
 previousButton.addEventListener('click', () => {
   offset = Math.max(0, offset - pageSize);
   loadList();
@@ -142,6 +165,28 @@ previousButton.addEventListener('click', () => {
 nextButton.addEventListener('click', () => {
   offset += pageSize;
   loadList();
+});
+
+exportButton.addEventListener('click', () => {
+  window.location.href = '/sim-history/export';
+});
+
+importButton.addEventListener('click', () => {
+  importFileInput.click();
+});
+
+importFileInput.addEventListener('change', async () => {
+  const file = importFileInput.files?.[0];
+  importFileInput.value = '';
+  if (!file) {
+    return;
+  }
+
+  try {
+    await importCsv(file);
+  } catch (error) {
+    setStatus(error.message || 'Unable to import CSV', true);
+  }
 });
 
 loadList();

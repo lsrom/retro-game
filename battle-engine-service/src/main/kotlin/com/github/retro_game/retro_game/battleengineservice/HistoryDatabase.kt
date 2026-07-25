@@ -48,7 +48,7 @@ class HistoryDatabase(
     connection().use { connection ->
       connection.prepareStatement(
         """
-        INSERT INTO history_items (
+        INSERT OR REPLACE INTO history_items (
           id,
           utc_timestamp,
           query,
@@ -71,6 +71,53 @@ class HistoryDatabase(
         statement.setLong(8, item.plunder)
         statement.setLong(9, item.elapsedTime)
         statement.executeUpdate()
+      }
+    }
+  }
+
+  fun saveAll(items: List<HistoryItem>) {
+    if (items.isEmpty()) {
+      return
+    }
+
+    connection().use { connection ->
+      connection.autoCommit = false
+      try {
+        connection.prepareStatement(
+          """
+          INSERT OR REPLACE INTO history_items (
+            id,
+            utc_timestamp,
+            query,
+            seed,
+            total_attacker_losses,
+            total_defender_losses,
+            total_debris_field,
+            plunder,
+            elapsed_time
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          """.trimIndent()
+        ).use { statement ->
+          for (item in items) {
+            statement.setString(1, item.id.toString())
+            statement.setLong(2, item.utcTimestamp)
+            statement.setString(3, item.query)
+            statement.setLong(4, item.seed)
+            statement.setLong(5, item.totalAttackerLosses)
+            statement.setLong(6, item.totalDefenderLosses)
+            statement.setLong(7, item.totalDebrisField)
+            statement.setLong(8, item.plunder)
+            statement.setLong(9, item.elapsedTime)
+            statement.addBatch()
+          }
+          statement.executeBatch()
+        }
+        connection.commit()
+      } catch (e: Exception) {
+        connection.rollback()
+        throw e
+      } finally {
+        connection.autoCommit = true
       }
     }
   }
@@ -135,6 +182,34 @@ class HistoryDatabase(
       }
     }
   }
+
+  fun listAll(): List<HistoryItem> =
+    connection().use { connection ->
+      connection.prepareStatement(
+        """
+        SELECT
+          id,
+          utc_timestamp,
+          query,
+          seed,
+          total_attacker_losses,
+          total_defender_losses,
+          total_debris_field,
+          plunder,
+          elapsed_time
+        FROM history_items
+        ORDER BY utc_timestamp DESC
+        """.trimIndent()
+      ).use { statement ->
+        statement.executeQuery().use { results ->
+          buildList {
+            while (results.next()) {
+              add(results.toHistoryItem())
+            }
+          }
+        }
+      }
+    }
 
   private fun connection(): Connection = DriverManager.getConnection(jdbcUrl)
 

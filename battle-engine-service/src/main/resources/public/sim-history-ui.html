@@ -58,6 +58,14 @@
       min-width: 0;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     h1,
     h2 {
       margin: 0;
@@ -201,6 +209,10 @@
         align-items: flex-start;
         flex-direction: column;
       }
+
+      .header-actions {
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
@@ -211,7 +223,12 @@
         <h1>Simulation History</h1>
         <a href="/sim-ui">Simulator</a>
       </div>
-      <div id="status" class="status" role="status"></div>
+      <div class="header-actions">
+        <button id="import-button" class="secondary" type="button">Import</button>
+        <button id="export-button" class="secondary" type="button">Export</button>
+        <div id="status" class="status" role="status"></div>
+      </div>
+      <input id="import-file-input" type="file" accept=".csv,text/csv" hidden>
     </div>
   </header>
 

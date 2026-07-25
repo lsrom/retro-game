@@ -39,6 +39,19 @@ class HistoryDatabaseTest {
     assertEquals(listOf(oldest), database.list(limit = 2, offset = 2))
   }
 
+  @Test
+  fun `saves all items with upsert and lists all newest first`() {
+    val database = testDatabase()
+    val original = historyItem(query = "seed=1", timestamp = 1000L)
+    val replacement = original.copy(query = "seed=2", utcTimestamp = 2000L)
+
+    database.save(original)
+    database.saveAll(listOf(replacement))
+
+    assertEquals(replacement, database.load(original.id))
+    assertEquals(listOf(replacement), database.listAll())
+  }
+
   private fun testDatabase(): HistoryDatabase {
     val directory = Files.createTempDirectory("battle-history-test")
     return HistoryDatabase(directory.resolve("history.sqlite"))

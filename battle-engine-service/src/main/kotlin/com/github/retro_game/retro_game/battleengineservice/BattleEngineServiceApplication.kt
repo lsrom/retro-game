@@ -51,6 +51,21 @@ fun main() {
       val offset = ctx.queryParam("offset")?.toIntOrNull() ?: 0
       ctx.json(historyDatabase.list(limit, offset))
     }
+    .get("/sim-history/export") { ctx ->
+      ctx.header("Content-Disposition", "attachment; filename=\"battle-sim-history.csv\"")
+        .contentType("text/csv; charset=utf-8")
+        .result(HistoryCsv.encode(historyDatabase.listAll()))
+    }
+    .post("/sim-history/import") { ctx ->
+      val file = ctx.uploadedFile("file") ?: throw BadRequestResponse("CSV file is required.")
+      val items = try {
+        HistoryCsv.decode(file.content().bufferedReader(Charsets.UTF_8).readText())
+      } catch (e: IllegalArgumentException) {
+        throw BadRequestResponse(e.message ?: "Invalid CSV file.")
+      }
+      historyDatabase.saveAll(items)
+      ctx.json(mapOf("imported" to items.size))
+    }
     .get("/sim-history/{id}") { ctx ->
       val id = try {
         UUID.fromString(ctx.pathParam("id"))
