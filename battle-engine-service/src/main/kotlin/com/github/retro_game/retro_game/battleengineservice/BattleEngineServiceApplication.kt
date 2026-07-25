@@ -6,6 +6,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.github.retro_game.retro_game.battleengine.BattleRules
 import com.github.retro_game.retro_game.battleengine.Combatant
 import com.github.retro_game.retro_game.battleengine.JavaBattleEngineStrategy
+import com.github.retro_game.retro_game.battleengine.NativeBattleEngineStrategy
 import io.javalin.Javalin
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.NotFoundResponse
@@ -15,12 +16,16 @@ import java.util.UUID
 private const val DEFAULT_PORT = 8078
 
 fun main() {
+  val config = UniverseConfig()
+
   val mapper = JavalinJackson.defaultMapper()
     .registerModule(KotlinModule.Builder().build())
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-  val strategy = JavaBattleEngineStrategy()
+  val strategy = if (config.useNativeCombatEngine) NativeBattleEngineStrategy() else JavaBattleEngineStrategy()
+
   val historyDatabase = HistoryDatabase()
+  val prettifiedBattleReportRenderer = PrettifiedBattleReportRenderer(::classpathResourceText)
 
   Javalin.create { config ->
     config.jsonMapper(JavalinJackson(mapper))
@@ -51,13 +56,23 @@ fun main() {
     .get("/sim-prettified-export-roster-template.html") { ctx ->
       ctx.contentType("text/html").result(classpathResourceText("public/sim-prettified-export-roster-template.html"))
     }
+    .get("/sim-prettified-export-templates") { ctx ->
+      ctx.json(PrettifiedBattleReportTemplates.templates.map { mapOf("label" to it.label, "templateUrl" to it.url) })
+    }
+    .post("/sim-prettified-export") { ctx ->
+      val request = mapper.readValue<PrettifiedBattleReportRequest>(ctx.body())
+      val filename = "combat-report-${request.output.outcome.seed()}.html"
+      ctx.header("Content-Disposition", "attachment; filename=\"$filename\"")
+        .contentType("text/html; charset=utf-8")
+        .result(prettifiedBattleReportRenderer.render(request))
+    }
     .get("/sim-history-ui.js") { ctx ->
       ctx.contentType("application/javascript").result(classpathResourceText("public/sim-history-ui.js"))
     }
     .get("/sim-units") { ctx ->
       ctx.json(BattleSimUnits.metadata)
     }
-    .get("/sim", BattleSimHttpApi(strategy, historyDatabase = historyDatabase))
+    .get("/sim", BattleSimHttpApi(strategy = strategy, universeConfig = config, historyDatabase = historyDatabase))
     .get("/sim-history") { ctx ->
       val limit = ctx.queryParam("limit")?.toIntOrNull() ?: 100
       val offset = ctx.queryParam("offset")?.toIntOrNull() ?: 0
@@ -92,7 +107,7 @@ fun main() {
 
 private fun readPort(): Int = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT
 
-private fun classpathResourceText(path: String): String =
+internal fun classpathResourceText(path: String): String =
   Thread.currentThread().contextClassLoader.getResource(path)?.readText()
     ?: throw IllegalStateException("Classpath resource not found: $path")
 

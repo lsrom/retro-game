@@ -10,7 +10,7 @@ import java.util.UUID
 
 class BattleSimHttpApi(
   private val strategy: BattleEngineStrategy,
-  private val universeConfig: UniverseConfig = UniverseConfig(),
+  private val universeConfig: UniverseConfig,
   private val historyDatabase: HistoryDatabase? = null,
 ) : Handler {
 

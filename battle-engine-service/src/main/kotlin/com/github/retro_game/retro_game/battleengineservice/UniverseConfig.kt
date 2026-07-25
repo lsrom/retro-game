@@ -7,6 +7,7 @@ data class UniverseConfig(
         debrisPerUnit = 100_000,
         maxPercent = 20
     ),
+    val useNativeCombatEngine: Boolean = false
 )
 
 data class MoonshotConfig(
