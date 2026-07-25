@@ -25,6 +25,13 @@ application {
   mainClass = 'com.github.retro_game.retro_game.battleengineservice.BattleEngineServiceApplicationKt'
 }
 
+def nativeBattleEngineDir = project(':battle-engine').layout.buildDirectory.dir('native')
+
+tasks.withType(JavaExec).configureEach {
+  dependsOn ':battle-engine:buildBattleEngine'
+  jvmArgs "-Djava.library.path=${nativeBattleEngineDir.get().asFile.absolutePath}"
+}
+
 tasks.named('test') {
   useJUnitPlatform()
 }

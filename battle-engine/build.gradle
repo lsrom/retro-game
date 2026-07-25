@@ -52,6 +52,8 @@ tasks.register('buildBattleEngine', Exec) {
   description = 'Builds the native battle engine shared library.'
   group = 'build'
   dependsOn 'configureBattleEngine'
+  inputs.file('src/main/cpp/CMakeLists.txt')
+  inputs.file('src/main/cpp/BattleEngine.cpp')
   inputs.dir(battleEngineBuildDir)
   outputs.file(battleEngineBuildDir.map { it.file(System.mapLibraryName('BattleEngine')) })
   commandLine 'cmake',

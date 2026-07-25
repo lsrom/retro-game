@@ -38,7 +38,7 @@ struct Random {
 #define COMBATANT_OUTCOME_CLASS_NAME RETRO_GAME_PREFIX "battleengine/CombatantOutcome"
 #define UNIT_ATTRIBUTES_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitAttributes"
 #define UNIT_GROUP_STATS_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitGroupStats"
-#define UNIT_KIND_CLASS_NAME RETRO_GAME_PREFIX "entity/UnitKind"
+#define UNIT_KIND_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitKind"
 
 // The JNI types must be defined as follows, otherwise our code might break.
 static_assert(std::is_same_v<jfloat, float>);
@@ -916,9 +916,11 @@ jobject createBattleOutcome(const Jni &jni, const Combatants &attackers,
 jobject fight(const Jni &jni, jobject attackersList, jobject defendersList, jint seed) {
   // Our RNG needs a positive seed.
   // Keep the calculation of the seed in sync with the java battle engine.
-  if (seed < 0)
+  if (seed == std::numeric_limits<jint>::min())
+    seed = 1;
+  else if (seed < 0)
     seed = -seed;
-  if (seed < 0 || seed == 0)
+  if (seed == 0)
     seed = 1;
   auto random = static_cast<std::uint32_t>(seed);
 
