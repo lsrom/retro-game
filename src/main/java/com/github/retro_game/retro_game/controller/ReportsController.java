@@ -60,12 +60,15 @@ public class ReportsController {
       }});
 
   private final boolean espionageProbeRaiding;
+  private final String websimLink;
   private final ReportService reportService;
   private final UserService userService;
 
   public ReportsController(@Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
+                           @Value("${retro-game.websim-link:https://websim.speedsim.net/?}") String websimLink,
                            ReportService reportService, UserService userService) {
     this.espionageProbeRaiding = espionageProbeRaiding;
+    this.websimLink = websimLink;
     this.reportService = reportService;
     this.userService = userService;
   }
@@ -108,7 +111,7 @@ public class ReportsController {
       }
     }
 
-    return "https://websim.speedsim.net/?" + String.join("&", params);
+    return websimLink + String.join("&", params);
   }
 
   @GetMapping("/reports")
