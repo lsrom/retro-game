@@ -83,6 +83,62 @@ class BattleSimQueryParserTest {
   }
 
   @Test
+  fun `parses all supported websim parameters together`() {
+    val parameters = mutableMapOf(
+      "attacker_pos" to listOf("1:23:7"),
+      "enemy_pos" to listOf("2:100:8"),
+      "enemy_metal" to listOf("100000"),
+      "enemy_crystal" to listOf("50000"),
+      "enemy_deut" to listOf("25000"),
+      "tech_a0_0" to listOf("1"),
+      "tech_a0_1" to listOf("2"),
+      "tech_a0_2" to listOf("3"),
+      "tech_d0_0" to listOf("4"),
+      "tech_d0_1" to listOf("5"),
+      "tech_d0_2" to listOf("6"),
+      "seed" to listOf("987654321"),
+    )
+    val expectedAttackerUnits = mutableMapOf<UnitKind, Long>()
+    val expectedDefenderUnits = mutableMapOf<UnitKind, Long>()
+
+    for ((index, kind) in BattleSimUnits.unitsByIndex) {
+      val attackerCount = if (kind in BattleSimUnits.defensiveUnitKinds) 0L else index + 1L
+      val defenderCount = index + 101L
+      parameters["ship_a0_${index}_b"] = listOf(attackerCount.toString())
+      parameters["ship_d0_${index}_b"] = listOf(defenderCount.toString())
+      if (attackerCount > 0) {
+        expectedAttackerUnits[kind] = attackerCount
+      }
+      expectedDefenderUnits[kind] = defenderCount
+    }
+
+    val input = BattleSimQueryParser.parse(parameters)
+
+    assertEquals(987654321, input.seed)
+    assertEquals(BattleSimResources(100000, 50000, 25000), input.resources)
+    assertEquals(1, input.attackers.size)
+    assertEquals(1, input.defenders.size)
+
+    assertEquals(1, input.attacker.coordinates().galaxy())
+    assertEquals(23, input.attacker.coordinates().system())
+    assertEquals(7, input.attacker.coordinates().position())
+    assertEquals(0, input.attacker.coordinates().kind())
+    assertEquals(1, input.attacker.weaponsTechnology())
+    assertEquals(2, input.attacker.shieldingTechnology())
+    assertEquals(3, input.attacker.armorTechnology())
+    assertEquals(expectedAttackerUnits, input.attacker.unitGroups())
+
+    assertEquals(2, input.defender.coordinates().galaxy())
+    assertEquals(100, input.defender.coordinates().system())
+    assertEquals(8, input.defender.coordinates().position())
+    assertEquals(0, input.defender.coordinates().kind())
+    assertEquals(4, input.defender.weaponsTechnology())
+    assertEquals(5, input.defender.shieldingTechnology())
+    assertEquals(6, input.defender.armorTechnology())
+    assertEquals(expectedDefenderUnits, input.defender.unitGroups())
+  }
+
+  @Test
   fun `rejects defensive units in attacker fleet`() {
     val error = assertFailsWith<AttackingFleetCannotContainDefensiveUnitsException> {
       BattleSimQueryParser.parse(
