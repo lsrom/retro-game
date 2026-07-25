@@ -390,7 +390,7 @@ function renderOutcomeSummary(output) {
 
   list.replaceChildren(
     makeElement('div', message),
-    makeElement('div', `Simulation time ${formatNumber(output.timeTaken ?? 0)} ms.`),
+    makeElement('div', `Simulation time ${formatNumber(output.elapsedTime ?? 0)} ms.`),
   );
   return list;
 }
