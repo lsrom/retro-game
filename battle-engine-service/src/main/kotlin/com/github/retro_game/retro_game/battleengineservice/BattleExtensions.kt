@@ -17,10 +17,13 @@ internal fun BattleOutcome.toSimOutput(
   val defendersLossByKind = input.defenders.calcLosses(defendersOutcomes())
   val result = calcBattleResult(input)
 
+  val debris = calcDebris(attackersLossByKind, defendersLossByKind, universeConfig)
+
   return SimOutput(
     outcome = this,
     result = result,
-    debris = calcDebris(attackersLossByKind, defendersLossByKind, universeConfig),
+    debris = debris,
+    moonchance = calcMoonchance(debris, universeConfig.moonshotConfig),
     possiblePlunder = if (result == BattleResult.AttackerWins) {
       input.resources.calcPossiblePlunder(input.attackers.calcRemainingCapacity(attackersOutcomes()))
     } else {
@@ -99,6 +102,10 @@ private fun calcDebris(
   val crystal = losses.sumOf { it.calcDebrisCrystal(universeConfig) }
   return Resources(metal, crystal, 0L)
 }
+
+private fun calcMoonchance(debris: Resources, moonshotConfig: MoonshotConfig): Double =
+  ((debris.metal + debris.crystal).toDouble() / moonshotConfig.debrisPerUnit)
+    .coerceAtMost(moonshotConfig.maxPercent.toDouble())
 
 private fun Map<UnitKind, Long>.calcDebrisMetal(universeConfig: UniverseConfig): Long =
   floor(entries.sumOf { (kind, count) -> kind.cost.metal * count * kind.debrisFactor(universeConfig) }).toLong()

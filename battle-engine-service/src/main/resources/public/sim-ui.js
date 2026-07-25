@@ -102,6 +102,10 @@ function formatNumber(value) {
   return numberFormatter.format(Math.round(Number(value) || 0));
 }
 
+function formatPercent(value) {
+  return `${(Number(value) || 0).toFixed(2)}%`;
+}
+
 function resourceTotal(resources) {
   if (!resources) {
     return 0;
@@ -360,7 +364,7 @@ function renderSummary(output) {
 
     const body = document.createElement('span');
     if (isResources) {
-      body.replaceChildren(renderResourceLines(value));
+      body.replaceChildren(label === 'Debris' ? renderDebrisLines(output) : renderResourceLines(value));
     } else if (label === 'Outcome') {
       body.replaceChildren(renderOutcomeSummary(value));
     } else {
@@ -392,6 +396,23 @@ function renderOutcomeSummary(output) {
     makeElement('div', message),
     makeElement('div', `Simulation time ${formatNumber(output.elapsedTime ?? 0)} ms.`),
   );
+  return list;
+}
+
+function renderDebrisLines(output) {
+  const list = makeElement('div', null, 'resource-lines');
+  const debris = output.debris;
+  const rows = [
+    ['Metal', formatNumber(debris?.metal ?? 0)],
+    ['Crystal', formatNumber(debris?.crystal ?? 0)],
+    ['Moonchance', formatPercent(output.moonchance)],
+  ];
+
+  list.replaceChildren(...rows.map(([label, value]) => {
+    const row = makeElement('div', null, 'resource-line');
+    row.append(makeElement('span', `${label}:`), makeElement('span', value));
+    return row;
+  }));
   return list;
 }
 

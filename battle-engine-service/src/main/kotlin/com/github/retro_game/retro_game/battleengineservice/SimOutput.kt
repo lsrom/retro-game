@@ -6,6 +6,7 @@ data class SimOutput(
     val outcome: BattleOutcome,
     val result: BattleResult,
     val debris: Resources,
+    val moonchance: Double,
     val possiblePlunder: Resources,
     val lossesAttacker: Resources,
     val lossesDefender: Resources,
