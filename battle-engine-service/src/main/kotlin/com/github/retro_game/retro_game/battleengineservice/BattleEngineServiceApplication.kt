@@ -7,7 +7,10 @@ import com.github.retro_game.retro_game.battleengine.BattleRules
 import com.github.retro_game.retro_game.battleengine.Combatant
 import com.github.retro_game.retro_game.battleengine.JavaBattleEngineStrategy
 import io.javalin.Javalin
+import io.javalin.http.BadRequestResponse
+import io.javalin.http.NotFoundResponse
 import io.javalin.json.JavalinJackson
+import java.util.UUID
 
 private const val DEFAULT_PORT = 8078
 
@@ -17,6 +20,7 @@ fun main() {
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
   val strategy = JavaBattleEngineStrategy()
+  val historyDatabase = HistoryDatabase()
 
   Javalin.create { config ->
     config.jsonMapper(JavalinJackson(mapper))
@@ -29,13 +33,32 @@ fun main() {
     .get("/sim-ui") { ctx ->
       ctx.contentType("text/html").result(classpathResourceText("public/sim-ui.html"))
     }
+    .get("/sim-history-ui") { ctx ->
+      ctx.contentType("text/html").result(classpathResourceText("public/sim-history-ui.html"))
+    }
     .get("/sim-ui.js") { ctx ->
       ctx.contentType("application/javascript").result(classpathResourceText("public/sim-ui.js"))
+    }
+    .get("/sim-history-ui.js") { ctx ->
+      ctx.contentType("application/javascript").result(classpathResourceText("public/sim-history-ui.js"))
     }
     .get("/sim-units") { ctx ->
       ctx.json(BattleSimUnits.metadata)
     }
-    .get("/sim", BattleSimHttpApi(strategy))
+    .get("/sim", BattleSimHttpApi(strategy, historyDatabase = historyDatabase))
+    .get("/sim-history") { ctx ->
+      val limit = ctx.queryParam("limit")?.toIntOrNull() ?: 100
+      val offset = ctx.queryParam("offset")?.toIntOrNull() ?: 0
+      ctx.json(historyDatabase.list(limit, offset))
+    }
+    .get("/sim-history/{id}") { ctx ->
+      val id = try {
+        UUID.fromString(ctx.pathParam("id"))
+      } catch (_: IllegalArgumentException) {
+        throw BadRequestResponse("Invalid history item id.")
+      }
+      ctx.json(historyDatabase.load(id) ?: throw NotFoundResponse("History item not found."))
+    }
     .get("/health") { ctx -> ctx.result("OK") }
     .start(readPort())
 }

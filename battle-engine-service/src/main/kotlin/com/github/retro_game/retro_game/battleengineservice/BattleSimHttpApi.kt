@@ -6,10 +6,12 @@ import com.github.retro_game.retro_game.battleengine.Combatant
 import io.javalin.http.BadRequestResponse
 import io.javalin.http.Context
 import io.javalin.http.Handler
+import java.util.UUID
 
 class BattleSimHttpApi(
   private val strategy: BattleEngineStrategy,
   private val universeConfig: UniverseConfig = UniverseConfig(),
+  private val historyDatabase: HistoryDatabase? = null,
 ) : Handler {
 
   override fun handle(ctx: Context) {
@@ -18,8 +20,11 @@ class BattleSimHttpApi(
       val time = System.currentTimeMillis()
       val outcome = strategy.fight(input.attackers, input.defenders, input.rules, input.seed)
       val fightDuration = System.currentTimeMillis() - time
+      val output = outcome.toSimOutput(input, universeConfig, fightDuration)
 
-      ctx.json(outcome.toSimOutput(input, universeConfig, fightDuration))
+      historyDatabase?.save(output.toHistoryItem(input, ctx.queryString() ?: ""))
+
+      ctx.json(output)
     } catch (e: AttackingFleetCannotContainDefensiveUnitsException) {
       ctx.status(400)
         .contentType("text/plain")
@@ -29,6 +34,21 @@ class BattleSimHttpApi(
     }
   }
 }
+
+private fun SimOutput.toHistoryItem(input: BattleSimInput, query: String): HistoryItem =
+  HistoryItem(
+    id = UUID.randomUUID(),
+    utcTimestamp = System.currentTimeMillis(),
+    query = query,
+    seed = input.seed.toLong(),
+    totalAttackerLosses = lossesAttacker.total(),
+    totalDefenderLosses = lossesDefender.total(),
+    totalDebrisField = debris.total(),
+    plunder = possiblePlunder.total(),
+    elapsedTime = elapsedTime,
+  )
+
+private fun Resources.total(): Long = metal + crystal + deuterium
 
 data class BattleSimInput(
   val resources: BattleSimResources,

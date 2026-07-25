@@ -52,6 +52,13 @@
       padding: 16px 0;
     }
 
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
     h1,
     h2,
     h3 {
@@ -71,6 +78,15 @@
     h3 {
       font-size: 14px;
       color: var(--muted);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
 
     main {
@@ -407,7 +423,10 @@
 <body>
   <header>
     <div class="header-inner">
-      <h1>Battle Simulator</h1>
+      <div class="header-title">
+        <h1>Battle Simulator</h1>
+        <a href="/sim-history-ui">History</a>
+      </div>
       <div id="status" class="status" role="status"></div>
     </div>
   </header>
