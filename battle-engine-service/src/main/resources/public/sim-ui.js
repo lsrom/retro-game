@@ -1,6 +1,7 @@
 const form = document.getElementById('sim-form');
 const statusEl = document.getElementById('status');
 const submitButton = document.getElementById('submit-button');
+const resetAttackerButton = document.getElementById('reset-attacker-button');
 const seedInput = document.getElementById('seed-input');
 const summaryEl = document.getElementById('summary');
 const reportEl = document.getElementById('report');
@@ -92,6 +93,12 @@ function prefillFormFromQuery() {
 
 function randomizeSeed() {
   seedInput.value = String(Math.floor(Math.random() * 2147483647));
+}
+
+function resetAttackerUnits() {
+  for (const input of form.querySelectorAll('input[name^="ship_a"]')) {
+    input.value = '0';
+  }
 }
 
 function initializeSeed() {
@@ -532,6 +539,10 @@ form.addEventListener('reset', () => {
     latestReportInput = null;
     setStatus('');
   });
+});
+
+resetAttackerButton.addEventListener('click', () => {
+  resetAttackerUnits();
 });
 
 loadUnits().catch((error) => {

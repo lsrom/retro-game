@@ -18,7 +18,7 @@ class BattleSimHttpApi(
   override fun handle(ctx: Context) {
     try {
       val input = BattleSimQueryParser.parse(ctx.queryParamMap())
-      input.requireNonEmptyFleets()
+      input.requireNonEmptyDefenderFleet()
       val time = System.currentTimeMillis()
       val outcome = strategy.fight(input.attackers, input.defenders, input.rules, input.seed)
       val fightDuration = System.currentTimeMillis() - time
@@ -37,8 +37,7 @@ class BattleSimHttpApi(
   }
 }
 
-private fun BattleSimInput.requireNonEmptyFleets() {
-  require(attackers.isNotEmpty()) { "Attacker fleet cannot be empty." }
+private fun BattleSimInput.requireNonEmptyDefenderFleet() {
   require(defenders.isNotEmpty()) { "Defender fleet cannot be empty." }
 }
 
