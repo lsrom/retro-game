@@ -57,7 +57,7 @@ private fun Map<String, String>.longValue(primaryName: String, fallbackName: Str
         ?: default
 
 private fun Map<String, String>.booleanValue(name: String, default: Boolean): Boolean =
-    when (val rawValue = this[name]?.trim()?.lowercase()) {
+    when (this[name]?.trim()?.lowercase()) {
         null -> default
         "true", "1", "yes", "y", "on" -> true
         "false", "0", "no", "n", "off" -> false

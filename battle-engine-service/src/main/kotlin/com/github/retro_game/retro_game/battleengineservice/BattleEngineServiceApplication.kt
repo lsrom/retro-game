@@ -101,6 +101,7 @@ fun main() {
       }
       ctx.json(historyDatabase.load(id) ?: throw NotFoundResponse("History item not found."))
     }
+    .get("/config") { ctx -> ctx.json(config) }
     .get("/health") { ctx -> ctx.result("OK") }
     .start(readPort())
 }
