@@ -16,7 +16,7 @@ import java.util.UUID
 private const val DEFAULT_PORT = 8078
 
 fun main() {
-  val config = UniverseConfig()
+  val config = UniverseConfig.fromEnvironment()
 
   val mapper = JavalinJackson.defaultMapper()
     .registerModule(KotlinModule.Builder().build())

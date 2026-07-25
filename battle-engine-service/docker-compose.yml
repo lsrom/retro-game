@@ -1,0 +1,22 @@
+services:
+  battle-engine-service:
+    build:
+      context: ..
+      dockerfile: battle-engine-service/Dockerfile
+    restart: always
+    ports:
+      - "8078:8080"
+    environment:
+      PORT: 8080
+      HISTORY_DATABASE_PATH: /retro-game/data/battle-sim-history.sqlite
+      RETRO_GAME_BATTLE_ENGINE: java
+      RETRO_GAME_FLEET_DEBRIS_FACTOR: 0.7
+      RETRO_GAME_DEFENSE_DEBRIS_FACTOR: 0.3
+      RETRO_GAME_MOON_CHANCE_RESOURCE_PERCENT: 1000000
+      RETRO_GAME_MAX_MOON_CHANCE: 1
+    volumes:
+      - battle-engine-service-data:/retro-game/data
+
+volumes:
+  battle-engine-service-data:
+    driver: local
