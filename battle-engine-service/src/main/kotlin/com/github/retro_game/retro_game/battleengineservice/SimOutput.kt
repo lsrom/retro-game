@@ -9,6 +9,7 @@ data class SimOutput(
     val possiblePlunder: Resources,
     val lossesAttacker: Resources,
     val lossesDefender: Resources,
+    val elapsedTime: Long
 )
 
 enum class BattleResult {

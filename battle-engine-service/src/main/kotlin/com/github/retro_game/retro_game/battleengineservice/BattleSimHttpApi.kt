@@ -11,11 +11,15 @@ class BattleSimHttpApi(
   private val strategy: BattleEngineStrategy,
   private val universeConfig: UniverseConfig = UniverseConfig(),
 ) : Handler {
+
   override fun handle(ctx: Context) {
     try {
       val input = BattleSimQueryParser.parse(ctx.queryParamMap())
+      val time = System.currentTimeMillis()
       val outcome = strategy.fight(input.attackers, input.defenders, input.rules, input.seed)
-      ctx.json(outcome.toSimOutput(input, universeConfig))
+      val fightDuration = System.currentTimeMillis() - time
+
+      ctx.json(outcome.toSimOutput(input, universeConfig, fightDuration))
     } catch (e: AttackingFleetCannotContainDefensiveUnitsException) {
       ctx.status(400)
         .contentType("text/plain")

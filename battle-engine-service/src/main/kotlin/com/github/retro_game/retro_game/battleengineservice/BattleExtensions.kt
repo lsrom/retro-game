@@ -11,6 +11,7 @@ import kotlin.math.min
 internal fun BattleOutcome.toSimOutput(
   input: BattleSimInput,
   universeConfig: UniverseConfig,
+  timeTaken: Long
 ): SimOutput {
   val attackersLossByKind = input.attackers.calcLosses(attackersOutcomes())
   val defendersLossByKind = input.defenders.calcLosses(defendersOutcomes())
@@ -27,6 +28,7 @@ internal fun BattleOutcome.toSimOutput(
     },
     lossesAttacker = attackersLossByKind.totalCost(),
     lossesDefender = defendersLossByKind.totalCost(),
+    elapsedTime = timeTaken
   )
 }
 

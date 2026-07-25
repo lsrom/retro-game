@@ -98,18 +98,6 @@ function initializeSeed() {
   }
 }
 
-function resourceText(resources) {
-  if (!resources) {
-    return '0 / 0 / 0';
-  }
-
-  return [
-    resources.metal ?? 0,
-    resources.crystal ?? 0,
-    resources.deuterium ?? 0,
-  ].map((value) => numberFormatter.format(value)).join(' / ');
-}
-
 function formatNumber(value) {
   return numberFormatter.format(Math.round(Number(value) || 0));
 }
@@ -288,7 +276,7 @@ function renderOutcome(output) {
   const result = output.result;
   const outcome = document.createElement('p');
 
-  if (result === 'FriendlyWinner') {
+  if (result === 'AttackerWins') {
     appendTextWithStrong(outcome, [
       { text: 'The attackers won the battle and captured ' },
       { text: formatNumber(output.possiblePlunder?.metal), strong: true },
@@ -298,7 +286,7 @@ function renderOutcome(output) {
       { text: formatNumber(output.possiblePlunder?.deuterium), strong: true },
       { text: ' deuterium.' },
     ]);
-  } else if (result === 'EnemyWinner') {
+  } else if (result === 'DefenderWins') {
     outcome.textContent = 'The defenders won the battle.';
   } else {
     outcome.textContent = 'The battle ended in a draw.';
@@ -356,14 +344,14 @@ function renderReport(output, input) {
 
 function renderSummary(output) {
   const rows = [
-    ['Outcome', output.result ?? 'Unknown'],
-    ['Debris', resourceText(output.debris)],
-    ['Plunder', resourceText(output.possiblePlunder)],
-    ['Attacker Losses', resourceText(output.lossesAttacker)],
-    ['Defender Losses', resourceText(output.lossesDefender)],
+    ['Outcome', output, false],
+    ['Debris', output.debris, true],
+    ['Plunder', output.possiblePlunder, true],
+    ['Attacker Losses', output.lossesAttacker, true],
+    ['Defender Losses', output.lossesDefender, true],
   ];
 
-  summaryEl.replaceChildren(...rows.map(([label, value]) => {
+  summaryEl.replaceChildren(...rows.map(([label, value, isResources]) => {
     const item = document.createElement('div');
     item.className = 'metric';
 
@@ -371,11 +359,56 @@ function renderSummary(output) {
     title.textContent = label;
 
     const body = document.createElement('span');
-    body.textContent = value;
+    if (isResources) {
+      body.replaceChildren(renderResourceLines(value));
+    } else if (label === 'Outcome') {
+      body.replaceChildren(renderOutcomeSummary(value));
+    } else {
+      body.textContent = value;
+    }
 
     item.append(title, body);
     return item;
   }));
+}
+
+function renderOutcomeSummary(output) {
+  const list = makeElement('div', null, 'summary-lines');
+  const rounds = formatNumber(output.outcome?.numRounds ?? 0);
+  const result = output.result;
+  let message;
+
+  if (result === 'AttackerWins') {
+    message = `Attacker won in ${rounds} rounds.`;
+  } else if (result === 'DefenderWins') {
+    message = `Defender won in ${rounds} rounds.`;
+  } else if (result === 'Draw') {
+    message = 'Battle ended in a draw.';
+  } else {
+    message = 'Outcome unknown.';
+  }
+
+  list.replaceChildren(
+    makeElement('div', message),
+    makeElement('div', `Simulation time ${formatNumber(output.timeTaken ?? 0)} ms.`),
+  );
+  return list;
+}
+
+function renderResourceLines(resources) {
+  const list = makeElement('div', null, 'resource-lines');
+  const rows = [
+    ['Metal', resources?.metal ?? 0],
+    ['Crystal', resources?.crystal ?? 0],
+    ['Deuterium', resources?.deuterium ?? 0],
+  ];
+
+  list.replaceChildren(...rows.map(([label, value]) => {
+    const row = makeElement('div', null, 'resource-line');
+    row.append(makeElement('span', `${label}:`), makeElement('span', formatNumber(value)));
+    return row;
+  }));
+  return list;
 }
 
 async function loadUnits() {

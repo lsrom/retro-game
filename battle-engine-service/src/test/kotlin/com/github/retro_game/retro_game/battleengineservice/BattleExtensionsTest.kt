@@ -25,7 +25,7 @@ class BattleExtensionsTest {
       listOf(combatantOutcome(UnitKind.ROCKET_LAUNCHER to 0L)),
     )
 
-    val output = outcome.toSimOutput(input, UniverseConfig())
+    val output = outcome.toSimOutput(input, UniverseConfig(), 42L)
 
     assertEquals(outcome, output.outcome)
     assertEquals(BattleResult.AttackerWins, output.result)
@@ -33,6 +33,7 @@ class BattleExtensionsTest {
     assertEquals(Resources(1_749L, 1_709L, 1_500L), output.possiblePlunder)
     assertEquals(Resources(2_000L, 2_000L, 0L), output.lossesAttacker)
     assertEquals(Resources(2_000L, 0L, 0L), output.lossesDefender)
+    assertEquals(42L, output.elapsedTime)
   }
 
   private fun combatant(userId: Long, vararg unitGroups: Pair<UnitKind, Long>): Combatant =

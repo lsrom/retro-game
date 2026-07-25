@@ -254,6 +254,22 @@
       text-transform: uppercase;
     }
 
+    .summary-lines,
+    .resource-lines {
+      display: grid;
+      gap: 2px;
+    }
+
+    .resource-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .resource-line span:first-child {
+      color: var(--muted);
+    }
+
     .report {
       display: grid;
       gap: 14px;
