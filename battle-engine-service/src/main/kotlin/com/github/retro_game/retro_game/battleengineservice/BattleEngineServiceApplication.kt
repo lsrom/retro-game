@@ -41,6 +41,12 @@ fun main() {
     .get("/sim-history-ui") { ctx ->
       ctx.contentType("text/html").result(classpathResourceText("public/sim-history-ui.html"))
     }
+    .get("/favicon.png") { ctx ->
+      ctx.contentType("image/png").result(classpathResourceBytes("public/favicon.png"))
+    }
+    .get("/favicon.ico") { ctx ->
+      ctx.contentType("image/png").result(classpathResourceBytes("public/favicon.png"))
+    }
     .get("/sim-ui.js") { ctx ->
       ctx.contentType("application/javascript").result(classpathResourceText("public/sim-ui.js"))
     }
@@ -110,6 +116,10 @@ private fun readPort(): Int = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PO
 
 internal fun classpathResourceText(path: String): String =
   Thread.currentThread().contextClassLoader.getResource(path)?.readText()
+    ?: throw IllegalStateException("Classpath resource not found: $path")
+
+internal fun classpathResourceBytes(path: String): ByteArray =
+  Thread.currentThread().contextClassLoader.getResource(path)?.readBytes()
     ?: throw IllegalStateException("Classpath resource not found: $path")
 
 data class FightRequest(
