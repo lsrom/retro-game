@@ -1,6 +1,5 @@
 package com.github.retro_game.retro_game.battleengine;
 
-import com.github.retro_game.retro_game.battleengine.UnitKind;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
