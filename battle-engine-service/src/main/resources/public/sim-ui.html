@@ -317,19 +317,23 @@
     .report-export {
       display: flex;
       align-items: center;
-      flex-direction: column;
       justify-content: center;
-      gap: 6px;
+      position: relative;
       padding-top: 2px;
     }
 
     .export-menu {
       display: grid;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      z-index: 10;
       min-width: 180px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: var(--panel-strong);
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      transform: translateX(-50%);
       overflow: hidden;
     }
 

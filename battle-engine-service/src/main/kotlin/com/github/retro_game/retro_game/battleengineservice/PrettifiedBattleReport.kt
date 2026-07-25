@@ -60,220 +60,127 @@ internal class PrettifiedBattleReportRenderer(
     val defenderFinalStats = request.output.lastRoundStats(Side.DEFENDER)
     val template = templateLoader(PrettifiedBattleReportTemplates.resourcePathFor(request.templateUrl))
 
-    return renderTemplate(
-      template,
-      mapOf(
-        "unitColorCsv" to escapeHtml(unitColorCsv()),
-        "attackerFleet" to renderPrettifiedCombatant(request.input.attacker, attackerFinalStats),
-        "attackerInitialFleet" to renderClassicInitialCombatant(request.input.attacker),
-        "attackerFinalFleet" to renderClassicFinalCombatant(request.input.attacker, attackerFinalStats),
-        "attackerRosterInitial" to renderRosterCombatant(request.input.attacker, attackerFinalStats, Side.ATTACKER, final = false),
-        "attackerRosterFinal" to renderRosterCombatant(request.input.attacker, attackerFinalStats, Side.ATTACKER, final = true),
-        "attackerLosses" to prettifiedNumber(request.output.lossesAttacker.total()),
-        "defenderFleet" to renderPrettifiedCombatant(request.input.defender, defenderFinalStats),
-        "defenderInitialFleet" to renderClassicInitialCombatant(request.input.defender),
-        "defenderFinalFleet" to renderClassicFinalCombatant(request.input.defender, defenderFinalStats),
-        "defenderRosterInitial" to renderRosterCombatant(request.input.defender, defenderFinalStats, Side.DEFENDER, final = false),
-        "defenderRosterFinal" to renderRosterCombatant(request.input.defender, defenderFinalStats, Side.DEFENDER, final = true),
-        "outcome" to prettifiedOutcomeHtml(request.output),
-        "rosterSummary" to renderRosterSummary(request.output),
-        "defenderLosses" to prettifiedNumber(request.output.lossesDefender.total()),
-        "debrisMetal" to prettifiedNumber(request.output.debris.metal),
-        "debrisCrystal" to prettifiedNumber(request.output.debris.crystal),
-        "moonchance" to formatPercent(request.output.moonchance),
-      ),
+    return SimpleHtmlTemplate.render(template, reportModel(request, attackerFinalStats, defenderFinalStats))
+  }
+
+  private fun reportModel(
+    request: PrettifiedBattleReportRequest,
+    attackerFinalStats: Map<UnitKind, UnitGroupStats>?,
+    defenderFinalStats: Map<UnitKind, UnitGroupStats>?,
+  ): Map<String, Any?> {
+    val output = request.output
+    return mapOf(
+      "unitColorCsv" to unitColorCsv(),
+      "attackerFleet" to tableCombatantModel(request.input.attacker, attackerFinalStats),
+      "attackerInitialFleet" to classicCombatantModel(request.input.attacker, null),
+      "attackerFinalFleet" to classicCombatantModel(request.input.attacker, attackerFinalStats),
+      "attackerRosterInitial" to rosterCombatantModel(request.input.attacker, attackerFinalStats, final = false),
+      "attackerRosterFinal" to rosterCombatantModel(request.input.attacker, attackerFinalStats, final = true),
+      "attackerLosses" to prettifiedNumber(output.lossesAttacker.total()),
+      "defenderFleet" to tableCombatantModel(request.input.defender, defenderFinalStats),
+      "defenderInitialFleet" to classicCombatantModel(request.input.defender, null),
+      "defenderFinalFleet" to classicCombatantModel(request.input.defender, defenderFinalStats),
+      "defenderRosterInitial" to rosterCombatantModel(request.input.defender, defenderFinalStats, final = false),
+      "defenderRosterFinal" to rosterCombatantModel(request.input.defender, defenderFinalStats, final = true),
+      "defenderLosses" to prettifiedNumber(output.lossesDefender.total()),
+      "lossesDefenderMetal" to prettifiedNumber(output.lossesDefender.metal),
+      "lossesDefenderCrystal" to prettifiedNumber(output.lossesDefender.crystal),
+      "lossesDefenderDeuterium" to prettifiedNumber(output.lossesDefender.deuterium),
+      "debrisMetal" to prettifiedNumber(output.debris.metal),
+      "debrisCrystal" to prettifiedNumber(output.debris.crystal),
+      "moonchance" to formatPercent(output.moonchance),
+      "attackerWins" to (output.result == BattleResult.AttackerWins),
+      "defenderWins" to (output.result == BattleResult.DefenderWins),
+      "draw" to (output.result == BattleResult.Draw),
+      "possiblePlunderMetal" to prettifiedNumber(output.possiblePlunder.metal),
+      "possiblePlunderCrystal" to prettifiedNumber(output.possiblePlunder.crystal),
+      "possiblePlunderDeuterium" to prettifiedNumber(output.possiblePlunder.deuterium),
+      "attackerProfitMetal" to prettifiedNumber(output.possiblePlunder.metal - output.lossesAttacker.metal),
+      "attackerProfitCrystal" to prettifiedNumber(output.possiblePlunder.crystal - output.lossesAttacker.crystal),
+      "attackerProfitDeuterium" to prettifiedNumber(output.possiblePlunder.deuterium - output.lossesAttacker.deuterium),
+      "attackerProfitTotal" to prettifiedNumber(output.possiblePlunder.total() - output.lossesAttacker.total()),
     )
   }
 
-  private fun renderTemplate(template: String, values: Map<String, String>): String =
-    values.entries.fold(template) { html, (key, value) -> html.replace("{{$key}}", value) }
-
-  private fun renderPrettifiedCombatant(
+  private fun tableCombatantModel(
     combatant: PrettifiedReportCombatant,
     finalStats: Map<UnitKind, UnitGroupStats>?,
-  ): String {
+  ): Map<String, Any?> {
     val reportUnits = reportUnitsForCombatant(combatant, finalStats)
-    if (reportUnits.isEmpty()) {
-      return """
-        <section class="combatant">
-          <div><span class="role">${escapeHtml(combatant.title)}</span> (${escapeHtml(combatant.coordinates)})</div>
-          <div class="empty">No units</div>
-        </section>
-      """.trimIndent()
-    }
-
-    val hasSurvivors = reportUnits.any { (finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L) > 0L }
-    val headerCells = reportUnits.joinToString("") { renderTableCell("th", it, unitColorPreset(it).abbreviation) }
-    val initialCells = renderCountCells(reportUnits) { combatant.unitCount(it) }
-    val lossCells = renderLossCells(reportUnits, combatant, finalStats)
-    val finalCells = renderCountCells(reportUnits) { finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L }
-    val finalRows = if (hasSurvivors) {
-      "<tr>$lossCells</tr><tr>$finalCells</tr>"
-    } else {
-      """<tr><td class="destroyed" colspan="${reportUnits.size}">Destroyed</td></tr>"""
-    }
-
-    return """
-      <section class="combatant">
-        <div><span class="role">${escapeHtml(combatant.title)}</span> (${escapeHtml(combatant.coordinates)})</div>
-        <table>
-          <thead>
-            <tr>$headerCells</tr>
-          </thead>
-          <tbody>
-            <tr>$initialCells</tr>
-            $finalRows
-          </tbody>
-        </table>
-      </section>
-    """.trimIndent()
+    return combatantModel(combatant) + mapOf(
+      "hasUnits" to reportUnits.isNotEmpty(),
+      "hasSurvivors" to reportUnits.any { (finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L) > 0L },
+      "colspan" to reportUnits.size,
+      "units" to reportUnits.map {
+        val initialCount = combatant.unitCount(it)
+        val finalCount = finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L
+        unitModel(it) + mapOf(
+          "initialCount" to prettifiedNumber(initialCount),
+          "lossCount" to prettifiedNumber(initialCount - finalCount),
+          "finalCount" to prettifiedNumber(finalCount),
+        )
+      },
+    )
   }
 
-  private fun renderTableCell(tagName: String, unit: BattleSimUnitMetadata, value: String, className: String = ""): String {
-    val preset = unitColorPreset(unit)
-    return """<$tagName class="$className" style="color:${escapeHtml(preset.color)}">${escapeHtml(value)}</$tagName>"""
-  }
-
-  private fun renderCountCells(
-    reportUnits: List<BattleSimUnitMetadata>,
-    className: String = "",
-    countForUnit: (BattleSimUnitMetadata) -> Long,
-  ): String =
-    reportUnits.joinToString("") { renderTableCell("td", it, prettifiedNumber(countForUnit(it)), className) }
-
-  private fun renderLossCells(
-    reportUnits: List<BattleSimUnitMetadata>,
+  private fun classicCombatantModel(
     combatant: PrettifiedReportCombatant,
     finalStats: Map<UnitKind, UnitGroupStats>?,
-  ): String =
-    reportUnits.joinToString("") {
-      val initialCount = combatant.unitCount(it)
-      val finalCount = finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L
-      renderTableCell("td", it, "-${prettifiedNumber(initialCount - finalCount)}", "loss")
+  ): Map<String, Any?> {
+    val reportUnits = units.filter {
+      if (finalStats == null) combatant.unitCount(it) > 0L else (finalStats[it.kindEnum()]?.numRemainingUnits() ?: 0L) > 0L
     }
-
-  private fun renderClassicInitialCombatant(combatant: PrettifiedReportCombatant): String {
-    val reportUnits = units.filter { combatant.unitCount(it) > 0L }
-    return """
-      <section class="combatant">
-        <div><span class="role">${escapeHtml(combatant.title)}</span> (${escapeHtml(combatant.coordinates)})</div>
-        <div>Weapons: ${combatant.weaponsTechnology * 10}% Shields: ${combatant.shieldingTechnology * 10}% Hull Plating: ${combatant.armorTechnology * 10}%</div>
-        ${renderClassicUnitLines(reportUnits) { combatant.unitCount(it) }}
-      </section>
-    """.trimIndent()
+    return combatantModel(combatant) + mapOf(
+      "weaponsPercent" to combatant.weaponsTechnology * 10,
+      "shieldingPercent" to combatant.shieldingTechnology * 10,
+      "armorPercent" to combatant.armorTechnology * 10,
+      "hasUnits" to reportUnits.isNotEmpty(),
+      "units" to reportUnits.map {
+        unitModel(it) + mapOf(
+          "count" to prettifiedNumber(finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: combatant.unitCount(it)),
+        )
+      },
+    )
   }
 
-  private fun renderClassicFinalCombatant(
+  private fun rosterCombatantModel(
     combatant: PrettifiedReportCombatant,
     finalStats: Map<UnitKind, UnitGroupStats>?,
-  ): String {
-    val reportUnits = units.filter { (finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L) > 0L }
-    return """
-      <section class="combatant">
-        <div><span class="role">${escapeHtml(combatant.title)}</span> (${escapeHtml(combatant.coordinates)})</div>
-        ${renderClassicUnitLines(reportUnits) { finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L }}
-      </section>
-    """.trimIndent()
-  }
-
-  private fun renderClassicUnitLines(
-    reportUnits: List<BattleSimUnitMetadata>,
-    countForUnit: (BattleSimUnitMetadata) -> Long,
-  ): String {
-    if (reportUnits.isEmpty()) {
-      return """
-        <div class="unit-line">Type: -</div>
-        <div class="unit-line">Number: -</div>
-      """.trimIndent()
-    }
-
-    val labels = reportUnits.joinToString(" ") {
-      val preset = unitColorPreset(it)
-      coloredSpan(preset.abbreviation, preset.color)
-    }
-    val counts = reportUnits.joinToString(" ") {
-      val preset = unitColorPreset(it)
-      coloredSpan(prettifiedNumber(countForUnit(it)), preset.color)
-    }
-
-    return """
-      <div class="unit-line">Type: $labels</div>
-      <div class="unit-line">Number: $counts</div>
-    """.trimIndent()
-  }
-
-  private fun renderRosterCombatant(
-    combatant: PrettifiedReportCombatant,
-    finalStats: Map<UnitKind, UnitGroupStats>?,
-    side: Side,
     final: Boolean,
-  ): String {
+  ): Map<String, Any?> {
     val reportUnits = if (final) {
       reportUnitsForCombatant(combatant, finalStats)
     } else {
       units.filter { combatant.unitCount(it) > 0L }
     }
-    val separatorClass = if (side == Side.ATTACKER) "attacker-separator" else "defender-separator"
-    val unitLines = if (reportUnits.isEmpty()) {
-      """<div class="empty">No units</div>"""
-    } else {
-      reportUnits.joinToString("\n") {
+    return combatantModel(combatant) + mapOf(
+      "hasUnits" to reportUnits.isNotEmpty(),
+      "units" to reportUnits.map {
         val initialCount = combatant.unitCount(it)
         val finalCount = finalStats?.get(it.kindEnum())?.numRemainingUnits() ?: 0L
-        val count = if (final) finalCount else initialCount
-        val loss = if (final) " (-${prettifiedNumber(initialCount - finalCount)})" else ""
-        """<div class="${side.lineClass()}">${escapeHtml(it.name)} ${prettifiedNumber(count)}$loss</div>"""
-      }
-    }
-
-    return """
-      <section class="section">
-        <div class="combatant-title"><span class="${side.labelClass()}">${escapeHtml(combatant.title)}</span> ${escapeHtml(combatant.coordinates)}</div>
-        $unitLines
-        <div class="separator $separatorClass">------------------------------------------------------------</div>
-      </section>
-    """.trimIndent()
+        unitModel(it) + mapOf(
+          "count" to prettifiedNumber(if (final) finalCount else initialCount),
+          "final" to final,
+          "lossCount" to prettifiedNumber(initialCount - finalCount),
+        )
+      },
+    )
   }
 
-  private fun renderRosterSummary(output: SimOutput): String =
-    """
-      <section class="summary">
-        <div>${rosterOutcomeHtml(output)}</div>
-        <div>The attacker lost a total of <span class="number">${prettifiedNumber(output.lossesAttacker.total())}</span> units.</div>
-        <div>The defender lost a total of <span class="number">${prettifiedNumber(output.lossesDefender.total())}</span> units.</div>
-        <br>
-        <div>At these space coordinates now float <span class="number">${prettifiedNumber(output.debris.metal)}</span> metal and <span class="number">${prettifiedNumber(output.debris.crystal)}</span> crystal.</div>
-        <div>The chance for a moon to be created from the debris was <span class="number">${formatPercent(output.moonchance)}</span>.</div>
-        <div class="summary-title">Summary attackers(s)</div>
-        <div>Metal: <span class="profit">${prettifiedNumber(output.possiblePlunder.metal - output.lossesAttacker.metal)}</span></div>
-        <div>Crystal: <span class="profit">${prettifiedNumber(output.possiblePlunder.crystal - output.lossesAttacker.crystal)}</span></div>
-        <div>Deuterium: <span class="profit">${prettifiedNumber(output.possiblePlunder.deuterium - output.lossesAttacker.deuterium)}</span></div>
-        <div>The attacker(s) made a profit of <span class="profit">${prettifiedNumber(output.possiblePlunder.total() - output.lossesAttacker.total())}</span> units.</div>
-        <div class="summary-title">Summary defenders(s)</div>
-        <div>Metal: <span class="loss">-${prettifiedNumber(output.lossesDefender.metal)}</span></div>
-        <div>Crystal: <span class="loss">-${prettifiedNumber(output.lossesDefender.crystal)}</span></div>
-        <div>Deuterium: <span class="loss">-${prettifiedNumber(output.lossesDefender.deuterium)}</span></div>
-        <div>The defender(s) lost a total of <span class="number">${prettifiedNumber(output.lossesDefender.total())}</span> units.</div>
-      </section>
-    """.trimIndent()
+  private fun combatantModel(combatant: PrettifiedReportCombatant): Map<String, Any?> =
+    mapOf(
+      "title" to combatant.title,
+      "coordinates" to combatant.coordinates,
+    )
 
-  private fun prettifiedOutcomeHtml(output: SimOutput): String =
-    when (output.result) {
-      BattleResult.AttackerWins ->
-        """Attacker captures <span class="number">${prettifiedNumber(output.possiblePlunder.metal)}</span> Metal, <span class="number">${prettifiedNumber(output.possiblePlunder.crystal)}</span> Crystal and <span class="number">${prettifiedNumber(output.possiblePlunder.deuterium)}</span> Deuterium."""
-
-      BattleResult.DefenderWins -> "The defender has won the battle."
-      BattleResult.Draw -> "The battle ended in a draw."
-    }
-
-  private fun rosterOutcomeHtml(output: SimOutput): String =
-    when (output.result) {
-      BattleResult.AttackerWins ->
-        """The attacker captured <span class="number">${prettifiedNumber(output.possiblePlunder.metal)}</span> Metal, <span class="number">${prettifiedNumber(output.possiblePlunder.crystal)}</span> Crystal and <span class="number">${prettifiedNumber(output.possiblePlunder.deuterium)}</span> Deuterium."""
-
-      BattleResult.DefenderWins -> "The defender has won the battle."
-      BattleResult.Draw -> "The battle ends in a draw."
-    }
+  private fun unitModel(unit: BattleSimUnitMetadata): Map<String, Any?> {
+    val preset = unitColorPreset(unit)
+    return mapOf(
+      "name" to unit.name,
+      "abbreviation" to preset.abbreviation,
+      "color" to preset.color,
+    )
+  }
 
   private fun reportUnitsForCombatant(
     combatant: PrettifiedReportCombatant,
@@ -291,9 +198,6 @@ internal class PrettifiedBattleReportRenderer(
 
   private fun unitColorPreset(unit: BattleSimUnitMetadata): UnitColorPreset =
     UNIT_COLOR_PRESETS.firstOrNull { it.kind == unit.kind } ?: UnitColorPreset(unit.kind, unit.name, "#aeb7c5")
-
-  private fun coloredSpan(text: String, color: String): String =
-    """<span style="color:${escapeHtml(color)}">${escapeHtml(text)}</span>"""
 
   private fun prettifiedNumber(value: Long): String = numberFormat.format(value).replace(',', '.')
 
@@ -313,22 +217,89 @@ internal class PrettifiedBattleReportRenderer(
 
   private fun Resources.total(): Long = metal + crystal + deuterium
 
-  private fun escapeHtml(value: Any?): String =
-    value.toString()
+  private enum class Side {
+    ATTACKER,
+    DEFENDER,
+  }
+}
+
+private object SimpleHtmlTemplate {
+  private val sectionRegex = Regex("""\{\{([#^])([A-Za-z0-9_.]+)}}(.*?)\{\{/\2}}""", RegexOption.DOT_MATCHES_ALL)
+  private val variableRegex = Regex("""\{\{([A-Za-z0-9_.]+)}}""")
+
+  fun render(template: String, model: Map<String, Any?>): String = render(template, listOf(model))
+
+  private fun render(template: String, contexts: List<Any?>): String {
+    val withSections = replaceSections(template, contexts)
+    return variableRegex.replace(withSections) { match ->
+      escapeHtml(resolve(match.groupValues[1], contexts)?.toString() ?: "")
+    }
+  }
+
+  private fun replaceSections(template: String, contexts: List<Any?>): String {
+    var html = template
+    while (true) {
+      val match = sectionRegex.find(html) ?: return html
+      val marker = match.groupValues[1]
+      val key = match.groupValues[2]
+      val block = match.groupValues[3]
+      val value = resolve(key, contexts)
+      val replacement = if (marker == "#") renderTruthySection(value, block, contexts) else renderInvertedSection(value, block, contexts)
+      html = html.replaceRange(match.range, replacement)
+    }
+  }
+
+  private fun renderTruthySection(value: Any?, block: String, contexts: List<Any?>): String =
+    when (value) {
+      is Iterable<*> -> value.joinToString("") { render(block, listOf(it) + contexts) }
+      is Boolean -> if (value) render(block, contexts) else ""
+      is Map<*, *> -> if (value.isEmpty()) "" else render(block, listOf(value) + contexts)
+      null -> ""
+      else -> render(block, contexts)
+    }
+
+  private fun renderInvertedSection(value: Any?, block: String, contexts: List<Any?>): String =
+    if (isTruthy(value)) "" else render(block, contexts)
+
+  private fun isTruthy(value: Any?): Boolean =
+    when (value) {
+      null -> false
+      is Boolean -> value
+      is Iterable<*> -> value.any()
+      is Map<*, *> -> value.isNotEmpty()
+      else -> true
+    }
+
+  private fun resolve(path: String, contexts: List<Any?>): Any? {
+    for (context in contexts) {
+      val value = resolveInContext(path, context)
+      if (value != MissingTemplateValue) {
+        return value
+      }
+    }
+    return null
+  }
+
+  private fun resolveInContext(path: String, context: Any?): Any? {
+    var value: Any? = context
+    for (part in path.split('.')) {
+      value = when (value) {
+        is Map<*, *> -> if (value.containsKey(part)) value[part] else return MissingTemplateValue
+        else -> return MissingTemplateValue
+      }
+    }
+    return value
+  }
+
+  private fun escapeHtml(value: String): String =
+    value
       .replace("&", "&amp;")
       .replace("<", "&lt;")
       .replace(">", "&gt;")
       .replace("\"", "&quot;")
       .replace("'", "&#39;")
 
-  private fun Side.labelClass(): String = if (this == Side.ATTACKER) "attacker-label" else "defender-label"
-
-  private fun Side.lineClass(): String = if (this == Side.ATTACKER) "attacker-line" else "defender-line"
-
-  private enum class Side {
-    ATTACKER,
-    DEFENDER,
-  }
+  private object MissingTemplateValue
 }
 
 private data class UnitColorPreset(

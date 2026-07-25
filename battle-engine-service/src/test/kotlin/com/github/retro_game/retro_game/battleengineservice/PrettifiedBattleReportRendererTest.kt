@@ -18,22 +18,7 @@ class PrettifiedBattleReportRendererTest {
 
   @Test
   fun `renders table report on the backend using selected template`() {
-    val renderer = PrettifiedBattleReportRenderer(
-      templateLoader = { path ->
-        assertEquals("public/sim-prettified-export-template.html", path)
-        """
-          <html>
-            <body>
-              {{attackerFleet}}
-              {{defenderFleet}}
-              {{outcome}}
-              {{attackerLosses}} {{defenderLosses}} {{debrisMetal}} {{debrisCrystal}} {{moonchance}}
-              <script>{{unitColorCsv}}</script>
-            </body>
-          </html>
-        """.trimIndent()
-      },
-    )
+    val renderer = PrettifiedBattleReportRenderer(::classpathResourceText)
 
     val html = renderer.render(reportRequest())
 
@@ -42,19 +27,17 @@ class PrettifiedBattleReportRendererTest {
     assertContains(html, """<td class="" style="color:#d7aa63">2.500</td>""")
     assertContains(html, """<td class="loss" style="color:#d7aa63">-1.000</td>""")
     assertContains(html, """Attacker captures <span class="number">1.500</span> Metal""")
-    assertContains(html, "4.000 2.000 600 300 12.35%")
+    assertContains(html, """The attacker has lost a total of <span class="number">4.000</span> Units.""")
+    assertContains(html, """The defender has lost a total of <span class="number">2.000</span> Units.""")
+    assertContains(html, """At these space coordinates now float <span class="number">600</span> Metal and <span class="number">300</span> Crystal.""")
+    assertContains(html, """The chance for a moon to arise from the debris is <span class="number">12.35%</span>.""")
     assertContains(html, "SMALL_CARGO,S.Cargo,#d7aa63")
-    assertFalse(html.contains("{{attackerFleet}}"))
+    assertFalse(html.contains("{{"))
   }
 
   @Test
   fun `renders roster report placeholders`() {
-    val renderer = PrettifiedBattleReportRenderer(
-      templateLoader = { path ->
-        assertEquals("public/sim-prettified-export-roster-template.html", path)
-        "{{attackerRosterInitial}}\n{{attackerRosterFinal}}\n{{rosterSummary}}"
-      },
-    )
+    val renderer = PrettifiedBattleReportRenderer(::classpathResourceText)
 
     val html = renderer.render(reportRequest(templateUrl = "/sim-prettified-export-roster-template.html"))
 
@@ -62,6 +45,7 @@ class PrettifiedBattleReportRendererTest {
     assertContains(html, """<div class="attacker-line">Small Cargo 1.500 (-1.000)</div>""")
     assertContains(html, """The attacker captured <span class="number">1.500</span> Metal""")
     assertContains(html, """The defender(s) lost a total of <span class="number">2.000</span> units.""")
+    assertFalse(html.contains("{{"))
   }
 
   @Test

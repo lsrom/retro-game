@@ -50,13 +50,59 @@
 <body>
   <main>
     <div>The following fleets are facing each other as it came to a battle:</div>
-    {{attackerInitialFleet}}
-    {{defenderInitialFleet}}
+    <section class="combatant">
+      <div><span class="role">{{attackerInitialFleet.title}}</span> ({{attackerInitialFleet.coordinates}})</div>
+      <div>Weapons: {{attackerInitialFleet.weaponsPercent}}% Shields: {{attackerInitialFleet.shieldingPercent}}% Hull Plating: {{attackerInitialFleet.armorPercent}}%</div>
+      {{#attackerInitialFleet.hasUnits}}
+      <div class="unit-line">Type: {{#attackerInitialFleet.units}}<span style="color:{{color}}">{{abbreviation}}</span> {{/attackerInitialFleet.units}}</div>
+      <div class="unit-line">Number: {{#attackerInitialFleet.units}}<span style="color:{{color}}">{{count}}</span> {{/attackerInitialFleet.units}}</div>
+      {{/attackerInitialFleet.hasUnits}}
+      {{^attackerInitialFleet.hasUnits}}
+      <div class="unit-line">Type: -</div>
+      <div class="unit-line">Number: -</div>
+      {{/attackerInitialFleet.hasUnits}}
+    </section>
+    <section class="combatant">
+      <div><span class="role">{{defenderInitialFleet.title}}</span> ({{defenderInitialFleet.coordinates}})</div>
+      <div>Weapons: {{defenderInitialFleet.weaponsPercent}}% Shields: {{defenderInitialFleet.shieldingPercent}}% Hull Plating: {{defenderInitialFleet.armorPercent}}%</div>
+      {{#defenderInitialFleet.hasUnits}}
+      <div class="unit-line">Type: {{#defenderInitialFleet.units}}<span style="color:{{color}}">{{abbreviation}}</span> {{/defenderInitialFleet.units}}</div>
+      <div class="unit-line">Number: {{#defenderInitialFleet.units}}<span style="color:{{color}}">{{count}}</span> {{/defenderInitialFleet.units}}</div>
+      {{/defenderInitialFleet.hasUnits}}
+      {{^defenderInitialFleet.hasUnits}}
+      <div class="unit-line">Type: -</div>
+      <div class="unit-line">Number: -</div>
+      {{/defenderInitialFleet.hasUnits}}
+    </section>
     <div class="after">After battle...</div>
-    {{attackerFinalFleet}}
-    {{defenderFinalFleet}}
+    <section class="combatant">
+      <div><span class="role">{{attackerFinalFleet.title}}</span> ({{attackerFinalFleet.coordinates}})</div>
+      {{#attackerFinalFleet.hasUnits}}
+      <div class="unit-line">Type: {{#attackerFinalFleet.units}}<span style="color:{{color}}">{{abbreviation}}</span> {{/attackerFinalFleet.units}}</div>
+      <div class="unit-line">Number: {{#attackerFinalFleet.units}}<span style="color:{{color}}">{{count}}</span> {{/attackerFinalFleet.units}}</div>
+      {{/attackerFinalFleet.hasUnits}}
+      {{^attackerFinalFleet.hasUnits}}
+      <div class="unit-line">Type: -</div>
+      <div class="unit-line">Number: -</div>
+      {{/attackerFinalFleet.hasUnits}}
+    </section>
+    <section class="combatant">
+      <div><span class="role">{{defenderFinalFleet.title}}</span> ({{defenderFinalFleet.coordinates}})</div>
+      {{#defenderFinalFleet.hasUnits}}
+      <div class="unit-line">Type: {{#defenderFinalFleet.units}}<span style="color:{{color}}">{{abbreviation}}</span> {{/defenderFinalFleet.units}}</div>
+      <div class="unit-line">Number: {{#defenderFinalFleet.units}}<span style="color:{{color}}">{{count}}</span> {{/defenderFinalFleet.units}}</div>
+      {{/defenderFinalFleet.hasUnits}}
+      {{^defenderFinalFleet.hasUnits}}
+      <div class="unit-line">Type: -</div>
+      <div class="unit-line">Number: -</div>
+      {{/defenderFinalFleet.hasUnits}}
+    </section>
     <div class="outcome">
-      <div>{{outcome}}</div>
+      <div>
+        {{#attackerWins}}Attacker captures <span class="number">{{possiblePlunderMetal}}</span> Metal, <span class="number">{{possiblePlunderCrystal}}</span> Crystal and <span class="number">{{possiblePlunderDeuterium}}</span> Deuterium.{{/attackerWins}}
+        {{#defenderWins}}The defender has won the battle.{{/defenderWins}}
+        {{#draw}}The battle ended in a draw.{{/draw}}
+      </div>
       <div>The attacker has lost a total of <span class="number">{{attackerLosses}}</span> Units.</div>
       <div>The defender has lost a total of <span class="number">{{defenderLosses}}</span> Units.</div>
       <div>At these space coordinates now float <span class="number">{{debrisMetal}}</span> Metal and <span class="number">{{debrisCrystal}}</span> Crystal.</div>
