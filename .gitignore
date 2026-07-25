@@ -17,3 +17,4 @@ src/main/resources/public/static/skins/*
 !src/main/resources/public/static/skins/GoW
 !src/main/resources/public/static/skins/ReImaginedHd
 /battle-sim-history.sqlite
+/battle-engine-service/battle-sim-history.sqlite
