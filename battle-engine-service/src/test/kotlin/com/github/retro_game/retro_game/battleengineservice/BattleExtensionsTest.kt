@@ -28,7 +28,7 @@ class BattleExtensionsTest {
     val output = outcome.toSimOutput(input, UniverseConfig())
 
     assertEquals(outcome, output.outcome)
-    assertEquals(BattleResult.FriendlyWinner, output.result)
+    assertEquals(BattleResult.AttackerWins, output.result)
     assertEquals(Resources(600L, 600L, 0L), output.debris)
     assertEquals(Resources(1_749L, 1_709L, 1_500L), output.possiblePlunder)
     assertEquals(Resources(2_000L, 2_000L, 0L), output.lossesAttacker)

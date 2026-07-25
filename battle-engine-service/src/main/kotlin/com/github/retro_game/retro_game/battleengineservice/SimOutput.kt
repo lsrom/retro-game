@@ -12,7 +12,7 @@ data class SimOutput(
 )
 
 enum class BattleResult {
-    FriendlyWinner, EnemyWinner, Draw
+    AttackerWins, DefenderWins, Draw
 }
 
 data class Resources(

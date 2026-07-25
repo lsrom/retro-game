@@ -40,7 +40,7 @@
 
     .header-inner,
     main {
-      width: min(1280px, calc(100% - 32px));
+      width: calc(100% - 32px);
       margin: 0 auto;
     }
 
@@ -79,8 +79,15 @@
 
     form {
       display: grid;
+      gap: 16px;
+    }
+
+    .controls {
+      display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 16px;
+      width: min(1280px, 100%);
+      margin: 0 auto;
     }
 
     section,
@@ -220,7 +227,7 @@
     }
 
     .results {
-      grid-column: 1 / -1;
+      width: 100%;
     }
 
     .summary {
@@ -247,14 +254,88 @@
       text-transform: uppercase;
     }
 
-    pre {
-      margin: 0;
+    .report {
+      display: grid;
+      gap: 14px;
       padding: 14px;
-      max-height: 520px;
-      overflow: auto;
       background: var(--field);
+      border-top: 1px solid var(--border);
+    }
+
+    .report:empty {
+      display: none;
+    }
+
+    .report p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .report strong {
       color: var(--text);
-      font-size: 12px;
+    }
+
+    .report hr {
+      width: 100%;
+      margin: 0;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .report-side {
+      display: grid;
+      gap: 10px;
+    }
+
+    .report-side h3,
+    .round h3 {
+      color: var(--text);
+    }
+
+    .combatant-table,
+    .unit-stats {
+      width: auto;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: #131820;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .combatant-table th,
+    .combatant-table td,
+    .unit-stats th,
+    .unit-stats td {
+      border: 1px solid var(--border);
+      min-width: 160px;
+      padding: 7px 8px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .combatant-table th,
+    .unit-stats th {
+      background: var(--panel-strong);
+      color: var(--text);
+      text-align: left;
+    }
+
+    .combatant-table td:first-child,
+    .unit-stats td:first-child {
+      color: var(--muted);
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .table-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .round {
+      display: grid;
+      gap: 10px;
     }
 
     .status {
@@ -267,7 +348,7 @@
     }
 
     @media (max-width: 900px) {
-      form,
+      .controls,
       .summary {
         grid-template-columns: 1fr;
       }
@@ -276,7 +357,7 @@
     @media (max-width: 640px) {
       .header-inner,
       main {
-        width: min(100% - 20px, 1280px);
+        width: calc(100% - 20px);
       }
 
       .fields.single,
@@ -317,83 +398,85 @@
 
   <main>
     <form id="sim-form">
-      <section>
-        <div class="section-header">
-          <h2>Attacker</h2>
-        </div>
-        <div class="fields single">
-          <label>Position
-            <input name="attacker_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1">
-          </label>
-        </div>
-        <div class="fields technologies">
-          <label>Weapons
-            <input name="tech_a0_0" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Shielding
-            <input name="tech_a0_1" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Armor
-            <input name="tech_a0_2" type="number" min="0" step="1" value="0">
-          </label>
-        </div>
-        <div class="fields resources fields-spacer" aria-hidden="true">
-          <label>Metal
-            <input type="number" min="0" step="1" value="0" disabled>
-          </label>
-          <label>Crystal
-            <input type="number" min="0" step="1" value="0" disabled>
-          </label>
-          <label>Deuterium
-            <input type="number" min="0" step="1" value="0" disabled>
-          </label>
-        </div>
-        <div id="attacker-units" class="units"></div>
-      </section>
+      <div class="controls">
+        <section>
+          <div class="section-header">
+            <h2>Attacker</h2>
+          </div>
+          <div class="fields single">
+            <label>Position
+              <input name="attacker_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1">
+            </label>
+          </div>
+          <div class="fields technologies">
+            <label>Weapons
+              <input name="tech_a0_0" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Shielding
+              <input name="tech_a0_1" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Armor
+              <input name="tech_a0_2" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div class="fields resources fields-spacer" aria-hidden="true">
+            <label>Metal
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+            <label>Crystal
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+            <label>Deuterium
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+          </div>
+          <div id="attacker-units" class="units"></div>
+        </section>
 
-      <section>
-        <div class="section-header">
-          <h2>Defender</h2>
-        </div>
-        <div class="fields single">
-          <label>Position
-            <input name="enemy_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1" required>
-          </label>
-        </div>
-        <div class="fields technologies">
-          <label>Weapons
-            <input name="tech_d0_0" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Shielding
-            <input name="tech_d0_1" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Armor
-            <input name="tech_d0_2" type="number" min="0" step="1" value="0">
-          </label>
-        </div>
-        <div class="fields resources">
-          <label>Metal
-            <input name="enemy_metal" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Crystal
-            <input name="enemy_crystal" type="number" min="0" step="1" value="0">
-          </label>
-          <label>Deuterium
-            <input name="enemy_deut" type="number" min="0" step="1" value="0">
-          </label>
-        </div>
-        <div id="defender-units" class="units"></div>
-      </section>
+        <section>
+          <div class="section-header">
+            <h2>Defender</h2>
+          </div>
+          <div class="fields single">
+            <label>Position
+              <input name="enemy_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1" required>
+            </label>
+          </div>
+          <div class="fields technologies">
+            <label>Weapons
+              <input name="tech_d0_0" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Shielding
+              <input name="tech_d0_1" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Armor
+              <input name="tech_d0_2" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div class="fields resources">
+            <label>Metal
+              <input name="enemy_metal" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Crystal
+              <input name="enemy_crystal" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Deuterium
+              <input name="enemy_deut" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div id="defender-units" class="units"></div>
+        </section>
 
-      <div class="actions">
-        <div class="action-group">
-          <button class="secondary" type="reset">Reset</button>
-          <button id="submit-button" type="submit">Run Simulation</button>
-        </div>
-        <div class="seed-controls">
-          <label class="seed-field">Seed
-            <input id="seed-input" name="seed" type="number" min="0" step="1" value="1">
-          </label>
+        <div class="actions">
+          <div class="action-group">
+            <button class="secondary" type="reset">Reset</button>
+            <button id="submit-button" type="submit">Run Simulation</button>
+          </div>
+          <div class="seed-controls">
+            <label class="seed-field">Seed
+              <input id="seed-input" name="seed" type="number" min="0" step="1" value="1">
+            </label>
+          </div>
         </div>
       </div>
 
@@ -402,7 +485,7 @@
           <h2>Result</h2>
         </div>
         <div id="summary" class="summary"></div>
-        <pre id="raw-output">{}</pre>
+        <div id="report" class="report"></div>
       </section>
     </form>
   </main>

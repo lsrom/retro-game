@@ -20,7 +20,7 @@ internal fun BattleOutcome.toSimOutput(
     outcome = this,
     result = result,
     debris = calcDebris(attackersLossByKind, defendersLossByKind, universeConfig),
-    possiblePlunder = if (result == BattleResult.FriendlyWinner) {
+    possiblePlunder = if (result == BattleResult.AttackerWins) {
       input.resources.calcPossiblePlunder(input.attackers.calcRemainingCapacity(attackersOutcomes()))
     } else {
       zeroResources()
@@ -35,8 +35,8 @@ private fun BattleOutcome.calcBattleResult(input: BattleSimInput): BattleResult 
   val defendersAlive = defendersOutcomes().anyRemainingUnits(numRounds()) { input.defenders.anyUnits() }
   return when {
     attackersAlive && defendersAlive -> BattleResult.Draw
-    attackersAlive -> BattleResult.FriendlyWinner
-    else -> BattleResult.EnemyWinner
+    attackersAlive -> BattleResult.AttackerWins
+    else -> BattleResult.DefenderWins
   }
 }
 

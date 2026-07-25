@@ -42,7 +42,16 @@ internal object BattleSimUnits {
   )
 
   val metadata: List<BattleSimUnitMetadata> = unitsByIndex.map { (index, kind) ->
-    BattleSimUnitMetadata(index, kind.name, kind.displayName(), kind in defensiveUnitKinds)
+    val attributes = DefaultBattleSimRules.rules.unitsAttributes()[kind.ordinal]
+    BattleSimUnitMetadata(
+      index,
+      kind.name,
+      kind.displayName(),
+      kind in defensiveUnitKinds,
+      attributes.weapons(),
+      attributes.shield(),
+      attributes.armor(),
+    )
   }
 
   private fun UnitKind.displayName(): String =
@@ -56,6 +65,9 @@ data class BattleSimUnitMetadata(
   val kind: String,
   val name: String,
   val defensive: Boolean,
+  val weapons: Float,
+  val shield: Float,
+  val armor: Float,
 )
 
 internal class AttackingFleetCannotContainDefensiveUnitsException :
