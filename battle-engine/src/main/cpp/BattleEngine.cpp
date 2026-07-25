@@ -38,7 +38,7 @@ struct Random {
 #define COMBATANT_OUTCOME_CLASS_NAME RETRO_GAME_PREFIX "battleengine/CombatantOutcome"
 #define UNIT_ATTRIBUTES_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitAttributes"
 #define UNIT_GROUP_STATS_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitGroupStats"
-#define UNIT_KIND_CLASS_NAME RETRO_GAME_PREFIX "entity/UnitKind"
+#define UNIT_KIND_CLASS_NAME RETRO_GAME_PREFIX "battleengine/UnitKind"
 
 // The JNI types must be defined as follows, otherwise our code might break.
 static_assert(std::is_same_v<jfloat, float>);
@@ -264,7 +264,7 @@ struct Jni {
     if (!ok)
       return false;
     ok &= getMethod(battleOutcome.init, battleOutcome.clazz, BATTLE_OUTCOME_CLASS_NAME, "<init>",
-                    "(ILjava/util/List;Ljava/util/List;)V");
+                    "(IILjava/util/List;Ljava/util/List;)V");
     return ok;
   }
 
@@ -434,9 +434,9 @@ struct Jni {
 
   // BattleOutcome
 
-  jobject BattleOutcome_init(int numRounds, jobject attackersOutcomes,
+  jobject BattleOutcome_init(int seed, int numRounds, jobject attackersOutcomes,
                              jobject defendersOutcomes) const {
-    return env->NewObject(battleOutcome.clazz, battleOutcome.init, numRounds, attackersOutcomes,
+    return env->NewObject(battleOutcome.clazz, battleOutcome.init, seed, numRounds, attackersOutcomes,
                           defendersOutcomes);
   }
 
@@ -903,10 +903,11 @@ jobject createCombatantOutcomes(const Jni &jni, const Combatants &combatants,
 }
 
 jobject createBattleOutcome(const Jni &jni, const Combatants &attackers,
-                            const Combatants &defenders, std::uint32_t numRounds) {
+                            const Combatants &defenders, std::int32_t seed,
+                            std::uint32_t numRounds) {
   jobject attackersOutcomes = createCombatantOutcomes(jni, attackers, numRounds);
   jobject defendersOutcomes = createCombatantOutcomes(jni, defenders, numRounds);
-  jobject battleOutcome = jni.BattleOutcome_init(static_cast<std::int32_t>(numRounds),
+  jobject battleOutcome = jni.BattleOutcome_init(seed, static_cast<std::int32_t>(numRounds),
                                                  attackersOutcomes, defendersOutcomes);
   assert(battleOutcome);
   return battleOutcome;
@@ -915,9 +916,11 @@ jobject createBattleOutcome(const Jni &jni, const Combatants &attackers,
 jobject fight(const Jni &jni, jobject attackersList, jobject defendersList, jint seed) {
   // Our RNG needs a positive seed.
   // Keep the calculation of the seed in sync with the java battle engine.
-  if (seed < 0)
+  if (seed == std::numeric_limits<jint>::min())
+    seed = 1;
+  else if (seed < 0)
     seed = -seed;
-  if (seed < 0 || seed == 0)
+  if (seed == 0)
     seed = 1;
   auto random = static_cast<std::uint32_t>(seed);
 
@@ -952,7 +955,7 @@ jobject fight(const Jni &jni, jobject attackersList, jobject defendersList, jint
   }
 
   std::uint32_t numRounds = round;
-  return createBattleOutcome(jni, *attackers, *defenders, numRounds);
+  return createBattleOutcome(jni, *attackers, *defenders, seed, numRounds);
 }
 
 } // namespace

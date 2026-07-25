@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <title>Battle Simulator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111318;
+      --panel: #1b2029;
+      --panel-strong: #242b36;
+      --border: #394150;
+      --text: #edf1f7;
+      --muted: #aeb7c5;
+      --accent: #59b4d8;
+      --accent-strong: #7ac768;
+      --danger: #f06c64;
+      --field: #0d1016;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: #171b22;
+    }
+
+    .header-inner,
+    main {
+      width: calc(100% - 32px);
+      margin: 0 auto;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 22px;
+    }
+
+    h2 {
+      font-size: 16px;
+    }
+
+    h3 {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    main {
+      padding: 20px 0 32px;
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      width: min(1280px, 100%);
+      margin: 0 auto;
+    }
+
+    section,
+    .results {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--panel-strong);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .fields {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .fields.single {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-bottom: 0;
+    }
+
+    .fields.technologies,
+    .fields.resources {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-bottom: 0;
+    }
+
+    .fields.resources {
+      padding-bottom: 14px;
+    }
+
+    .fields-spacer {
+      visibility: hidden;
+    }
+
+    .units {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .unit-column {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    label {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      min-width: 0;
+    }
+
+    .unit-row {
+      grid-template-columns: minmax(112px, 1fr) minmax(88px, 120px);
+      align-items: center;
+      gap: 8px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--field);
+      color: var(--text);
+      padding: 6px 8px;
+      font: inherit;
+    }
+
+    input:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    .span-all {
+      grid-column: 1 / -1;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      grid-column: 1 / -1;
+      padding: 4px 0;
+    }
+
+    .action-group,
+    .seed-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .seed-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: min(180px, 100%);
+    }
+
+    button {
+      min-height: 38px;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      background: var(--accent);
+      color: #071016;
+      padding: 8px 14px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.7;
+    }
+
+    .results {
+      width: 100%;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      background: #131820;
+      min-height: 82px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .summary-lines,
+    .resource-lines {
+      display: grid;
+      gap: 2px;
+    }
+
+    .resource-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .resource-line span:first-child {
+      color: var(--muted);
+    }
+
+    .report {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+      background: var(--field);
+      border-top: 1px solid var(--border);
+    }
+
+    .report:empty {
+      display: none;
+    }
+
+    .report p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .report strong {
+      color: var(--text);
+    }
+
+    .report hr {
+      width: 100%;
+      margin: 0;
+      border: 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .report-export {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding-top: 2px;
+    }
+
+    .export-menu {
+      display: grid;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      z-index: 10;
+      min-width: 180px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+      transform: translateX(-50%);
+      overflow: hidden;
+    }
+
+    .export-menu[hidden] {
+      display: none;
+    }
+
+    .export-menu button {
+      justify-content: flex-start;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
+      min-height: 36px;
+      text-align: left;
+    }
+
+    .export-menu button:hover {
+      background: #131820;
+    }
+
+    .report-side {
+      display: grid;
+      gap: 10px;
+    }
+
+    .report-side h3,
+    .round h3 {
+      color: var(--text);
+    }
+
+    .combatant-table,
+    .unit-stats {
+      width: auto;
+      margin: 0 auto;
+      border-collapse: collapse;
+      background: #131820;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .combatant-table th,
+    .combatant-table td,
+    .unit-stats th,
+    .unit-stats td {
+      border: 1px solid var(--border);
+      min-width: 160px;
+      padding: 7px 8px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .combatant-table th,
+    .unit-stats th {
+      background: var(--panel-strong);
+      color: var(--text);
+      text-align: left;
+    }
+
+    .combatant-table td:first-child,
+    .unit-stats td:first-child {
+      color: var(--muted);
+      text-align: left;
+      font-weight: 700;
+    }
+
+    .table-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    .round {
+      display: grid;
+      gap: 10px;
+    }
+
+    .status {
+      min-height: 20px;
+      color: var(--muted);
+    }
+
+    .status.error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 900px) {
+      .controls,
+      .summary {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .header-inner,
+      main {
+        width: calc(100% - 20px);
+      }
+
+      .fields.single,
+      .fields.technologies,
+      .fields.resources,
+      .units {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .action-group,
+      .seed-controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .seed-field {
+        width: 100%;
+      }
+
+      .unit-row {
+        grid-template-columns: minmax(0, 1fr) minmax(80px, 120px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <h1>Battle Simulator</h1>
+        <a href="/sim-history-ui">History</a>
+      </div>
+      <div id="status" class="status" role="status"></div>
+    </div>
+  </header>
+
+  <main>
+    <form id="sim-form">
+      <div class="controls">
+        <section>
+          <div class="section-header">
+            <h2>Attacker</h2>
+          </div>
+          <div class="fields single">
+            <label>Position
+              <input name="attacker_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1">
+            </label>
+          </div>
+          <div class="fields technologies">
+            <label>Weapons
+              <input name="tech_a0_0" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Shielding
+              <input name="tech_a0_1" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Armor
+              <input name="tech_a0_2" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div class="fields resources fields-spacer" aria-hidden="true">
+            <label>Metal
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+            <label>Crystal
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+            <label>Deuterium
+              <input type="number" min="0" step="1" value="0" disabled>
+            </label>
+          </div>
+          <div id="attacker-units" class="units"></div>
+        </section>
+
+        <section>
+          <div class="section-header">
+            <h2>Defender</h2>
+          </div>
+          <div class="fields single">
+            <label>Position
+              <input name="enemy_pos" type="text" inputmode="numeric" pattern="[0-9]+:[0-9]+:[0-9]+" value="1:1:1" required>
+            </label>
+          </div>
+          <div class="fields technologies">
+            <label>Weapons
+              <input name="tech_d0_0" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Shielding
+              <input name="tech_d0_1" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Armor
+              <input name="tech_d0_2" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div class="fields resources">
+            <label>Metal
+              <input name="enemy_metal" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Crystal
+              <input name="enemy_crystal" type="number" min="0" step="1" value="0">
+            </label>
+            <label>Deuterium
+              <input name="enemy_deut" type="number" min="0" step="1" value="0">
+            </label>
+          </div>
+          <div id="defender-units" class="units"></div>
+        </section>
+
+        <div class="actions">
+          <div class="action-group">
+            <button class="secondary" type="reset">Reset</button>
+            <button id="submit-button" type="submit">Run Simulation</button>
+          </div>
+          <div class="seed-controls">
+            <label class="seed-field">Seed
+              <input id="seed-input" name="seed" type="number" min="0" step="1" value="1">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <section class="results" aria-live="polite">
+        <div class="section-header">
+          <h2>Result</h2>
+        </div>
+        <div id="summary" class="summary"></div>
+        <div id="report" class="report"></div>
+      </section>
+    </form>
+  </main>
+
+  <script src="/sim-prettified-export.js"></script>
+  <script src="/sim-ui.js"></script>
+</body>
+</html>

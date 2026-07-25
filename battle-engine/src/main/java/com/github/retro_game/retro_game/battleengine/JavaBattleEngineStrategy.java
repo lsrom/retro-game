@@ -1,17 +1,20 @@
 package com.github.retro_game.retro_game.battleengine;
 
-import com.github.retro_game.retro_game.battleengine.UnitKind;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 
 @Component
 @ConditionalOnProperty(value = "retro-game.battle-engine", havingValue = "java")
 public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
+  private static final int MAX_ROUNDS = 6;
+  private static final UnitKind[] UNIT_KINDS = UnitKind.values();
+  private static final int NUM_KINDS = UNIT_KINDS.length;
+  private static final int STATS_STRIDE = MAX_ROUNDS * NUM_KINDS;
+
   // Lehmer RNG
   // Using this simple RNG improves the performance of the battle engine by a wide margin.
   // Keep in sync with the RNG in the native battle engine.
@@ -25,8 +28,6 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
       return (int) ((long) r * (long) MULTIPLIER % (long) MODULUS);
     }
   }
-
-  private static final int MAX_ROUNDS = 6;
 
   private static final class Units {
     private int numAlive;
@@ -52,12 +53,15 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   private static Units makeUnits(Combatant[] combatants, UnitAttributes[] unitsAttributes) {
-    assert UnitKind.values().length <= Byte.MAX_VALUE;
+    assert NUM_KINDS <= Byte.MAX_VALUE;
     assert combatants.length <= Byte.MAX_VALUE;
 
-    var totalUnits = Arrays.stream(combatants)
-        .mapToLong(c -> c.unitGroups().values().stream().mapToLong(Long::longValue).sum())
-        .sum();
+    var totalUnits = 0L;
+    for (var combatant : combatants) {
+      for (var count : combatant.unitGroups().values()) {
+        totalUnits += count;
+      }
+    }
     if (totalUnits > Integer.MAX_VALUE) {
       // We cannot make bigger arrays in Java.
       throw new IllegalArgumentException("Too many units");
@@ -88,8 +92,8 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   }
 
   private static Stats makeStats(Combatant[] combatants) {
-    assert combatants.length <= Integer.MAX_VALUE / (MAX_ROUNDS * UnitKind.values().length);
-    var size = combatants.length * MAX_ROUNDS * UnitKind.values().length;
+    assert combatants.length <= Integer.MAX_VALUE / STATS_STRIDE;
+    var size = combatants.length * STATS_STRIDE;
     var numRemainingUnits = new int[size];
     var timesFired = new long[size];
     var timesWasShot = new long[size];
@@ -130,16 +134,18 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
 
     final var numShooters = attackersUnits.numAlive;
     final var numTargets = defendersUnits.numAlive;
+    final var roundStatsOffset = round * NUM_KINDS;
 
     // Each shooter fires at one or more random targets.
     for (var i = 0; i < numShooters; i++) {
       final var shooterKind = attackersUnits.kinds[i];
       final var attackerId = attackersUnits.ids[i];
       final var attacker = attackers[attackerId];
-      final var shooterStatsIdx = attackerId * MAX_ROUNDS * UnitKind.values().length +
-          round * UnitKind.values().length + shooterKind;
+      final var shooterStatsIdx = attackerId * STATS_STRIDE + roundStatsOffset + shooterKind;
+      final var shooterAttributes = unitsAttributes[shooterKind];
+      final var rapidFire = shooterAttributes.rapidFire();
 
-      final var damage = unitsAttributes[shooterKind].weapons() * (1.0f + 0.1f * attacker.weaponsTechnology());
+      final var damage = shooterAttributes.weapons() * (1.0f + 0.1f * attacker.weaponsTechnology());
 
       while (true) {
         // Pick a random target.
@@ -151,8 +157,8 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
         final var targetKind = defendersUnits.kinds[targetIdx];
         final var defenderId = defendersUnits.ids[targetIdx];
         final var defender = defenders[defenderId];
-        final var targetStatsIdx = defenderId * MAX_ROUNDS * UnitKind.values().length +
-            round * UnitKind.values().length + targetKind;
+        final var targetStatsIdx = defenderId * STATS_STRIDE + roundStatsOffset + targetKind;
+        final var targetAttributes = unitsAttributes[targetKind];
 
         attackersStats.timesFired[shooterStatsIdx]++;
         defendersStats.timesWasShot[targetStatsIdx]++;
@@ -164,7 +170,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
           // Does the shooter break through the shield at all?
           if (hullDamage < 0.0f) {
             // All damage absorbed by the shield. Calculate the shield damage including the bouncing effect.
-            var maxShield = unitsAttributes[targetKind].shield() * (1.0f + 0.1f * defender.shieldingTechnology());
+            var maxShield = targetAttributes.shield() * (1.0f + 0.1f * defender.shieldingTechnology());
             var shieldDamage = 0.01f * (float) Math.floor(100.0f * damage / maxShield) * maxShield;
             shield -= shieldDamage;
 
@@ -188,7 +194,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
 
           if (hull != 0.0f) {
             // If the target's hull is less than 70%, the target might explode.
-            var maxHull = 0.1f * unitsAttributes[targetKind].armor() * (1.0f + 0.1f * defender.armorTechnology());
+            var maxHull = 0.1f * targetAttributes.armor() * (1.0f + 0.1f * defender.armorTechnology());
             if (hull < 0.7f * maxHull) {
               r = Random.next(r);
               if (hull < (1.0f / Random.MAX * r * maxHull)) {
@@ -202,13 +208,13 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
           defendersUnits.hulls[targetIdx] = hull;
         }
 
-        var rapidFire = unitsAttributes[shooterKind].rapidFire()[targetKind];
-        if (rapidFire == 0) {
+        var rapidFireAgainstTarget = rapidFire[targetKind];
+        if (rapidFireAgainstTarget == 0) {
           break;
         }
 
         r = Random.next(r);
-        if (r % rapidFire == 0) {
+        if (r % rapidFireAgainstTarget == 0) {
           break;
         }
       }
@@ -221,6 +227,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
   private static void updateUnits(Party party, int round) {
     var units = party.units;
     var stats = party.stats;
+    final var roundStatsOffset = round * NUM_KINDS;
 
     var n = 0;
     for (var i = 0; i < units.numAlive; i++) {
@@ -231,9 +238,7 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
         units.ids[n] = units.ids[i];
         n++;
 
-        int idx = units.ids[i] * MAX_ROUNDS * UnitKind.values().length +
-            round * UnitKind.values().length +
-            units.kinds[i];
+        int idx = units.ids[i] * STATS_STRIDE + roundStatsOffset + units.kinds[i];
         stats.numRemainingUnits[idx]++;
       }
     }
@@ -247,9 +252,10 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
     for (var i = 0; i < combatants.length; i++) {
       var combatantStats = new ArrayList<EnumMap<UnitKind, UnitGroupStats>>(numRounds);
       for (var round = 0; round < numRounds; round++) {
+        final var roundStatsOffset = round * NUM_KINDS;
         var roundStats = new EnumMap<UnitKind, UnitGroupStats>(UnitKind.class);
-        for (var kind : UnitKind.values()) {
-          int idx = i * MAX_ROUNDS * UnitKind.values().length + round * UnitKind.values().length + kind.ordinal();
+        for (var kind : UNIT_KINDS) {
+          int idx = i * STATS_STRIDE + roundStatsOffset + kind.ordinal();
           roundStats.put(kind, new UnitGroupStats(
               stats.numRemainingUnits[idx],
               stats.timesFired[idx],
@@ -302,6 +308,6 @@ public final class JavaBattleEngineStrategy implements BattleEngineStrategy {
     var numRounds = round;
     var attackersOutcomes = makeOutcomes(attackers, attackersParty, numRounds);
     var defendersOutcomes = makeOutcomes(defenders, defendersParty, numRounds);
-    return new BattleOutcome(numRounds, attackersOutcomes, defendersOutcomes);
+    return new BattleOutcome(seed, numRounds, attackersOutcomes, defendersOutcomes);
   }
 }

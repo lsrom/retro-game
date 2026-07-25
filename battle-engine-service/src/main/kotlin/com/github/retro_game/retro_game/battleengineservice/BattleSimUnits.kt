@@ -1,0 +1,74 @@
+package com.github.retro_game.retro_game.battleengineservice
+
+import com.github.retro_game.retro_game.battleengine.UnitKind
+import com.github.retro_game.retro_game.battleengine.UnitKind.*
+
+internal object BattleSimUnits {
+  val unitsByIndex: Map<Int, UnitKind> = linkedMapOf(
+    0 to SMALL_CARGO,
+    1 to LARGE_CARGO,
+    2 to LITTLE_FIGHTER,
+    3 to HEAVY_FIGHTER,
+    4 to CRUISER,
+    5 to BATTLESHIP,
+    6 to COLONY_SHIP,
+    7 to RECYCLER,
+    8 to ESPIONAGE_PROBE,
+    9 to BOMBER,
+    10 to SOLAR_SATELLITE,
+    11 to DESTROYER,
+    12 to DEATH_STAR,
+    13 to BATTLE_CRUISER,
+    14 to ROCKET_LAUNCHER,
+    15 to LIGHT_LASER,
+    16 to HEAVY_LASER,
+    17 to GAUSS_CANNON,
+    18 to ION_CANNON,
+    19 to PLASMA_TURRET,
+    20 to SMALL_SHIELD_DOME,
+    21 to LARGE_SHIELD_DOME,
+  )
+
+  val defensiveUnitKinds: Set<UnitKind> = setOf(
+    ROCKET_LAUNCHER,
+    LIGHT_LASER,
+    HEAVY_LASER,
+    GAUSS_CANNON,
+    ION_CANNON,
+    PLASMA_TURRET,
+    SMALL_SHIELD_DOME,
+    LARGE_SHIELD_DOME,
+    SOLAR_SATELLITE
+  )
+
+  val metadata: List<BattleSimUnitMetadata> = unitsByIndex.map { (index, kind) ->
+    val attributes = DefaultBattleSimRules.rules.unitsAttributes()[kind.ordinal]
+    BattleSimUnitMetadata(
+      index,
+      kind.name,
+      kind.displayName(),
+      kind in defensiveUnitKinds,
+      attributes.weapons(),
+      attributes.shield(),
+      attributes.armor(),
+    )
+  }
+
+  private fun UnitKind.displayName(): String =
+    name.lowercase()
+      .split('_')
+      .joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+}
+
+data class BattleSimUnitMetadata(
+  val index: Int,
+  val kind: String,
+  val name: String,
+  val defensive: Boolean,
+  val weapons: Float,
+  val shield: Float,
+  val armor: Float,
+)
+
+internal class AttackingFleetCannotContainDefensiveUnitsException :
+  IllegalArgumentException("Attacking fleet cannot contain defensive units.")

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prettified Combat Report</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111827;
+      color: #6f91ad;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 20px;
+      line-height: 1.35;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    main {
+      min-width: 100%;
+      margin: 0 auto;
+      padding: 6px 0 20px;
+    }
+
+    .combatant {
+      position: relative;
+      left: 50%;
+      width: max-content;
+      margin-top: 22px;
+      transform: translateX(-50%);
+    }
+
+    .outcome {
+      margin-top: 22px;
+    }
+
+    .role {
+      color: #9ed97a;
+      font-weight: 700;
+    }
+
+    table {
+      margin: 2px auto 0;
+      border-collapse: collapse;
+      border-bottom: 2px solid #597493;
+      font-size: 18px;
+      line-height: 1.15;
+    }
+
+    th,
+    td {
+      min-width: 78px;
+      padding: 1px 4px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      border-bottom: 2px solid #597493;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .loss,
+    .destroyed {
+      color: #ff3333 !important;
+    }
+
+    .destroyed {
+      border-top: 2px solid #597493;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .empty {
+      color: #aeb7c5;
+    }
+
+    .number {
+      color: #f0a62e;
+      font-weight: 700;
+    }
+
+    script[type="text/csv"] {
+      display: none;
+    }
+  </style>
+  <script id="unit-color-presets" type="text/csv">{{unitColorCsv}}</script>
+</head>
+<body>
+  <main>
+    <section class="combatant">
+      <div><span class="role">{{attackerFleet.title}}</span> ({{attackerFleet.coordinates}})</div>
+      {{#attackerFleet.hasUnits}}
+      <table>
+        <thead>
+          <tr>{{#attackerFleet.units}}<th class="" style="color:{{color}}">{{abbreviation}}</th>{{/attackerFleet.units}}</tr>
+        </thead>
+        <tbody>
+          <tr>{{#attackerFleet.units}}<td class="" style="color:{{color}}">{{initialCount}}</td>{{/attackerFleet.units}}</tr>
+          {{#attackerFleet.hasSurvivors}}
+          <tr>{{#attackerFleet.units}}<td class="loss" style="color:{{color}}">-{{lossCount}}</td>{{/attackerFleet.units}}</tr>
+          <tr>{{#attackerFleet.units}}<td class="" style="color:{{color}}">{{finalCount}}</td>{{/attackerFleet.units}}</tr>
+          {{/attackerFleet.hasSurvivors}}
+          {{^attackerFleet.hasSurvivors}}
+          <tr><td class="destroyed" colspan="{{attackerFleet.colspan}}">Destroyed</td></tr>
+          {{/attackerFleet.hasSurvivors}}
+        </tbody>
+      </table>
+      {{/attackerFleet.hasUnits}}
+      {{^attackerFleet.hasUnits}}
+      <div class="empty">No units</div>
+      {{/attackerFleet.hasUnits}}
+    </section>
+    <div>The attacker has lost a total of <span class="number">{{attackerLosses}}</span> Units.</div>
+    <section class="combatant">
+      <div><span class="role">{{defenderFleet.title}}</span> ({{defenderFleet.coordinates}})</div>
+      {{#defenderFleet.hasUnits}}
+      <table>
+        <thead>
+          <tr>{{#defenderFleet.units}}<th class="" style="color:{{color}}">{{abbreviation}}</th>{{/defenderFleet.units}}</tr>
+        </thead>
+        <tbody>
+          <tr>{{#defenderFleet.units}}<td class="" style="color:{{color}}">{{initialCount}}</td>{{/defenderFleet.units}}</tr>
+          {{#defenderFleet.hasSurvivors}}
+          <tr>{{#defenderFleet.units}}<td class="loss" style="color:{{color}}">-{{lossCount}}</td>{{/defenderFleet.units}}</tr>
+          <tr>{{#defenderFleet.units}}<td class="" style="color:{{color}}">{{finalCount}}</td>{{/defenderFleet.units}}</tr>
+          {{/defenderFleet.hasSurvivors}}
+          {{^defenderFleet.hasSurvivors}}
+          <tr><td class="destroyed" colspan="{{defenderFleet.colspan}}">Destroyed</td></tr>
+          {{/defenderFleet.hasSurvivors}}
+        </tbody>
+      </table>
+      {{/defenderFleet.hasUnits}}
+      {{^defenderFleet.hasUnits}}
+      <div class="empty">No units</div>
+      {{/defenderFleet.hasUnits}}
+    </section>
+    <div class="outcome">
+      <div>
+        {{#attackerWins}}Attacker captures <span class="number">{{possiblePlunderMetal}}</span> Metal, <span class="number">{{possiblePlunderCrystal}}</span> Crystal and <span class="number">{{possiblePlunderDeuterium}}</span> Deuterium.{{/attackerWins}}
+        {{#defenderWins}}The defender has won the battle.{{/defenderWins}}
+        {{#draw}}The battle ended in a draw.{{/draw}}
+      </div>
+      <div>The defender has lost a total of <span class="number">{{defenderLosses}}</span> Units.</div>
+      <div>At these space coordinates now float <span class="number">{{debrisMetal}}</span> Metal and <span class="number">{{debrisCrystal}}</span> Crystal.</div>
+      <div>The chance for a moon to arise from the debris is <span class="number">{{moonchance}}</span>.</div>
+    </div>
+  </main>
+</body>
+</html>

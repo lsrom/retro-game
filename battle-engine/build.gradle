@@ -1,6 +1,7 @@
 plugins {
   id 'java-library'
   id 'io.spring.dependency-management' version '1.1.7'
+  id 'me.champeau.jmh' version '0.7.3'
 }
 
 group = 'com.github.retro_game'
@@ -51,6 +52,8 @@ tasks.register('buildBattleEngine', Exec) {
   description = 'Builds the native battle engine shared library.'
   group = 'build'
   dependsOn 'configureBattleEngine'
+  inputs.file('src/main/cpp/CMakeLists.txt')
+  inputs.file('src/main/cpp/BattleEngine.cpp')
   inputs.dir(battleEngineBuildDir)
   outputs.file(battleEngineBuildDir.map { it.file(System.mapLibraryName('BattleEngine')) })
   commandLine 'cmake',
@@ -67,4 +70,12 @@ tasks.named('test') {
     dependsOn 'buildBattleEngine'
     systemProperty 'java.library.path', battleEngineBuildDir.get().asFile.absolutePath
   }
+}
+
+jmh {
+  fork = 1
+  warmupIterations = 3
+  iterations = 5
+  timeOnIteration = '1s'
+  resultFormat = 'JSON'
 }

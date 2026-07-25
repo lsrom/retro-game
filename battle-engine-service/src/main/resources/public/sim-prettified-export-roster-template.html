@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Prettified Combat Report</title>
+  <style>
+    body {
+      margin: 0;
+      background: #122130;
+      color: #f4f7fb;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      line-height: 1.45;
+      overflow-x: auto;
+      text-align: center;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 14px 16px 26px;
+    }
+
+    .section {
+      margin-top: 28px;
+    }
+
+    .after {
+      margin-top: 34px;
+      font-weight: 700;
+    }
+
+    .combatant-title {
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .attacker-label {
+      color: #ff2020;
+    }
+
+    .defender-label {
+      color: #008f1c;
+    }
+
+    .attacker-line {
+      color: #ff8a00;
+    }
+
+    .defender-line {
+      color: #168dd1;
+    }
+
+    .separator {
+      width: min(520px, 100%);
+      margin: 18px auto 0;
+      font-family: "Courier New", monospace;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .attacker-separator {
+      color: #ff2020;
+    }
+
+    .defender-separator {
+      color: #008f1c;
+    }
+
+    .summary {
+      margin-top: 34px;
+      color: #f4f7fb;
+    }
+
+    .summary-title {
+      color: #278cff;
+      margin-top: 30px;
+    }
+
+    .number {
+      color: #ff8a00;
+      font-weight: 700;
+    }
+
+    .profit {
+      color: #ff8a00;
+      font-weight: 700;
+    }
+
+    .loss {
+      color: #ff2020;
+      font-weight: 700;
+    }
+
+    script[type="text/csv"] {
+      display: none;
+    }
+  </style>
+  <script id="unit-color-presets" type="text/csv">{{unitColorCsv}}</script>
+</head>
+<body>
+  <main>
+    <section class="section">
+      <div class="combatant-title"><span class="attacker-label">{{attackerRosterInitial.title}}</span> {{attackerRosterInitial.coordinates}}</div>
+      {{#attackerRosterInitial.hasUnits}}
+      {{#attackerRosterInitial.units}}<div class="attacker-line">{{name}} {{count}}</div>
+      {{/attackerRosterInitial.units}}
+      {{/attackerRosterInitial.hasUnits}}
+      {{^attackerRosterInitial.hasUnits}}
+      <div class="empty">No units</div>
+      {{/attackerRosterInitial.hasUnits}}
+      <div class="separator attacker-separator">------------------------------------------------------------</div>
+    </section>
+    <section class="section">
+      <div class="combatant-title"><span class="defender-label">{{defenderRosterInitial.title}}</span> {{defenderRosterInitial.coordinates}}</div>
+      {{#defenderRosterInitial.hasUnits}}
+      {{#defenderRosterInitial.units}}<div class="defender-line">{{name}} {{count}}</div>
+      {{/defenderRosterInitial.units}}
+      {{/defenderRosterInitial.hasUnits}}
+      {{^defenderRosterInitial.hasUnits}}
+      <div class="empty">No units</div>
+      {{/defenderRosterInitial.hasUnits}}
+      <div class="separator defender-separator">------------------------------------------------------------</div>
+    </section>
+    <div class="after">After the battle ...</div>
+    <section class="section">
+      <div class="combatant-title"><span class="attacker-label">{{attackerRosterFinal.title}}</span> {{attackerRosterFinal.coordinates}}</div>
+      {{#attackerRosterFinal.hasUnits}}
+      {{#attackerRosterFinal.units}}<div class="attacker-line">{{name}} {{count}}{{#final}} (-{{lossCount}}){{/final}}</div>
+      {{/attackerRosterFinal.units}}
+      {{/attackerRosterFinal.hasUnits}}
+      {{^attackerRosterFinal.hasUnits}}
+      <div class="empty">No units</div>
+      {{/attackerRosterFinal.hasUnits}}
+      <div class="separator attacker-separator">------------------------------------------------------------</div>
+    </section>
+    <section class="section">
+      <div class="combatant-title"><span class="defender-label">{{defenderRosterFinal.title}}</span> {{defenderRosterFinal.coordinates}}</div>
+      {{#defenderRosterFinal.hasUnits}}
+      {{#defenderRosterFinal.units}}<div class="defender-line">{{name}} {{count}}{{#final}} (-{{lossCount}}){{/final}}</div>
+      {{/defenderRosterFinal.units}}
+      {{/defenderRosterFinal.hasUnits}}
+      {{^defenderRosterFinal.hasUnits}}
+      <div class="empty">No units</div>
+      {{/defenderRosterFinal.hasUnits}}
+      <div class="separator defender-separator">------------------------------------------------------------</div>
+    </section>
+    <section class="summary">
+      <div>
+        {{#attackerWins}}The attacker captured <span class="number">{{possiblePlunderMetal}}</span> Metal, <span class="number">{{possiblePlunderCrystal}}</span> Crystal and <span class="number">{{possiblePlunderDeuterium}}</span> Deuterium.{{/attackerWins}}
+        {{#defenderWins}}The defender has won the battle.{{/defenderWins}}
+        {{#draw}}The battle ends in a draw.{{/draw}}
+      </div>
+      <div>The attacker lost a total of <span class="number">{{attackerLosses}}</span> units.</div>
+      <div>The defender lost a total of <span class="number">{{defenderLosses}}</span> units.</div>
+      <br>
+      <div>At these space coordinates now float <span class="number">{{debrisMetal}}</span> metal and <span class="number">{{debrisCrystal}}</span> crystal.</div>
+      <div>The chance for a moon to be created from the debris was <span class="number">{{moonchance}}</span>.</div>
+      <div class="summary-title">Summary attackers(s)</div>
+      <div>Metal: <span class="profit">{{attackerProfitMetal}}</span></div>
+      <div>Crystal: <span class="profit">{{attackerProfitCrystal}}</span></div>
+      <div>Deuterium: <span class="profit">{{attackerProfitDeuterium}}</span></div>
+      <div>The attacker(s) made a profit of <span class="profit">{{attackerProfitTotal}}</span> units.</div>
+      <div class="summary-title">Summary defenders(s)</div>
+      <div>Metal: <span class="loss">-{{lossesDefenderMetal}}</span></div>
+      <div>Crystal: <span class="loss">-{{lossesDefenderCrystal}}</span></div>
+      <div>Deuterium: <span class="loss">-{{lossesDefenderDeuterium}}</span></div>
+      <div>The defender(s) lost a total of <span class="number">{{defenderLosses}}</span> units.</div>
+    </section>
+  </main>
+</body>
+</html>
