@@ -96,7 +96,7 @@
           <a class="btn"
              th:href="@{/flights/send(body=${bodyId},galaxy=${c.galaxy},system=${c.system},position=${c.position},kind=${c.kind},mission='ATTACK',units[LARGE_CARGO]=${report.neededLargeCargoes})}"
              th:title="#{raidWithLargeCargoes}">LC</a>
-          <a class="btn" th:href="@{/espionage-report(id=${report.id},token=${report.token})}"
+          <a class="btn" th:href="@{/espionage-report(id=${report.id},token=${report.token},body=${bodyId})}"
              th:title="#{openFullReport}">F</a>
           <button data-spy th:data-body="${bodyId}" th:data-galaxy="${c.galaxy}" th:data-system="${c.system}"
                   th:data-position="${c.position}" th:data-kind="${c.kind}" th:title="#{spy}">

@@ -5,6 +5,7 @@ import com.github.retro_game.retro_game.controller.form.DeleteAllReportsForm;
 import com.github.retro_game.retro_game.controller.form.DeleteReportForm;
 import com.github.retro_game.retro_game.controller.form.DeleteReportResponse;
 import com.github.retro_game.retro_game.dto.*;
+import com.github.retro_game.retro_game.security.CustomUser;
 import com.github.retro_game.retro_game.service.ReportService;
 import com.github.retro_game.retro_game.service.UserService;
 import com.github.retro_game.retro_game.service.exception.ReportDoesNotExistException;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +29,23 @@ import java.util.*;
 @Controller
 @Validated
 public class ReportsController {
+  private static final Set<UnitKindDto> websimAttackerShipKinds = EnumSet.of(
+      UnitKindDto.SMALL_CARGO,
+      UnitKindDto.LARGE_CARGO,
+      UnitKindDto.LITTLE_FIGHTER,
+      UnitKindDto.HEAVY_FIGHTER,
+      UnitKindDto.CRUISER,
+      UnitKindDto.BATTLESHIP,
+      UnitKindDto.COLONY_SHIP,
+      UnitKindDto.RECYCLER,
+      UnitKindDto.ESPIONAGE_PROBE,
+      UnitKindDto.BOMBER,
+      UnitKindDto.DESTROYER,
+      UnitKindDto.DEATH_STAR,
+      UnitKindDto.BATTLE_CRUISER);
+  private static final WebsimAttackerContext emptyWebsimAttackerContext =
+      new WebsimAttackerContext(null, Collections.emptyMap(), Collections.emptyMap());
+
   private static final Map<TechnologyKindDto, Integer> websimTechsIndexes =
       Collections.unmodifiableMap(new EnumMap<>(TechnologyKindDto.class) {{
         put(TechnologyKindDto.WEAPONS_TECHNOLOGY, 0);
@@ -64,6 +84,10 @@ public class ReportsController {
   private final ReportService reportService;
   private final UserService userService;
 
+  record WebsimAttackerContext(@Nullable CoordinatesDto coordinates, Map<UnitKindDto, Integer> units,
+                               Map<TechnologyKindDto, Integer> technologies) {
+  }
+
   public ReportsController(@Value("${retro-game.espionage-probe-raiding:false}") boolean espionageProbeRaiding,
                            @Value("${retro-game.websim-link:https://websim.speedsim.net/?}") String websimLink,
                            ReportService reportService, UserService userService) {
@@ -74,14 +98,33 @@ public class ReportsController {
   }
 
   @GetMapping("/espionage-report")
-  public String espionageReport(@RequestParam long id, @RequestParam @NotBlank String token, Model model) {
+  public String espionageReport(@RequestParam long id, @RequestParam @NotBlank String token,
+                                @RequestParam(required = false) Long body, Model model) {
     EspionageReportDto report = reportService.getEspionageReport(id, token);
     model.addAttribute("report", report);
-    model.addAttribute("websimLink", generateWebsimLink(report));
+    model.addAttribute("websimLink", generateWebsimLink(report, getWebsimAttackerContext(body)));
     return "espionage-report";
   }
 
-  private String generateWebsimLink(EspionageReportDto report) {
+  private WebsimAttackerContext getWebsimAttackerContext(Long bodyId) {
+    if (bodyId == null) {
+      return emptyWebsimAttackerContext;
+    }
+
+    var authentication = SecurityContextHolder.getContext().getAuthentication();
+    if (authentication == null || !(authentication.getPrincipal() instanceof CustomUser)) {
+      return emptyWebsimAttackerContext;
+    }
+
+    UserContextDto ctx = userService.getCurrentUserContext(bodyId);
+    boolean bodyBelongsToCurrentUser = ctx.bodies().stream().anyMatch(b -> b.getId() == bodyId);
+    if (!bodyBelongsToCurrentUser) {
+      return emptyWebsimAttackerContext;
+    }
+    return new WebsimAttackerContext(ctx.curBody().coordinates(), ctx.curBody().units(), ctx.technologies());
+  }
+
+  String generateWebsimLink(EspionageReportDto report, WebsimAttackerContext attacker) {
     List<String> params = new ArrayList<>();
 
     CoordinatesDto coords = report.getCoordinates();
@@ -91,6 +134,28 @@ public class ReportsController {
     params.add("enemy_metal=" + (long) resources.getMetal());
     params.add("enemy_crystal=" + (long) resources.getCrystal());
     params.add("enemy_deut=" + (long) resources.getDeuterium());
+
+    CoordinatesDto attackerCoordinates = attacker.coordinates();
+    if (attackerCoordinates != null) {
+      params.add(String.format("attacker_pos=%d:%d:%d", attackerCoordinates.getGalaxy(), attackerCoordinates.getSystem(),
+          attackerCoordinates.getPosition()));
+    }
+
+    for (Map.Entry<UnitKindDto, Integer> entry : attacker.units().entrySet()) {
+      UnitKindDto kind = entry.getKey();
+      Integer count = entry.getValue();
+      if (!websimAttackerShipKinds.contains(kind) || count == null || count <= 0) {
+        continue;
+      }
+      params.add(String.format("ship_a0_%d_b=%d", websimUnitsIndexes.get(kind), count));
+    }
+
+    if (!attacker.technologies().isEmpty()) {
+      for (Map.Entry<TechnologyKindDto, Integer> entry : websimTechsIndexes.entrySet()) {
+        int level = attacker.technologies().getOrDefault(entry.getKey(), 0);
+        params.add(String.format("tech_a0_%d=%d", entry.getValue(), level));
+      }
+    }
 
     if (report.getFleet() != null) {
       for (Map.Entry<UnitKindDto, Integer> entry : report.getFleet().entrySet()) {
